@@ -181,11 +181,3 @@ class ProductController
 }
 
 ?>
-
-Summary Checklist for Fixes
-Feature         Status          Action Needed      
-Data Mapping    🔴 Broken       Fix array key casing and nesting level.
-Inventory       ⚪ Missing      Add checkStock() and decrementStock() inside the transaction.
-Security        ⚪ Missing      Add CSRF tokens to the POST form.
-Flow Control    🟡 Partial      Add exit; after all header("Location: ...") calls.
-Calculation     🟡 Risky        Re-verify prices from the DB at the moment of purchase.
