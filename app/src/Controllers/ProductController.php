@@ -8,6 +8,7 @@ use App\ViewModels\ManageProductViewModel;
 use App\ViewModels\ProductsViewModel;
 use App\Models\ProductModel;
 use App\Services\OrderService;
+use App\Middleware\AuthMiddleware;
 use Exception;
 
 class ProductController
@@ -19,24 +20,6 @@ class ProductController
     {
         $this->productService = new ProductService();
         $this->orderService = new OrderService();
-    }
-
-    public function index()
-    {
-        $searchTerm = $_GET['q'] ?? null;
-
-        if ($searchTerm) {
-            // If searching, we get the results (wrapped in an array for the ViewModel)
-            $products = $this->productService->getSearchMatches($searchTerm);
-        } else {
-            // Otherwise, get everything
-            $products = $this->productService->getAll();
-        }
-
-        $vm = new ProductsViewModel($products);
-        $vm->searchTerm = $searchTerm; 
-                 
-        require __DIR__ . "/../Views/Products/index.php";       
     }
 
     public function index2($vars = [])
@@ -53,7 +36,9 @@ class ProductController
 
     public function shoppingCart() 
     {
+        
         $userId = $_SESSION['UserId'] ?? null;
+        AuthMiddleware::requireAdminOrOwner($userId);
         if (!$userId) {
             header("Location: /showLogin?error=auth_required");
             exit;
@@ -67,7 +52,7 @@ class ProductController
     public function updateProduct($vars = [])
     {
         $id = (int)($vars['id'] ?? 0);
-
+        AuthMiddleware::requireAdmin();
         if ($id <= 0) {
             header('Location: /products');
             exit();
@@ -95,6 +80,7 @@ class ProductController
     // GET
     public function createProduct($vars = [])
     {
+        AuthMiddleware::requireAdmin();
         $product = null;           
         $vm = new ManageProductViewModel($product);
         require __DIR__ . "/../Views/Products/createProduct.php";       
@@ -103,6 +89,7 @@ class ProductController
     // POST
     public function saveProduct($vars = [])
     {
+        AuthMiddleware::requireAdmin();
         $product = (new ProductModel())->fromPost();
         if ($product->ProductId > 0) {
             $this->productService->update($product);
@@ -122,6 +109,7 @@ class ProductController
         }
 
         $userId = $_SESSION['UserId'];
+        AuthMiddleware::requireOwner($userId);
         $productId = (int)($_POST['product_id'] ?? 0);
         $quantity = (int)($_POST['quantity'] ?? 1);
 

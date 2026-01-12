@@ -11,6 +11,7 @@ require __DIR__ . "/../Partials/header.php";
             </div>
             <div class="card-body">
                 <form method="post" action="/saveUser">
+                    <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
                     <input type="hidden" name="UserId" value="<?= htmlspecialchars($user->UserId) ?>">
 
                     <div class="row g-3">
@@ -48,19 +49,7 @@ require __DIR__ . "/../Partials/header.php";
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                        </div>
-                        <div class="col-12 border-top pt-3">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="isVerified" name="isVerified" value="1" 
-                                    <?= $user->isVerified ? 'checked' : '' ?>>
-                                <label class="form-check-label" for="isVerified">Verified User</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="isActive" name="isActive" value="1" 
-                                    <?= $user->isActive ? 'checked' : '' ?>>
-                                <label class="form-check-label" for="isActive">Active Account</label>
-                            </div>
-                        </div>
+                        </div>                        
                     </div>
 
                     <div class="mt-4 d-flex justify-content-between">

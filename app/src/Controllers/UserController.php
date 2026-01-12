@@ -7,6 +7,7 @@ use App\ViewModels\ManageUserViewModel;
 use App\ViewModels\UsersViewModel;
 use App\Models\UserModel;
 use App\ViewModels\LoginViewModel;
+use App\Middleware\AuthMiddleware;
 
 class UserController
 {
@@ -19,6 +20,7 @@ class UserController
 
     public function index()
     {
+        AuthMiddleware::requireAdmin(); 
         $users = $this->userService->getAll();
         $vm = new UsersViewModel($users);
         require __DIR__ . "/../Views/Users/index.php";       
@@ -28,6 +30,7 @@ class UserController
     public function updateUser($vars = [])
     {
         $id = (int)($vars['id'] ?? 0);
+        AuthMiddleware::requireAdminOrOwner($id);        
 
         if ($id <= 0) {
             header('Location: /users');
@@ -49,6 +52,7 @@ class UserController
     public function displayUser($vars = [])
     {
         $id = $vars['id'] ?? $_SESSION['UserId'];
+        AuthMiddleware::requireAdminOrOwner($id);
         $user = $this->userService->getById($id);
         require  __DIR__ . "/../Views/Users/displayUser.php";
     }

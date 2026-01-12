@@ -1,10 +1,4 @@
-<?php
-/** @var ProductViewModel $vm */
-$title = "Electronics - Webstore";
-require __DIR__ . "/../Partials/header.php"; 
-//print_r($_SESSION);
-?>
-
+<?php require __DIR__ . "/../Partials/header.php"; ?>
 <style>
     /* Custom purple theme matching your header */
     .btn-purple { background-color: #5c2379; color: white; }
@@ -93,6 +87,7 @@ require __DIR__ . "/../Partials/header.php";
                                 <div class="btn-group w-100 mt-2">
                                     <a href="/updateProduct/<?= $product->ProductId ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
                                     <form action="/deleteProduct" method="POST" class="d-inline w-100" onsubmit="return confirm('Delete?');">
+                                        <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
                                         <input type="hidden" name="ProductId" value="<?= $product->ProductId ?>">
                                         <button type="submit" class="btn btn-sm btn-outline-danger w-100">Delete</button>
                                     </form>

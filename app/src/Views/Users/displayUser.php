@@ -64,6 +64,7 @@ require __DIR__ . "/../Partials/header.php";
                                 <div>
                                     <span class="badge rounded-pill bg-warning text-dark">Pending Verification</span>
                                     <form action="/send-verification-link" method="POST" class="mt-2">
+                                        <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
                                         <button type="submit" class="btn btn-sm btn-outline-primary">Verify Your Account</button>
                                     </form>
                                 </div>
@@ -72,10 +73,13 @@ require __DIR__ . "/../Partials/header.php";
                     </ul>
                 </div>
                 <div class="card-footer text-end">
-                    <a href="/user/edit" class="btn btn-outline-primary btn-sm">Edit Profile</a>
+                    <a href="/updateUser/<?= $user->UserId ?>" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil-square"></i> Edit
+                    </a>
                 </div>
                 <div class="card-body">
                     <form method="post" action="/logout">
+                        <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
                         <div>
                             <button type="submit" class="btn btn-success px-4">Logout</button>
                         </div>

@@ -2,11 +2,12 @@
 require __DIR__ . '/../vendor/autoload.php';
 session_start();
 date_default_timezone_set('Europe/Brussels');
-/**if (!isset($_SESSION['UserId'])) {
-    header('Location: /showLogin');
-    exit();
-}*/
-
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!App\Middleware\AuthMiddleware::verifyCsrfToken()) {
+        http_response_code(403);
+        die("CSRF validation failed. Direct access not allowed.");
+    }
+}
 
 use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;

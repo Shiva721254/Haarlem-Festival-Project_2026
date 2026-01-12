@@ -2,6 +2,7 @@
 /** @var ManageUserViewModel $vm */
 $title = "Create New User"; // Set the title for the header partial
 require __DIR__ . "/../Partials/header.php"; 
+use App\Middleware\AuthMiddleware;
 ?>
     <div class="container mt-5">
         <div class="card shadow-sm mx-auto" style="max-width: 600px;">
@@ -11,6 +12,7 @@ require __DIR__ . "/../Partials/header.php";
             <div class="card-body">
                 <form method="post" action="/saveUser">
                     <input type="hidden" name="UserId" value="0">
+                    <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
 
                     <div class="row g-3">
                         <div class="col-md-6">

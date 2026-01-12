@@ -12,6 +12,7 @@ require __DIR__ . "/../Partials/header.php";
         </div>
         <div class="card-body">
             <form action="/saveProduct" method="POST">
+                <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
                 <input type="hidden" name="ProductId" value="<?= $product->ProductId ?>">
                 
                 <div class="mb-3">

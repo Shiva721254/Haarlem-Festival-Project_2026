@@ -12,6 +12,7 @@ $title = "forgot password";
             <p class="text-muted small">Enter your email address and we will send you a link to reset your password.</p>
             
             <form action="/send-reset-link" method="POST">
+                <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
                 <div class="mb-3">
                     <label class="form-label fw-bold">Email Address</label>
                     <input type="email" name="Email" class="form-control" placeholder="name@example.com" required>

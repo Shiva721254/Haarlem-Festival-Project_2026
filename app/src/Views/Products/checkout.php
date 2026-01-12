@@ -20,6 +20,7 @@ require __DIR__ . "/../Partials/header.php";
     <hr>
 
     <form action="/processCheckout" method="POST">
+        <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
         <div class="form-group">
             <label for="address">Shipping Address:</label>
             <textarea name="address" id="address" required placeholder="Enter your full address..."></textarea>

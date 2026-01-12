@@ -17,6 +17,7 @@
 
                 <div class="col-md-6">
                 <form action="/products" method="GET">
+                    <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
                         <div class="input-group">
                             <input type="text" name="q" class="form-control border-0" 
                                 placeholder="What are you looking for?" 

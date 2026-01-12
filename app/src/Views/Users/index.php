@@ -5,7 +5,6 @@ use App\ViewModels\UsersViewModel;
 // Include the HTML head and Bootstrap CSS
 require __DIR__ . "/../Partials/header.php";
 ?>
-
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>👥 User Overview</h2>

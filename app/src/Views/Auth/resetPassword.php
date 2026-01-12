@@ -3,6 +3,7 @@ require __DIR__ . "/../Partials/header.php";
 $title = "reset password";
 ?>
 <form action="/update-password" method="POST">
+    <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
     <input type="hidden" name="token" value="<?= htmlspecialchars($_GET['token']) ?>">
     
     <div class="mb-3">

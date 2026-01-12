@@ -37,6 +37,7 @@ require __DIR__ . "/../Partials/header.php";
                 </div>
 
                 <form action="/cart/add" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
                     <input type="hidden" name="product_id" value="<?= $product->ProductId ?>">
                     
                     <div class="mb-4 border-top pt-4">
