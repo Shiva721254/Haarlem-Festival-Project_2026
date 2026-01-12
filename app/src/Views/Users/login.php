@@ -28,6 +28,12 @@
                 <div class="text-end mt-1">
                     <a href="/forgotPassword" class="small text-decoration-none" style="color: #6f42c1;">Forgot password?</a>
                 </div>
+                <div>
+                    <h5 class="mt-3">Don't have an account?</h5>
+                </div>
+                <div>
+                    <a href="/createUser" class="btn w-100 text-white" style="background-color: #198754;">Create Account</a>
+                </div>
             </form>
         </div>
     </div>

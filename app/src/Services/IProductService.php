@@ -16,4 +16,6 @@ interface IProductService
 
     public function getSearchMatches(string $query): array;
     public function emptyCart($userId): void;
+
+    public function getProducts(?string $term = null, ?string $category = null, ?string $type = null, ?int $price = null): array;
 }

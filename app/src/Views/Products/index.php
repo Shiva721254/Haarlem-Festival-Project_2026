@@ -66,7 +66,7 @@ require __DIR__ . "/../Partials/header.php";
                     <div class="card-body pb-0">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <span class="badge rounded-pill bg-secondary text-uppercase" style="font-size: 0.7rem;">
-                                <?= htmlspecialchars($product->Category->name) ?>
+                                <?= htmlspecialchars($product->Category ?? 'General') ?>
                             </span>
                             <span class="fw-bold text-primary fs-5">
                                 €<?= number_format($product->Price / 100, 2) ?>

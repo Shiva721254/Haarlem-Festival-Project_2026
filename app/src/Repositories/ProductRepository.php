@@ -18,6 +18,64 @@ class ProductRepository extends Repository implements IProductRepository
         return array_map(fn($row) => ProductModel::fromDb($row), $rows);
     }
 
+    public function searchProducts(?string $term = null): array
+    {
+        $sql = 'SELECT * FROM products WHERE
+                ProductName LIKE :term OR
+                Description LIKE :term OR
+                Category LIKE :term OR
+                Type LIKE :term
+                ORDER BY (ProductName LIKE :term) DESC LIMIT 5';
+        
+        $stmt  = $this->getConnection()->prepare($sql);
+        $stmt->execute(['term' => '%' . $term . '%']);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+    public function getProducts(?string $term = null, ?string $category = null, ?string $type = null, ?int $price = null): array
+    {
+        $sql = 'SELECT ProductId, ProductName, Description, Category, Type, Price FROM products';
+        $conditions = [];
+        $params = [];
+
+        if (!empty($term)) {
+            $conditions[] = "(ProductName LIKE :term OR Description LIKE :term OR Category LIKE :term OR Type LIKE :term)";
+            $params['term'] = '%' . $term . '%';
+        }
+        if ($category) {
+            $conditions[] = "Category = :category";
+            $params['category'] = $category;
+        }
+        if ($type) {
+            $conditions[] = "Type = :type";
+            $params['type'] = $type;
+        }
+        if ($price) {
+            $conditions[] = "Price <= :price";
+            $params['price'] = $price;
+        }
+
+        if (!empty($conditions)){
+            $sql .= " WHERE " . implode(" AND ", $conditions);
+        }
+
+        if (!empty($term)) {
+                $sql .= " ORDER BY (ProductName LIKE :term) DESC";
+            }
+        
+        try {
+            $stmt = $this->getConnection()->prepare($sql);
+            $stmt->execute($params); 
+            // Change FETCH_ASSOC to FETCH_OBJ           
+            return $stmt->fetchAll(PDO::FETCH_OBJ);
+        } catch (\PDOException $e) {
+            error_log("Database Error: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public function getById(int $id): ?ProductModel
     {
         $sql = 'SELECT * FROM products WHERE ProductId = :ProductId';
@@ -113,20 +171,6 @@ class ProductRepository extends Repository implements IProductRepository
         ];
     }
 
-    public function searchProducts(string $term): array
-    {
-        $sql = 'SELECT * FROM products WHERE
-                ProductName LIKE :term OR
-                Description LIKE :term OR
-                Category LIKE :term OR
-                Type LIKE :term
-                ORDER BY (ProductName LIKE :term) DESC LIMIT 5';
-        
-        $stmt  = $this->getConnection()->prepare($sql);
-        $stmt->execute(['term' => '%' . $term . '%']);
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
 
     public function emptyCart($userId): void
     {

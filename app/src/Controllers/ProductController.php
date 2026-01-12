@@ -34,11 +34,21 @@ class ProductController
         }
 
         $vm = new ProductsViewModel($products);
-        
-        // Pass the search term to the view so we can show "Results for '...'"
         $vm->searchTerm = $searchTerm; 
-
+                 
         require __DIR__ . "/../Views/Products/index.php";       
+    }
+
+    public function index2($vars = [])
+    {
+        $searchTerm = $_GET['q'] ?? null;
+        $category   = $_GET['category'] ?? null;
+        $type       = $_GET['type'] ?? null;
+        $price      = isset($_GET['price']) ? (int)$_GET['price'] : null;
+
+        $products = $this->productService->getProducts($searchTerm, $category, $type, $price);
+        $vm = new ProductsViewModel($products, $searchTerm, $category, $type, $price);
+        require __DIR__ . "/../Views/Products/index.php";
     }
 
     public function shoppingCart() 

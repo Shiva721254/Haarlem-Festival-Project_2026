@@ -61,15 +61,18 @@ require __DIR__ . "/../Partials/header.php";
                         </div>
 
                         <?php // ENUMERATIONS ?>
-                        <div class="col-md-6">
-                            <label for="Role" class="form-label">Role</label>
-                            <select class="form-select" id="Role" name="Role" required>
-                                <option value="" selected disabled>Choose...</option>
-                                <?php foreach (\App\Enums\UserRole::cases() as $role): ?>
-                                    <option value="<?= $role->value ?>"><?= $role->name ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
+                        <?php if (isset($_SESSION['Role']) && $_SESSION['Role']->value === 'admin'): ?>
+                            <div class="col-md-6">
+                                <label for="Role" class="form-label">Role</label>
+                                <select class="form-select" id="Role" name="Role" required>
+                                    <option value="" selected disabled>Choose...</option>
+                                    <?php foreach (\App\Enums\UserRole::cases() as $role): ?>
+                                        <option value="<?= $role->value ?>"><?= $role->name ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="col-md-6">
                             <label for="Address" class="form-label">Region/Address</label>
                             <select class="form-select" id="Address" name="Address" required>
@@ -78,18 +81,6 @@ require __DIR__ . "/../Partials/header.php";
                                     <option value="<?= $address->value ?>"><?= $address->name ?></option>
                                 <?php endforeach; ?>
                             </select>
-                        </div>
-
-                        <?php // BOOLEANS ?>
-                        <div class="col-12">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="isVerified" name="isVerified" value="1">
-                                <label class="form-check-label" for="isVerified">Verified User</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="isActive" name="isActive" value="1" checked>
-                                <label class="form-check-label" for="isActive">Active Account</label>
-                            </div>
                         </div>
                     </div>
 

@@ -39,7 +39,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/update-password', ['App\Controllers\AuthController', 'handleResetSubmit']);
 
     // product stuff
-    $r->addRoute('GET', '/products', ['App\Controllers\ProductController', 'index']);
+    $r->addRoute('GET', '/products', ['App\Controllers\ProductController', 'index2']);
     $r->addRoute('GET', '/createProduct', ['App\Controllers\ProductController', 'createProduct']);
     $r->addRoute('GET', '/updateProduct/{id:\d+}', ['App\Controllers\ProductController', 'updateProduct']);
     $r->addRoute('POST', '/saveProduct', ['App\Controllers\ProductController', 'saveProduct']);

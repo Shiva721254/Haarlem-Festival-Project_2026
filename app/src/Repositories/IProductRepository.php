@@ -16,4 +16,6 @@ interface IProductRepository
 
     public function searchProducts(string $term): array;
     public function emptyCart($userId): void;
+
+    public function getProducts(?string $term = null, ?string $category = null, ?string $type = null, ?int $price = null): array;
 }

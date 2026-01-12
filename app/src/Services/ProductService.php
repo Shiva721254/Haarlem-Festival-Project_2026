@@ -26,6 +26,12 @@ class ProductService implements IProductService
         return $products;
     }
 
+    public function getProducts(?string $term = null, ?string $category = null, ?string $type = null, ?int $price = null): array
+    {
+        $products = $this->productRepository->getProducts($term, $category, $type, $price);
+        return $products;
+    }
+
     public function getById(int $id): ?ProductModel
     {
         $product = $this->productRepository->getById($id);
