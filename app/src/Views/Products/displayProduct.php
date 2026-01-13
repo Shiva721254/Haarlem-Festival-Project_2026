@@ -20,7 +20,7 @@ require __DIR__ . "/../Partials/header.php";
     <div class="row g-5">
         <div class="col-md-6">
             <div class="card border-0 shadow-sm overflow-hidden">
-                <img src="https://via.placeholder.com/600x450?text=<?= urlencode($product->ProductName) ?>" 
+                <img src="https://placehold.co/600x450?text=<?= urlencode($product->ProductName) ?>" 
                      class="img-fluid" 
                      alt="<?= htmlspecialchars($product->ProductName) ?>">
             </div>
@@ -57,9 +57,6 @@ require __DIR__ . "/../Partials/header.php";
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-purple btn-lg py-3 shadow-sm">
                             <i class="bi bi-cart-plus me-2"></i> Add to Shopping Cart
-                        </button>
-                        <button class="btn btn-outline-secondary btn-lg py-3" type="button">
-                            <i class="bi bi-heart me-2"></i> Add to Wishlist
                         </button>
                     </div>
                 </form>

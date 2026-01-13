@@ -44,8 +44,7 @@
                 </p>
             <?php endif; ?>
         </div>
-
-        <h2 class="text-purple fw-bold"><i class="bi bi-cpu"></i> Featured Products</h2>
+        
         <?php if (isset($_SESSION['Role']) && $_SESSION['Role']->value === 'admin'): ?>
             <a href="/createProduct" class="btn btn-purple">
                 <i class="bi bi-plus-circle"></i> Add New Product
@@ -60,7 +59,7 @@
                     <div class="card-body pb-0">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <span class="badge rounded-pill bg-secondary text-uppercase" style="font-size: 0.7rem;">
-                                <?= htmlspecialchars($product->Category ?? 'General') ?>
+                                <?= htmlspecialchars($product->Category ?? 'General') ?>                                
                             </span>
                             <span class="fw-bold text-primary fs-5">
                                 €<?= number_format($product->Price / 100, 2) ?>
@@ -68,7 +67,7 @@
                         </div>
                     </div>
 
-                    <img src="https://via.placeholder.com/300x200?text=<?= urlencode($product->ProductName) ?>" 
+                    <img src="https://placehold.co/300x200?text=<?= urlencode($product->ProductName) ?>" 
                          class="card-img-top p-3" alt="<?= htmlspecialchars($product->ProductName) ?>">
 
                     <div class="card-body pt-0">

@@ -37,4 +37,29 @@ class OrderRepository extends Repository implements IOrderRepository
             ':price'        => $price
         ]);
     }
+
+    public function getOrderDetails(int $orderId): ?array
+    {
+        $sql = "SELECT o.*, u.FirstName, u.LastName, u.Email 
+                FROM orders o
+                JOIN users u ON o.UserId = u.UserId
+                WHERE o.OrderId = :orderId";
+                
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->execute([':orderId' => $orderId]);
+        $order = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$order) return null;
+        
+        $sqlItems = "SELECT oi.Quantity, oi.PriceAtPurchase, p.ProductName 
+                    FROM orderItems oi
+                    JOIN products p ON oi.ProductId = p.ProductId
+                    WHERE oi.OrderId = :orderId";
+                    
+        $stmtItems = $this->getConnection()->prepare($sqlItems);
+        $stmtItems->execute([':orderId' => $orderId]);
+        $order['items'] = $stmtItems->fetchAll(\PDO::FETCH_ASSOC);
+
+        return $order;
+    }
 }

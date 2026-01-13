@@ -147,7 +147,7 @@ class ProductRepository extends Repository implements IProductRepository
 
     public function getShoppingCart(int $userId): array
     {
-        $sql = 'SELECT p.ProductName, p.Price, c.Quantity, (p.Price * c.Quantity) AS subtotal
+        $sql = 'SELECT p.ProductId, p.ProductName, p.Price, c.Quantity, (p.Price * c.Quantity) AS subtotal
                 FROM shoppingCart c
                 JOIN products p ON c.ProductId = p.ProductId
                 WHERE c.UserId = :userId';

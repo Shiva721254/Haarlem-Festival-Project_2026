@@ -161,7 +161,8 @@ class ProductController
 
         try {
             $orderId = $this->orderService->checkout($userId, $address, $paymentMethod);
-            header("Location: /orderSucess?id=" . $orderId);
+            $this->orderService->sendOrderConfirmationEmail($orderId);
+            header("Location: /orderSuccess?id=" . $orderId);
             exit;
 
         } catch (Exception $e) {

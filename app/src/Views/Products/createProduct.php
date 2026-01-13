@@ -44,7 +44,7 @@ require __DIR__ . "/../Partials/header.php";
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Price ($)</label>
+                    <label class="form-label fw-bold">Price (€)</label>
                     <input type="number" name="Price" class="form-control" step="0.01" placeholder="0.00" required>
                 </div>
 

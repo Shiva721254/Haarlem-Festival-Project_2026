@@ -49,9 +49,9 @@ require __DIR__ . "/../Partials/header.php";
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Price ($)</label>
+                    <label class="form-label">Price (€)</label>
                     <input type="number" name="Price" class="form-control" step="0.01" 
-                           value="<?= number_format($product->Price / 100, 2, '.', '') ?>" required>
+                           value="<?= number_format($product->Price / 100, 2) ?>" required>
                 </div>
 
                 <div class="mb-3">
