@@ -3,8 +3,8 @@ namespace App\Services;
 
 use App\Models\ProductModel;
 use App\Repositories\ProductRepository;
-use App\Repositories\IProductRepository;
-use App\Services\IProductService;
+use App\Repositories\Interfaces\IProductRepository;
+use App\Services\Interfaces\IProductService;
 
 class ProductService implements IProductService
 {
@@ -13,13 +13,7 @@ class ProductService implements IProductService
     {
         $this->productRepository = new ProductRepository();
     }
-
-    public function getShoppingCart(int $userId): array
-    {
-        $shoppingCart = $this->productRepository->getShoppingCart($userId);
-        return $shoppingCart;
-    }
-
+    
     public function getAll(): array
     {
         $products = $this->productRepository->getAll();
@@ -53,11 +47,6 @@ class ProductService implements IProductService
         $this->productRepository->delete($id);
     }
 
-     public function addProductToShoppingCart(int $userId, int $productId, $quantity): void
-    {
-        $this->productRepository->addProductToShoppingCart($userId, $productId, $quantity);
-    }
-
     public function getSearchMatches(string $query): array
     {
         if (empty($query)) return [];
@@ -70,10 +59,5 @@ class ProductService implements IProductService
         }
 
         return $products; 
-    }
-
-    public function emptyCart($userId): void
-    {
-        $this->productRepository->emptyCart($userId);
     }
 }

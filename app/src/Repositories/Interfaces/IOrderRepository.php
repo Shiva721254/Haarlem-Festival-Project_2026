@@ -1,5 +1,5 @@
 <?php 
-namespace App\Repositories;
+namespace App\Repositories\Interfaces;
 interface IOrderRepository
 {
     public function saveOrder(int $userId, string $address, string $paymentMethod, int $total) :int;

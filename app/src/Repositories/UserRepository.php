@@ -2,8 +2,9 @@
 namespace App\Repositories;
 
 use App\Framework\Repository;
-use App\Repositories\IUserRepository;
+use App\Repositories\Interfaces\IUserRepository;
 use App\Models\UserModel;
+use App\Enums\UserRole;
 use \PDO;
 
 class UserRepository extends Repository implements IUserRepository
@@ -57,7 +58,8 @@ class UserRepository extends Repository implements IUserRepository
         $stmt->bindValue(':Password', $user->Password, PDO::PARAM_STR);
         
         // Access the scalar value (string or int) of the Enum BY USING ->value
-        $stmt->bindValue(':Role', $user->Role->value, PDO::PARAM_STR);
+        $roleValue = isset($user->Role) ? $user->Role->value : UserRole::Customer->value;
+        $stmt->bindValue(':Role', $roleValue, PDO::PARAM_STR);
         $stmt->bindValue(':Address', $user->Address->value, PDO::PARAM_STR);
 
         $stmt->bindValue(':isVerified', $user->isVerified, PDO::PARAM_BOOL);

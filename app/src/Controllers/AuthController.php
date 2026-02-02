@@ -1,9 +1,9 @@
 <?php 
 
-namespace App\Controllers;
-use App\Services\IUserService;
+namespace App\Middleware;
+use App\Services\Interfaces\IUserService;
 use App\Services\UserService;
-use App\Repositories\IUserRepository;
+use App\Repositories\Interfaces\IUserRepository;
 use App\Repositories\UserRepository;
 use App\ViewModels\AuthViewModel;
 

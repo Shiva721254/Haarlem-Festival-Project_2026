@@ -1,17 +1,15 @@
 <?php require __DIR__ . "/../Partials/header.php"; ?>
 <style>
-    /* Custom purple theme matching your header */
     .btn-purple { background-color: #5c2379; color: white; }
     .btn-purple:hover { background-color: #4a1c61; color: white; }
     .text-purple { color: #5c2379; }
     
-    /* Truncate description to exactly 3 lines with "..." */
     .description-truncate {
         display: -webkit-box;
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;  
         overflow: hidden;
-        min-height: 4.5em; /* Ensures cards stay aligned */
+        min-height: 4.5em;
     }
     
     .hero-section {
@@ -21,6 +19,9 @@
         background-position: center;
         color: white;
         padding: 60px 0;
+    }
+    #product-grid{
+        scroll-margin-top: 180px;
     }
 </style>
 
@@ -72,7 +73,21 @@
 
                     <div class="card-body pt-0">
                         <h5 class="card-title fw-bold"><?= htmlspecialchars($product->ProductName) ?></h5>
-                        
+                        <div class="mb-2">
+                            <span class="text-warning">
+                                <?php 
+                                $avg = $product->AverageRating ?? 0;
+                                for ($i = 1; $i <= 5; $i++): 
+                                    if ($i <= floor($avg)): ?>
+                                        <i class="bi bi-star-fill"></i> <?php elseif ($i == ceil($avg) && ($avg - floor($avg)) >= 0.5): ?>
+                                        <i class="bi bi-star-half"></i> <?php else: ?>
+                                        <i class="bi bi-star"></i> <?php endif; 
+                                endfor; ?>
+                            </span>
+                            <span class="text-muted small ms-1">
+                                <?= number_format($avg, 1) ?> (<?= $product->TotalReviews ?> reviews)
+                            </span>
+                        </div>
                         <p class="card-text text-muted small description-truncate">
                             <?= htmlspecialchars($product->Description ?? 'No description available for this electronic item.') ?>
                         </p>

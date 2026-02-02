@@ -3,8 +3,8 @@ namespace App\Services;
 
 use App\Models\UserModel;
 use App\Repositories\UserRepository;
-use App\Repositories\IUserRepository;
-use App\Services\IUserService;
+use App\Repositories\Interfaces\IUserRepository;
+use App\Services\Interfaces\IUserService;
 use App\Services\MailService;
 
 class UserService implements IUserService

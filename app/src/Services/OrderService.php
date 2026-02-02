@@ -1,11 +1,14 @@
 <?php
 namespace App\Services;
-use App\Services\IOrderService;
-use App\Repositories\IOrderRepository;
-use App\Repositories\OrderRepository;
-use App\Services\IProductService;
+use App\Services\Interfaces\IOrderService;
+use App\Services\Interfaces\IProductService;
 use App\Services\ProductService;
 use App\Services\MailService;
+use App\Repositories\Interfaces\IOrderRepository;
+use App\Repositories\Interfaces\IShoppingCartRepository;
+use App\Repositories\ShoppingCartRepository;
+use App\Repositories\OrderRepository;
+
 use Exception;
 
 class OrderService implements IOrderService
@@ -13,17 +16,19 @@ class OrderService implements IOrderService
     private OrderRepository $orderRepository;
     private IProductService $productService;
     private MailService $mailService;
+    private IShoppingCartRepository $cartRepository;
 
     public function __construct()
     {
         $this->orderRepository = new OrderRepository();
         $this->productService = new ProductService();
         $this->mailService = new MailService();
+        $this->cartRepository = new ShoppingCartRepository();
     }
 
     public function checkout(int $userId, string $address, string $paymentMethod): int
     {
-        $cartData = $this->productService->getShoppingCart($userId);
+        $cartData = $this->cartRepository->getShoppingCart($userId);
         if (empty($cartData['items'])) {
             throw new Exception("Cart is empty");
         }      
@@ -46,7 +51,7 @@ class OrderService implements IOrderService
                 );
             }
 
-            $this->productService->emptyCart($userId);
+            $this->cartRepository->emptyCart($userId);
 
             $db->commit();
             return $orderId;

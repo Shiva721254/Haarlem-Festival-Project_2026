@@ -1,7 +1,7 @@
 <?php
 namespace App\Repositories;
 use App\Framework\Repository;
-use App\Repositories\IOrderRepository;
+use App\Repositories\Interfaces\IOrderRepository;
 use PDO;
 
 class OrderRepository extends Repository implements IOrderRepository

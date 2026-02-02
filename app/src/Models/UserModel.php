@@ -9,11 +9,12 @@ class UserModel
     public string $LastName;
     public string $Email;    
 
-    public UserRole $Role;
+    public UserRole $Role = UserRole::Customer;
     public Address $Address;
 
     public bool $isVerified;
     public bool $isActive;
+
     public ?string $verification_token;
     public ?string $verification_token_expires_at;
     public ?string $verified_at;
@@ -61,7 +62,9 @@ class UserModel
         // Handle both cases for password field
         $user->Password = $_POST['Password'] ?? $_POST['password'] ?? '';
 
-        $user->Role = UserRole::from($_POST['Role']);
+        $user->Role = isset($_POST['Role']) 
+            ? UserRole::from($_POST['Role']) 
+            : $this->Role; 
         $user->Address = Address::from($_POST['Address']);
         
         $user->isVerified = isset($_POST['isVerified']) ? (bool)$_POST['isVerified'] : false;

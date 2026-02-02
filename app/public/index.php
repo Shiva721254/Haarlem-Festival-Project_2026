@@ -13,6 +13,9 @@ use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;
 
 $dispatcher = simpleDispatcher(function (RouteCollector $r) {
+
+    $r->addRoute('GET', '/demo', ['App\Controllers\DemoController', 'showDemo']);
+
     // login stuff
     $r->addRoute('GET', '/showLogin', ['App\Controllers\UserController', 'showLogin']);
     $r->addRoute('POST', '/login', ['App\Controllers\UserController', 'login']);
@@ -52,6 +55,14 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/showCheckout', ['App\Controllers\ProductController', 'showCheckout']);
     $r->addRoute('POST', '/processCheckout', ['App\Controllers\ProductController', 'processCheckout']);
     $r->addRoute('GET', '/orderSuccess', ['App\Controllers\ProductController', 'orderSuccess']);
+
+    $r->addRoute('GET' , '/addRating/{id:\d+}', ['App\Controllers\ProductController', 'showAddRating']);
+    $r->addRoute('POST', '/rateProduct', ['App\Controllers\ProductController', 'rateProdcut']);
+    $r->addRoute('GET' , '/editRating/{id:\d+}', ['App\Controllers\ProductController', 'showEditRating']);
+    $r->addRoute('POST', '/updateRating/{id:\d+}', ['App\Controllers\ProductController', 'handleUpdateRating']);
+    $r->addRoute('POST', '/deleteRating/{id:\d+}', ['App\Controllers\ProductController', 'handleDeleteRating']);
+
+    $r->addRoute('GET', '/api/products/{id:\d+}/rating', ['App\Controllers\ProductController', 'getRatingApi']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];

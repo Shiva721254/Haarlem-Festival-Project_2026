@@ -1,7 +1,7 @@
 <?php  
 
 namespace App\Controllers;
-use App\Services\IUserService;
+use App\Services\Interfaces\IUserService;
 use App\Services\UserService;
 use App\ViewModels\ManageUserViewModel;
 use App\ViewModels\UsersViewModel;
@@ -74,7 +74,7 @@ class UserController
         } else {
             $this->userService->create($user);
         }
-        header('Location: /users');
+        header('Location: /products');
         exit();
     }
     
