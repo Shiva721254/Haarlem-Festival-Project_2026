@@ -17,6 +17,8 @@ composer.phar
 
 # Environment files (keep example files tracked)
 .env
+node_modules/
+.DS_Store
 .env.*
 !.env.example
 !/app/.env.example
