@@ -19,9 +19,6 @@ class ManageUserViewModel
     // Using simple arrays to hold the enum values, replacing C#'s Enum.GetValues().
     /** @var array<UserRole> */
     public array $userRoles;
-
-    /** @var array<Address> */
-    public array $locations;
     
     // The constructor is used for initialization logic.
     public function __construct(?UserModel $user = null)
@@ -29,10 +26,8 @@ class ManageUserViewModel
         $this->user = $user;
         // Populate the arrays with Enum cases
         $this->userRoles = UserRole::cases();
-        $this->locations = Address::cases();
 
         // Populate the select box options (assuming static methods exist on Enums)
         $this->userRoleOptions = UserRole::toSelectOptions();
-        $this->addressOptions = Address::toSelectOptions();
     }
 }

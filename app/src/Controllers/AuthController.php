@@ -107,7 +107,7 @@ class AuthController
         }
         $success = $this->userService->completeAccountVerification($token);
         if($success){
-            header("Location: /displayUser?verified=1");
+            header("Location: /user/{id:\d+}?verified=1");
         } else {
             header("Location: /showLogin?error=expired_token");
         }

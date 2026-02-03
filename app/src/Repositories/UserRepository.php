@@ -98,7 +98,7 @@ class UserRepository extends Repository implements IUserRepository
     {
         $sql = 'UPDATE users 
                 SET FirstName = :FirstName, LastName = :LastName, Email = :Email, 
-                    Role = :Role, isVerified = :isVerified, isActive = :isActive
+                    Role = :Role
                 WHERE UserId = :UserId';
 
         $stmt = $this->getConnection()->prepare($sql);
@@ -108,9 +108,6 @@ class UserRepository extends Repository implements IUserRepository
         $stmt->bindValue(':Email', $user->Email, PDO::PARAM_STR);
 
         $stmt->bindValue(':Role', $user->Role->value, PDO::PARAM_STR);
-
-        $stmt->bindValue(':isVerified', $user->isVerified, PDO::PARAM_BOOL);
-        $stmt->bindValue(':isActive', $user->isActive, PDO::PARAM_BOOL);
         $stmt->bindValue(':UserId', $user->UserId, PDO::PARAM_INT);
 
         $stmt->execute();
