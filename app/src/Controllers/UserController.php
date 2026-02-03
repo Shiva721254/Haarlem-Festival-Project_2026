@@ -3,19 +3,23 @@
 namespace App\Controllers;
 use App\Services\Interfaces\IUserService;
 use App\Services\UserService;
+use App\Services\RecaptchaService;
 use App\ViewModels\ManageUserViewModel;
 use App\ViewModels\UsersViewModel;
 use App\Models\UserModel;
 use App\ViewModels\LoginViewModel;
 use App\Middleware\AuthMiddleware;
+use App\CustomException\DuplicateEntryException;
 
 class UserController
 {
     private IUserService $userService;
+    private RecaptchaService $recaptchaService;
 
     public function __construct()
     {
         $this->userService = new UserService();
+        $this->recaptchaService = new RecaptchaService();
     }
 
     public function index()
@@ -69,13 +73,28 @@ class UserController
     public function saveUser($vars = [])
     {
         $user = (new UserModel())->fromPost();
-        if ($user->UserId > 0) {
-            $this->userService->update($user);
-        } else {
-            $this->userService->create($user);
-        }
-        header('Location: /products');
-        exit();
+        try {
+            $token = $_POST['g-recaptcha-response'] ?? null;
+            if (!$this->recaptchaService->verify($token)) {
+                header('Location: /createUser?error=recaptcha_failed');
+                exit();
+            }       
+            
+            if ($user->UserId > 0) {
+                $this->userService->update($user);
+            } else {
+                $this->userService->create($user);
+            }
+
+            header('Location: /products');
+            exit();
+
+        } catch (DuplicateEntryException $e) {
+            $error = $e->getMessage();            
+            $vm = new ManageUserViewModel($user);
+            require __DIR__ . "/../Views/Users/createUser.php";
+            exit();
+        } 
     }
     
     //GET

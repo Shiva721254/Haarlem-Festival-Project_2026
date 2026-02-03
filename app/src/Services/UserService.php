@@ -6,6 +6,7 @@ use App\Repositories\UserRepository;
 use App\Repositories\Interfaces\IUserRepository;
 use App\Services\Interfaces\IUserService;
 use App\Services\MailService;
+use App\CustomException\DuplicateEntryException;
 
 class UserService implements IUserService
 {
@@ -35,7 +36,10 @@ class UserService implements IUserService
             throw new \Exception("Passwords do not match.");
         }
 
-        $user->Password = password_hash($user->Password, PASSWORD_DEFAULT);        
+        $user->Password = password_hash($user->Password, PASSWORD_DEFAULT);    
+            if ($this->userRepository->getByEmail($user->Email)) {
+            throw new DuplicateEntryException("Warning: Email already exists. ⚠️");
+        }    
         $this->userRepository->create($user);
     }
 

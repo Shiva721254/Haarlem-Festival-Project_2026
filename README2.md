@@ -1,3 +1,9 @@
+Use this site key in the HTML code your site serves to users:
+6LcRjF8sAAAAAA8Yhjp-lQFxIpea53uZMsYTbMSR
+
+Use this secret key for communication between your site and reCAPTCHA:
+6LcRjF8sAAAAAKP6omk4A3pM-mAqZcNmQKMiZCgN
+
 CREATE TABLE users (
     UserId INT AUTO_INCREMENT PRIMARY KEY,
     FirstName VARCHAR(100) NOT NULL,

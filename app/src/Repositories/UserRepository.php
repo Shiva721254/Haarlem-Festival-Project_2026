@@ -5,6 +5,7 @@ use App\Framework\Repository;
 use App\Repositories\Interfaces\IUserRepository;
 use App\Models\UserModel;
 use App\Enums\UserRole;
+use App\CustomException\DuplicateEntryException;
 use \PDO;
 
 class UserRepository extends Repository implements IUserRepository
@@ -47,23 +48,30 @@ class UserRepository extends Repository implements IUserRepository
     // --- CRUD OPERATIONS ---
     public function create(UserModel $user): void
     {
-        $sql = 'INSERT INTO users (FirstName, LastName, Email, Password, Role, isVerified, isActive)
-                VALUES (:FirstName, :LastName, :Email, :Password, :Role, :isVerified, :isActive)';
+        try{
+            $sql = 'INSERT INTO users (FirstName, LastName, Email, Password, Role, isVerified, isActive)
+                    VALUES (:FirstName, :LastName, :Email, :Password, :Role, :isVerified, :isActive)';
 
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bindValue(':FirstName', $user->FirstName, PDO::PARAM_STR);
-        $stmt->bindValue(':LastName', $user->LastName, PDO::PARAM_STR);
-        $stmt->bindValue(':Email', $user->Email, PDO::PARAM_STR);
-        $stmt->bindValue(':Password', $user->Password, PDO::PARAM_STR);
-        
-        // Access the scalar value (string or int) of the Enum BY USING ->value
-        $roleValue = isset($user->Role) ? $user->Role->value : UserRole::Customer->value;
-        $stmt->bindValue(':Role', $roleValue, PDO::PARAM_STR);
+            $stmt = $this->getConnection()->prepare($sql);
+            $stmt->bindValue(':FirstName', $user->FirstName, PDO::PARAM_STR);
+            $stmt->bindValue(':LastName', $user->LastName, PDO::PARAM_STR);
+            $stmt->bindValue(':Email', $user->Email, PDO::PARAM_STR);
+            $stmt->bindValue(':Password', $user->Password, PDO::PARAM_STR);
+            
+            // Access the scalar value (string or int) of the Enum BY USING ->value
+            $roleValue = isset($user->Role) ? $user->Role->value : UserRole::Customer->value;
+            $stmt->bindValue(':Role', $roleValue, PDO::PARAM_STR);
 
-        $stmt->bindValue(':isVerified', $user->isVerified, PDO::PARAM_BOOL);
-        $stmt->bindValue(':isActive', $user->isActive, PDO::PARAM_BOOL);
+            $stmt->bindValue(':isVerified', $user->isVerified, PDO::PARAM_BOOL);
+            $stmt->bindValue(':isActive', $user->isActive, PDO::PARAM_BOOL);
 
-        $stmt->execute();
+            $stmt->execute();
+        } catch (\PDOException $e) {
+            if ($e->getCode() == 23000) { // Integrity constraint violation
+                throw new DuplicateEntryException("This email is already registered.");
+            }
+            throw $e; // Rethrow if it's a different DB error
+        }
     }
 
     public function getById(int $id): ?UserModel

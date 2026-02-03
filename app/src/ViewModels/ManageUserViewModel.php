@@ -2,8 +2,7 @@
 namespace App\ViewModels;
 
 use App\Models\UserModel;
-use App\Enums\UserRole; 
-use App\Enums\Address;
+use App\Enums\UserRole;
 
 class ManageUserViewModel
 {
@@ -12,9 +11,6 @@ class ManageUserViewModel
     // The array will hold key-value pairs (value => display name) or objects.
     /** @var array<string|int, string> */
     public array $userRoleOptions;
-
-    /** @var array<string|int, string> */
-    public array $addressOptions;
 
     // Using simple arrays to hold the enum values, replacing C#'s Enum.GetValues().
     /** @var array<UserRole> */
