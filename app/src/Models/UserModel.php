@@ -10,7 +10,6 @@ class UserModel
     public string $Email;    
 
     public UserRole $Role = UserRole::Customer;
-    public Address $Address;
 
     public bool $isVerified;
     public bool $isActive;
@@ -34,7 +33,6 @@ class UserModel
         
         // Convert strings from DB back to Enums
         $user->Role = UserRole::from($data['Role']);
-        $user->Address = Address::from($data['Address']);
         
         // Ensure boolean types
         $user->isVerified = (bool)($data['isVerified'] ?? false);
@@ -64,8 +62,7 @@ class UserModel
 
         $user->Role = isset($_POST['Role']) 
             ? UserRole::from($_POST['Role']) 
-            : $this->Role; 
-        $user->Address = Address::from($_POST['Address']);
+            : $this->Role;
         
         $user->isVerified = isset($_POST['isVerified']) ? (bool)$_POST['isVerified'] : false;
         $user->isActive = isset($_POST['isActive']) ? (bool)$_POST['isActive'] : false;

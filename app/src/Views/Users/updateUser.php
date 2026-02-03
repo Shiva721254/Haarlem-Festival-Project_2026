@@ -39,17 +39,7 @@ require __DIR__ . "/../Partials/header.php";
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="Address" class="form-label">Region/Address</label>
-                            <select class="form-select" id="Address" name="Address" required>
-                                <?php foreach (\App\Enums\Address::cases() as $address): ?>
-                                    <option value="<?= $address->value ?>" <?= $user->Address === $address ? 'selected' : '' ?>>
-                                        <?= $address->name ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>                        
+                        </div>                      
                     </div>
 
                     <div class="mt-4 d-flex justify-content-between">

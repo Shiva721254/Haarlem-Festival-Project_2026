@@ -53,10 +53,6 @@ require __DIR__ . "/../Partials/header.php";
                             <span class="text-secondary"><?= htmlspecialchars($user->Role->value ?? $user->Role->name) ?></span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <strong>Location</strong>
-                            <span class="text-secondary"><?= htmlspecialchars($user->Address->value ?? $user->Address->name) ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
                             <strong>Verification Status</strong>
                             <?php if ($user->isVerified): ?>
                                 <span class="badge rounded-pill bg-info text-dark">Verified Account</span>

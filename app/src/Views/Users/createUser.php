@@ -74,16 +74,7 @@ use App\Middleware\AuthMiddleware;
                                 </select>
                             </div>
                         <?php endif; ?>
-
-                        <div class="col-md-6">
-                            <label for="Address" class="form-label">Region/Address</label>
-                            <select class="form-select" id="Address" name="Address" required>
-                                <option value="" selected disabled>Choose...</option>
-                                <?php foreach (\App\Enums\Address::cases() as $address): ?>
-                                    <option value="<?= $address->value ?>"><?= $address->name ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
+                        
                     </div>
 
                     <div class="mt-4 d-flex justify-content-between">

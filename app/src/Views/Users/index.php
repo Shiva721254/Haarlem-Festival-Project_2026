@@ -31,7 +31,6 @@ require __DIR__ . "/../Partials/header.php";
                         <th>Last Name</th>
                         <th>Email</th>
                         <th>Role</th>
-                        <th>Address</th>
                         <th class="text-center">Verified</th>
                         <th class="text-center">Active</th>
                         <th class="text-center">Actions</th>
@@ -52,9 +51,6 @@ require __DIR__ . "/../Partials/header.php";
                             <td><?= htmlspecialchars($user->Email ?? '') ?></td>
                             <td>
                                 <?= $user->Role ? htmlspecialchars($user->Role->name) : '' ?>
-                            </td>
-                            <td>
-                                <?= $user->Address ? htmlspecialchars($user->Address->name) : '' ?>
                             </td>
 
 

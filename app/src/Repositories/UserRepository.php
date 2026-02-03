@@ -11,7 +11,7 @@ class UserRepository extends Repository implements IUserRepository
 {
     public function getAll(): array
     {
-        $sql = 'SELECT UserId, FirstName, LastName, Email, Role, Address, isVerified, isActive 
+        $sql = 'SELECT UserId, FirstName, LastName, Email, Role, isVerified, isActive 
                 FROM users ORDER BY LastName';
         
         $result = $this->getConnection()->query($sql);
@@ -33,8 +33,7 @@ class UserRepository extends Repository implements IUserRepository
             
             // --- THE FIX ---
             // Convert the database string back into the Enum
-            $user->Role = \App\Enums\UserRole::tryFrom($row['Role']); 
-            $user->Address = \App\Enums\Address::tryFrom($row['Address']);
+            $user->Role = \App\Enums\UserRole::tryFrom($row['Role']);
             // ----------------
 
             $user->isVerified = (bool) $row['isVerified']; // Good practice to cast bools
@@ -48,8 +47,8 @@ class UserRepository extends Repository implements IUserRepository
     // --- CRUD OPERATIONS ---
     public function create(UserModel $user): void
     {
-        $sql = 'INSERT INTO users (FirstName, LastName, Email, Password, Role, Address, isVerified, isActive)
-                VALUES (:FirstName, :LastName, :Email, :Password, :Role, :Address, :isVerified, :isActive)';
+        $sql = 'INSERT INTO users (FirstName, LastName, Email, Password, Role, isVerified, isActive)
+                VALUES (:FirstName, :LastName, :Email, :Password, :Role, :isVerified, :isActive)';
 
         $stmt = $this->getConnection()->prepare($sql);
         $stmt->bindValue(':FirstName', $user->FirstName, PDO::PARAM_STR);
@@ -60,7 +59,6 @@ class UserRepository extends Repository implements IUserRepository
         // Access the scalar value (string or int) of the Enum BY USING ->value
         $roleValue = isset($user->Role) ? $user->Role->value : UserRole::Customer->value;
         $stmt->bindValue(':Role', $roleValue, PDO::PARAM_STR);
-        $stmt->bindValue(':Address', $user->Address->value, PDO::PARAM_STR);
 
         $stmt->bindValue(':isVerified', $user->isVerified, PDO::PARAM_BOOL);
         $stmt->bindValue(':isActive', $user->isActive, PDO::PARAM_BOOL);
@@ -70,7 +68,7 @@ class UserRepository extends Repository implements IUserRepository
 
     public function getById(int $id): ?UserModel
     {
-        $sql = 'SELECT UserId, FirstName, LastName, Email, Role, Address, isVerified, isActive 
+        $sql = 'SELECT UserId, FirstName, LastName, Email, Role, isVerified, isActive 
                 FROM users WHERE UserId = :UserId';
         
         $stmt = $this->getConnection()->prepare($sql);
@@ -100,7 +98,7 @@ class UserRepository extends Repository implements IUserRepository
     {
         $sql = 'UPDATE users 
                 SET FirstName = :FirstName, LastName = :LastName, Email = :Email, 
-                    Role = :Role, Address = :Address, isVerified = :isVerified, isActive = :isActive
+                    Role = :Role, isVerified = :isVerified, isActive = :isActive
                 WHERE UserId = :UserId';
 
         $stmt = $this->getConnection()->prepare($sql);
@@ -110,7 +108,6 @@ class UserRepository extends Repository implements IUserRepository
         $stmt->bindValue(':Email', $user->Email, PDO::PARAM_STR);
 
         $stmt->bindValue(':Role', $user->Role->value, PDO::PARAM_STR);
-        $stmt->bindValue(':Address', $user->Address->value, PDO::PARAM_STR);
 
         $stmt->bindValue(':isVerified', $user->isVerified, PDO::PARAM_BOOL);
         $stmt->bindValue(':isActive', $user->isActive, PDO::PARAM_BOOL);
@@ -153,7 +150,7 @@ class UserRepository extends Repository implements IUserRepository
         $sql = 'UPDATE users SET Password = :password WHERE UserId = :id';
 
         $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bindValue(':password', $passwordHash, \PDO::PARAM_STR); // Are you sure about intiger for password? David
+        $stmt->bindValue(':password', $passwordHash, \PDO::PARAM_STR);
         $stmt->bindValue(':id', $userId, \PDO::PARAM_INT);
         $stmt->execute();
     }
