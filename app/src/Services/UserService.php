@@ -59,6 +59,10 @@ class UserService implements IUserService
         $this->userRepository->delete($id);
     }    
 
+    public function sendConfirmEmail(): void
+    {
+
+    }
 
     // This is for login! 
     public function authenticate(string $email, string $password): ?UserModel
