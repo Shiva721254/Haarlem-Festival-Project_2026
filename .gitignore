@@ -1,29 +1,42 @@
+# ======================
 # OS files
+# ======================
 .DS_Store
 Thumbs.db
 ehthumbs.db
 Icon?
 
-# Editor/IDE
+# ======================
+# Editor / IDE
+# ======================
 .vscode/
 .idea/
 *.iml
 
-# Composer
+# ======================
+# Composer / PHP
+# ======================
 composer.phar
 /vendor/
 /app/vendor/
 /vendor-bin/**/vendor/
 
-# Environment files (keep example files tracked)
+# ======================
+# Environment files
+# ======================
 .env
-node_modules/
-.DS_Store
 .env.*
 !.env.example
 !/app/.env.example
 
-# Logs and caches
+# ======================
+# Node (if ever used)
+# ======================
+node_modules/
+
+# ======================
+# Logs / caches
+# ======================
 *.log
 logs/
 tmp/
@@ -37,9 +50,19 @@ app/var/
 .phpunit.result.cache
 coverage/
 
-# Node (if present)
-node_modules/
+# ======================
+# SSL / certificates (CRITICAL)
+# ======================
+app/ssl/
+*.key
+*.pem
+*.p12
+*.pfx
 
-# Docker overrides (optional local overrides)
+# ======================
+# Docker local overrides
+# ======================
 docker-compose.override.yml
 
+
+app/public/test-db.php
