@@ -22,20 +22,23 @@ class Repository
     private function connect(): void
     {
         try {
-            $connectionString = 'mysql:host=' . Config::DB_SERVER_NAME . 
-                                ';dbname=' . Config::DB_NAME . 
-                                ';charset=utf8mb4';
+            $dsn = 'mysql:host=' . Config::dbHost()
+                 . ';port=' . Config::dbPort()
+                 . ';dbname=' . Config::dbName()
+                 . ';charset=utf8mb4';
 
             self::$connection = new PDO(
-                $connectionString,
-                Config::DB_USERNAME,
-                Config::DB_PASSWORD
+                $dsn,
+                Config::dbUser(),
+                Config::dbPass(),
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                ]
             );
-            self::$connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            self::$connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
         } catch (PDOException $ex) {
-            throw new Exception("Database connection failed: " . $ex->getMessage());
+            throw new Exception('Database connection failed');
         }
     }
 }
