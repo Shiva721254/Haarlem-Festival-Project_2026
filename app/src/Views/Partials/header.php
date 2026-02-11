@@ -28,7 +28,7 @@
                     <a class="nav-link" href="#">Yummy</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active-pill" href="#">Haarlem Jazz</a>
+                    <a class="nav-link active-pill" href="/mainJazz">Haarlem Jazz</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">Dance</a>

@@ -45,6 +45,15 @@ class UserRepository extends Repository implements IUserRepository
 
         return $users;
     }
+
+    public function createJazzBand():void {
+        $sql = 'INSERT INTO jazz_bands (BandName, Description) VALUES (:BandName, :Description)';
+    }
+
+    public function createDanceGroup():void {
+        $sql = 'INSERT INTO dance_groups (GroupName, Description) VALUES (:GroupName, :Description)';
+    }
+
     // --- CRUD OPERATIONS ---
     public function create(UserModel $user): void
     {
