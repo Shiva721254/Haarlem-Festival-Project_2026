@@ -27,6 +27,8 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/updateUser/{id:\d+}', ['App\Controllers\UserController', 'updateUser']);
     $r->addRoute('POST', '/saveUser', ['App\Controllers\UserController', 'saveUser']);
     $r->addRoute('GET', '/user/{id:\d+}', ['App\Controllers\UserController', 'displayUser']);
+    $r->addRoute('GET', '/deleteUser/{id:\d+}', ['App\Controllers\UserController', 'deleteUser']);
+    $r->addRoute('POST', '/deleteUser/{id:\d+}', ['App\Controllers\UserController', 'destroyUser']);
 
     // Verification Routes
     $r->addRoute('POST', '/send-verification-link', ['App\Controllers\AuthController', 'sendVerification']);

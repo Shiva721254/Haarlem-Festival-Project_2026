@@ -115,6 +115,43 @@ class UserController
             exit();
         } 
     }
+
+    //GET 
+    public function deleteUser($vars = [])
+    {
+        $id = (int)($vars['id'] ?? 0);
+        AuthMiddleware::requireAdminOrOwner($id);
+
+        if ($id <= 0) {
+            header('Location: /users');
+            exit();
+        }
+
+        $user = $this->userService->getById($id);
+
+        if (!$user) {
+            header('Location: /users?error=notfound');
+            exit();
+        }
+
+        require __DIR__ . "/../Views/Users/deleteUser.php"; 
+    }
+
+    //POST
+    public function destroyUser($vars = [])
+    {
+        $id = (int)($vars['id'] ?? 0);
+        AuthMiddleware::requireAdminOrOwner($id);
+
+        if ($id <= 0) {
+            header('Location: /users');
+            exit();
+        }
+
+        $this->userService->delete($id);
+        header('Location: /users');
+        exit();
+    }
     
     //GET
     public function showLogin()
