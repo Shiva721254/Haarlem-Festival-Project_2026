@@ -33,6 +33,8 @@ class ProductController
         $this->productRatingRepository = new ProductRatingRepository();
     }
 
+    // This method is used for the main product listing page, 
+    // which also supports filtering based on search term, category, type, and price.
     public function index2($vars = [])
     {
         $searchTerm = $_GET['q'] ?? null;
