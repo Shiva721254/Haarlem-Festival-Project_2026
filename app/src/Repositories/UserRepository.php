@@ -10,35 +10,51 @@ use \PDO;
 
 class UserRepository extends Repository implements IUserRepository
 {
-    public function getAll(): array
+        /**
+     * Unified method to fetch, search, and filter users.
+     * * @param string|null $term The search term (First Name, Last Name, Email).
+     * @param string|null $role The specific UserRole value.
+     * @return UserModel[]
+     */
+    public function getUsers(?string $term = null, ?string $role = null): array
     {
-        $sql = 'SELECT * 
-                FROM users ORDER BY LastName';
-        
-        $result = $this->getConnection()->query($sql);
+        // 1. Base SQL
+        $sql = 'SELECT * FROM users WHERE 1=1';
+        $params = [];
 
-        // 1. Fetch as a plain associative array (not a class yet)
-        $rows = $result->fetchAll(PDO::FETCH_ASSOC);
+        // 2. Dynamic Filtering
+        if (!empty($term)) {
+            $sql .= ' AND (FirstName LIKE :term OR LastName LIKE :term OR Email LIKE :term)';
+            $params['term'] = '%' . $term . '%';
+        }
 
-        // 2. Map the arrays to UserModel objects manually
+        if (!empty($role)) {
+            $sql .= ' AND Role = :role';
+            $params['role'] = $role;
+        }
+
+        // 3. Sorting
+        $sql .= ' ORDER BY LastName ASC';
+
+        // 4. Execution
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // 5. Mapping to Model
         $users = [];
-
         foreach ($rows as $row) {
-            $user = new UserModel();
-            
-            // Manual assignment
+            $user = new \App\Models\UserModel();
             $user->UserId = $row['UserId'];
             $user->FirstName = $row['FirstName'];
             $user->LastName = $row['LastName'];
             $user->Email = $row['Email'];
             
-            // --- THE FIX ---
-            // Convert the database string back into the Enum
+            // Enum conversion
             $user->Role = \App\Enums\UserRole::tryFrom($row['Role']);
-            // ----------------
-
-            $user->isVerified = (bool) $row['isVerified']; // Good practice to cast bools
-            $user->isActive = (bool) $row['isActive'];
+            
+            $user->isVerified = (bool) ($row['isVerified'] ?? false);
+            $user->isActive = (bool) ($row['isActive'] ?? false);
 
             $users[] = $user;
         }
@@ -189,47 +205,5 @@ class UserRepository extends Repository implements IUserRepository
         $stmt->execute();
 
         return $stmt->rowCount() > 0;
-    }
-
-    // --- SEARCH & FILTER OPERATIONS ---
-
-    // This method is used for the user management page in the admin panel
-    public function searchUsers(?string $term = null): array
-    {
-        $sql = 'SELECT * FROM users WHERE
-                FirstName LIKE :term OR
-                LastName LIKE :term OR
-                Email LIKE :term OR
-                Role LIKE :term
-                ORDER BY (LastName LIKE :term) DESC /*LIMIT 5*/';
-        
-        $stmt  = $this->getConnection()->prepare($sql);
-        $stmt->execute(['term' => '%' . $term . '%']);
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // This method is to filter users in the admin panel based on criteria
-    public function getUsersByRole(?string $role = null): array
-    {
-        $sql = 'SELECT * FROM users';
-        $conditions = [];
-        $params = [];
-
-        if ($role) {
-            $conditions[] = "Role = :role";
-            $params['role'] = $role;
-        }
-
-        if (!empty($conditions)){
-            $sql .= " WHERE " . implode(" AND ", $conditions);
-        }
-
-        $sql .= ' ORDER BY (LastName LIKE :term) DESC';
-        
-        $stmt  = $this->getConnection()->prepare($sql);
-        $stmt->execute(['term' => '%' . ($role ?? '') . '%']);
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

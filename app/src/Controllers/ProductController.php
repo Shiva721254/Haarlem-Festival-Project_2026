@@ -52,20 +52,6 @@ class ProductController
         require __DIR__ . "/../Views/Products/index.php";
     }
 
-    public function shoppingCart() 
-    {
-        
-        $userId = $_SESSION['UserId'] ?? null;
-        AuthMiddleware::requireAdminOrOwner($userId);
-        if (!$userId) {
-            header("Location: /showLogin?error=auth_required");
-            exit;
-        }
-        $cartData = $this->cartRepository->getShoppingCart($userId);
-
-        require __DIR__ . "/../Views/Products/shoppingCart.php";
-    }
-
     // GET
     public function updateProduct($vars = [])
     {
@@ -105,60 +91,6 @@ class ProductController
         require __DIR__ . "/../Views/Products/displayProduct.php";
     }
 
-    public function getRatingApi($vars = []) {
-        $id = (int)($vars['id'] ?? 0);
-        
-        $avgRating = $this->productRatingRepository->getAverageRatingByProductId($id);
-        $totalReviews = $this->productRatingRepository->getNumberOfRatingsByProductId($id);
-        $reviews = $this->productRatingRepository->getAllRatingsByProductId($id);
-
-        header('Content-Type: application/json');
-        
-        echo json_encode([
-            'averageRating' => (float)$avgRating,
-            'totalReviews' => (int)$totalReviews,
-            'reviews' => $reviews
-        ]);
-    }
-
-    // GET
-    public function showEditRating($vars = []) {
-        $rating = $this->productRatingRepository->getRatingByProductId((int)($vars['id'] ?? 0));
-        $vm = new ManageRatingViewModel($rating);
-        require __DIR__ . "/../Views/Products/editRating.php";
-    }
-
-    // POST
-    public function handleUpdateRating($vars = []) {
-        $userId = $_SESSION['UserId'] ?? null;
-        if (!$userId) exit("Unauthorized");
-
-        $rating = new \App\Models\ProductRating();
-        $rating->ProductId = (int)($vars['id'] ?? 0);
-        $rating->UserId = $userId;
-        $rating->Rating = (int)$_POST['rating'];
-        $rating->Review = $_POST['review'];
-
-        $this->productRatingRepository->updateRating($rating);
-        header("Location: /product/" . $rating->ProductId);
-    }
-
-    // POST
-    public function handleDeleteRating($vars = []) {
-        $userId = $_SESSION['UserId'] ?? null;
-        $productId = (int)($vars['id'] ?? 0);
-
-        $success = $this->productRatingRepository->deleteRating($productId, $userId);
-
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
-            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => $success]);
-            exit;
-        }
-        header("Location: /product/" . $productId);
-    }
-
     // GET
     public function createProduct($vars = [])
     {
@@ -180,6 +112,30 @@ class ProductController
         }
         header('Location: /products');
         exit();
+    }
+
+    // --- RATING LOGIC ---
+
+    // GET
+    public function showEditRating($vars = []) {
+        $rating = $this->productRatingRepository->getRatingByProductId((int)($vars['id'] ?? 0));
+        $vm = new ManageRatingViewModel($rating);
+        require __DIR__ . "/../Views/Products/editRating.php";
+    }
+
+    // POST
+    public function handleUpdateRating($vars = []) {
+        $userId = $_SESSION['UserId'] ?? null;
+        if (!$userId) exit("Unauthorized");
+
+        $rating = new \App\Models\ProductRating();
+        $rating->ProductId = (int)($vars['id'] ?? 0);
+        $rating->UserId = $userId;
+        $rating->Rating = (int)$_POST['rating'];
+        $rating->Review = $_POST['review'];
+
+        $this->productRatingRepository->updateRating($rating);
+        header("Location: /product/" . $rating->ProductId);
     }
 
     // GET
@@ -231,8 +187,40 @@ class ProductController
             header("Location: /product/" . $productId . "?error=already_rated");
         }
         exit();
+    } 
+
+    // POST
+    public function handleDeleteRating($vars = []) 
+    {
+        $userId = $_SESSION['UserId'] ?? null;
+        $productId = (int)($vars['id'] ?? 0);
+
+        $success = $this->productRatingRepository->deleteRating($productId, $userId);
+
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => $success]);
+            exit;
+        }
+        header("Location: /product/" . $productId);
     }
-    
+
+    // --- SHOPPING CART LOGIC ---
+    public function shoppingCart() 
+    {
+        
+        $userId = $_SESSION['UserId'] ?? null;
+        AuthMiddleware::requireAdminOrOwner($userId);
+        if (!$userId) {
+            header("Location: /showLogin?error=auth_required");
+            exit;
+        }
+        $cartData = $this->cartRepository->getShoppingCart($userId);
+
+        require __DIR__ . "/../Views/Products/shoppingCart.php";
+    }
+
     // POST
     public function addProductToShoppingCart()
     {
@@ -311,5 +299,3 @@ class ProductController
         require __DIR__ . "/../Views/Products/orderSuccess.php";
     }
 }
-
-?>

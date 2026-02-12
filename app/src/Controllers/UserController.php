@@ -25,8 +25,13 @@ class UserController
     public function index()
     {
         AuthMiddleware::requireAdmin(); 
-        $users = $this->userService->getAll();
-        $vm = new UsersViewModel($users);
+
+        $searchTerm = $_GET['q'] ?? null;
+        $roleFilter = $_GET['role'] ?? null;
+        
+        $users = $this->userService->getFilteredUsers($searchTerm, $roleFilter);
+
+        $vm = new UsersViewModel($users, $searchTerm, $roleFilter);
         require __DIR__ . "/../Views/Users/index.php";       
     }
 

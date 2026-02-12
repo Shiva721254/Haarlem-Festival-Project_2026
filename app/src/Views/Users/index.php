@@ -13,6 +13,47 @@ require __DIR__ . "/../Partials/header.php";
         </a>
     </div>
 
+    <div class="card filter-card">
+        <div class="card-body p-4">
+            <form method="GET" action="/users" class="row g-3 align-items-end">
+                
+                <div class="col-md-5">
+                    <label class="filter-label">Search</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search icon-purple"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0" 
+                            placeholder="Name or email..." 
+                            value="<?= htmlspecialchars($vm->searchTerm ?? '') ?>">
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="filter-label">Role Filter</label>
+                    <select name="role" class="form-select">
+                        <option value="">All Roles</option>
+                        <?php foreach (\App\Enums\UserRole::cases() as $role): ?>
+                            <option value="<?= $role->value ?>" <?= ($vm->roleFilter === $role->value) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($role->name) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-filter me-2"></i>Apply
+                    </button>
+                    <a href="/users" class="btn btn-outline-secondary" title="Reset Filters">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
     <?php if (empty($vm->users)): ?>
         <div class="alert shadow-sm text-center py-5 mt-5" style="background-color: var(--off-white); border: 1px solid var(--jazz-purple);" role="alert">
             <i class="bi bi-info-circle fs-4 d-block mb-3"></i> No users found in the festival database.

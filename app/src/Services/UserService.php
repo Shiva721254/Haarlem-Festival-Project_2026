@@ -18,10 +18,10 @@ class UserService implements IUserService
         $this->mailService = new MailService();
     }
 
-    public function getAll(): array 
+    // Essentially this is a get All method. 
+    public function getFilteredUsers(?string $term = null, ?string $role = null): array
     {
-        $users = $this->userRepository->getAll();
-        return $users;
+        return $this->userRepository->getUsers($term, $role);
     }
 
     // --- CRUD OPERATIONS ---
@@ -218,35 +218,5 @@ class UserService implements IUserService
         }
         $this->verifyUser($user);
         return true;
-    }
-
-    // --- SEARCH FUNCTIONALITY ---
-
-    // This method is used for searching for users by a search term.
-    public function getSearchUserMatches(string $query): array
-    {
-        if (empty($query)) return [];
-
-        $results = $this->userRepository->searchUsers($query);
-        
-        $users = [];
-        foreach ($results as $row) {
-            $users[] = UserModel::fromDb($row);
-        }
-
-        return $users; 
-    }
-
-    // This method is used for searching for users by their role (e.g., admin, customer).
-    public function searchUsersByRole(string $role): array
-    {
-        $results = $this->userRepository->getUsersByRole($role);
-        
-        $users = [];
-        foreach ($results as $row) {
-            $users[] = UserModel::fromDb($row);
-        }
-
-        return $users;
     }
 }
