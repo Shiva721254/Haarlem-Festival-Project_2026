@@ -12,7 +12,7 @@ class UserRepository extends Repository implements IUserRepository
 {
     public function getAll(): array
     {
-        $sql = 'SELECT UserId, FirstName, LastName, Email, Role, isVerified, isActive 
+        $sql = 'SELECT * 
                 FROM users ORDER BY LastName';
         
         $result = $this->getConnection()->query($sql);
@@ -58,6 +58,7 @@ class UserRepository extends Repository implements IUserRepository
             $stmt->bindValue(':LastName', $user->LastName, PDO::PARAM_STR);
             $stmt->bindValue(':Email', $user->Email, PDO::PARAM_STR);
             $stmt->bindValue(':Password', $user->Password, PDO::PARAM_STR);
+            $stmt->bindValue(':created_at', date('Y-m-d H:i:s'), PDO::PARAM_STR);
             
             // Access the scalar value (string or int) of the Enum BY USING ->value
             $roleValue = isset($user->Role) ? $user->Role->value : UserRole::Customer->value;
@@ -115,6 +116,7 @@ class UserRepository extends Repository implements IUserRepository
         $stmt->bindValue(':FirstName', $user->FirstName, PDO::PARAM_STR);
         $stmt->bindValue(':LastName', $user->LastName, PDO::PARAM_STR);
         $stmt->bindValue(':Email', $user->Email, PDO::PARAM_STR);
+        $stmt->bindValue(':updated_at', date('Y-m-d H:i:s'), PDO::PARAM_STR);
 
         $stmt->bindValue(':Role', $user->Role->value, PDO::PARAM_STR);
         $stmt->bindValue(':UserId', $user->UserId, PDO::PARAM_INT);

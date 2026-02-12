@@ -9,6 +9,9 @@ class UserModel
     public string $LastName;
     public string $Email;    
 
+    public string $created_at; 
+    public ?string $updated_at;
+
     public UserRole $Role = UserRole::Customer;
 
     public bool $isVerified;

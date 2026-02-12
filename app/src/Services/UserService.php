@@ -26,6 +26,10 @@ class UserService implements IUserService
 
     public function create(UserModel $user): void
     {
+        if ($this->userRepository->getByEmail($user->Email)) {
+            throw new DuplicateEntryException("Warning: Email already exists. ⚠️");
+        }   
+
         if (empty($user->Password)) {
             throw new \Exception("Password is required for new users.");
         }
@@ -37,9 +41,7 @@ class UserService implements IUserService
         }
 
         $user->Password = password_hash($user->Password, PASSWORD_DEFAULT);    
-            if ($this->userRepository->getByEmail($user->Email)) {
-            throw new DuplicateEntryException("Warning: Email already exists. ⚠️");
-        }    
+         
         $this->userRepository->create($user);
     }
 
@@ -51,6 +53,10 @@ class UserService implements IUserService
 
     public function update(UserModel $user) : void
     {
+        if ($this->userRepository->getByEmail($user->Email)) {
+            throw new DuplicateEntryException("Warning: Email already exists. ⚠️");
+        }
+        
         $this->userRepository->update($user);
     }
 
