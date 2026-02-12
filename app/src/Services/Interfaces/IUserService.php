@@ -22,6 +22,9 @@ interface IUserService
     public function sendVerificationEmail(string $email): bool;
     public function validateVerificationToken(string $token) : ?UserModel;
     public function completeAccountVerification(string $token) :bool;
-
     function sendUpdateNotification(string $email, array $changes): bool;
+
+    // searcgh stuff
+    public function getSearchUserMatches(string $query): array;
+    public function searchUsersByRole(string $role): array;
 }

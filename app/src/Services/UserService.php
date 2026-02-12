@@ -24,6 +24,8 @@ class UserService implements IUserService
         return $users;
     }
 
+    // --- CRUD OPERATIONS ---
+
     public function create(UserModel $user): void
     {
         if ($this->userRepository->getByEmail($user->Email)) {
@@ -65,25 +67,6 @@ class UserService implements IUserService
         $this->userRepository->delete($id);
     }    
 
-    public function sendConfirmEmail(): void
-    {
-
-    }
-
-    // This is for login! 
-    public function authenticate(string $email, string $password): ?UserModel
-    {
-        $user = $this->userRepository->getByEmail($email);
-        
-        if (!$user){return null;}
-
-        if(password_verify($password, $user->Password))
-        {
-            return $user;
-        }
-        return null;
-    }
-
     function sendUpdateNotification(string $email, array $changes): bool
     {
         $user = $this->userRepository->getByEmail($email);
@@ -114,8 +97,22 @@ class UserService implements IUserService
 
         return $this->mailService->send($email, "Your account has been updated", $message);
     }
+    
+    // --- AUTHENTICATION LOGIC ---
+    public function authenticate(string $email, string $password): ?UserModel
+    {
+        $user = $this->userRepository->getByEmail($email);
+        
+        if (!$user){return null;}
 
-    // --- PASSWORD RESET LOGIC
+        if(password_verify($password, $user->Password))
+        {
+            return $user;
+        }
+        return null;
+    }    
+
+    // --- PASSWORD RESET LOGIC ---
 
     public function sendPasswordReset(string $email): bool 
     {
@@ -172,7 +169,7 @@ class UserService implements IUserService
         return true;
     }
 
-    // --- VERIFY ACCOUNT LOGIC
+    // --- VERIFY ACCOUNT LOGIC ---
 
     public function sendVerificationEmail(string $email): bool
     {
@@ -221,5 +218,35 @@ class UserService implements IUserService
         }
         $this->verifyUser($user);
         return true;
+    }
+
+    // --- SEARCH FUNCTIONALITY ---
+
+    // This method is used for searching for users by a search term.
+    public function getSearchUserMatches(string $query): array
+    {
+        if (empty($query)) return [];
+
+        $results = $this->userRepository->searchUsers($query);
+        
+        $users = [];
+        foreach ($results as $row) {
+            $users[] = UserModel::fromDb($row);
+        }
+
+        return $users; 
+    }
+
+    // This method is used for searching for users by their role (e.g., admin, customer).
+    public function searchUsersByRole(string $role): array
+    {
+        $results = $this->userRepository->getUsersByRole($role);
+        
+        $users = [];
+        foreach ($results as $row) {
+            $users[] = UserModel::fromDb($row);
+        }
+
+        return $users;
     }
 }
