@@ -5,6 +5,7 @@ use App\Models\UserModel;
 
 interface IUserRepository
 {
+    // CRUD
     public function getAll(): array ;
     public function create(UserModel $article) : void;
     public function getById(int $id): ?UserModel;
@@ -21,4 +22,8 @@ interface IUserRepository
     public function updateVerifyToken(int $userId, ?string $hash, ?string $expiry): void;
     public function findByVerifyToken(string $hash): ?UserModel;
     public function verifyAccount(int $userId): bool;
+
+    // Search
+    public function searchUsers(?string $term = null): array;
+    public function getUsersByRole(?string $role = null): array;
 }

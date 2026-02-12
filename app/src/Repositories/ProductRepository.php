@@ -19,6 +19,7 @@ class ProductRepository extends Repository implements IProductRepository
         return array_map(fn($row) => ProductModel::fromDb($row), $rows);
     }
 
+    // This method is used for the search suggestions in the header search bar
     public function searchProducts(?string $term = null): array
     {
         $sql = 'SELECT * FROM products WHERE
@@ -34,6 +35,7 @@ class ProductRepository extends Repository implements IProductRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // This method is used for the product listing page with filters
     public function getProducts(?string $term = null, ?string $category = null, ?string $type = null, ?int $price = null): array
     {
         $sql = 'SELECT ProductId, ProductName, Description, Category, Type, Price FROM products';

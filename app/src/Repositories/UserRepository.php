@@ -190,4 +190,46 @@ class UserRepository extends Repository implements IUserRepository
 
         return $stmt->rowCount() > 0;
     }
+
+    // --- SEARCH & FILTER OPERATIONS ---
+
+    // This method is used for the user management page in the admin panel
+    public function searchUsers(?string $term = null): array
+    {
+        $sql = 'SELECT * FROM users WHERE
+                FirstName LIKE :term OR
+                LastName LIKE :term OR
+                Email LIKE :term OR
+                Role LIKE :term
+                ORDER BY (LastName LIKE :term) DESC /*LIMIT 5*/';
+        
+        $stmt  = $this->getConnection()->prepare($sql);
+        $stmt->execute(['term' => '%' . $term . '%']);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // This method is to filter users in the admin panel based on criteria
+    public function getUsersByRole(?string $role = null): array
+    {
+        $sql = 'SELECT * FROM users';
+        $conditions = [];
+        $params = [];
+
+        if ($role) {
+            $conditions[] = "Role = :role";
+            $params['role'] = $role;
+        }
+
+        if (!empty($conditions)){
+            $sql .= " WHERE " . implode(" AND ", $conditions);
+        }
+
+        $sql .= ' ORDER BY (LastName LIKE :term) DESC';
+        
+        $stmt  = $this->getConnection()->prepare($sql);
+        $stmt->execute(['term' => '%' . ($role ?? '') . '%']);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
