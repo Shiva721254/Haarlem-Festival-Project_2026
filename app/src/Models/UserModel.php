@@ -21,7 +21,7 @@ class UserModel
     public string $Password = "";
     public ?string $reset_token_hash;
     public ?string $reset_token_expires_at; 
-
+    
     public static function fromDb(array $data): self
     {
         $user = new self();

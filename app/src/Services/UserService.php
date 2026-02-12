@@ -78,6 +78,37 @@ class UserService implements IUserService
         return null;
     }
 
+    function sendUpdateNotification(string $email, array $changes): bool
+    {
+        $user = $this->userRepository->getByEmail($email);
+        if (!$user) return false;
+
+        // Map database column names to human-readable labels
+        $labels = [
+            'FirstName' => 'First Name',
+            'LastName'  => 'Last Name',
+            'Email'     => 'Email Address',
+            'Role'      => 'User Role',
+        ];
+
+        $changedList = "";
+        foreach ($changes as $field) {
+            if (isset($labels[$field])) {
+                $changedList .= "<li><strong>" . $labels[$field] . "</strong></li>";
+            }
+        }
+
+        $message = "
+            <h2>Account Update Confirmation</h2>
+            <p>Dear {$user->FirstName} {$user->LastName},</p>
+            <p>This is a confirmation that the following details on your account were recently changed:</p>
+            <ul>{$changedList}</ul>
+            <p>If you did not make these changes, please contact our support team immediately.</p>
+        ";
+
+        return $this->mailService->send($email, "Your account has been updated", $message);
+    }
+
     // --- PASSWORD RESET LOGIC
 
     public function sendPasswordReset(string $email): bool 

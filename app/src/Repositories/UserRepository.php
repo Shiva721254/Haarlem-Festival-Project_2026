@@ -46,20 +46,12 @@ class UserRepository extends Repository implements IUserRepository
         return $users;
     }
 
-    public function createJazzBand():void {
-        $sql = 'INSERT INTO jazz_bands (BandName, Description) VALUES (:BandName, :Description)';
-    }
-
-    public function createDanceGroup():void {
-        $sql = 'INSERT INTO dance_groups (GroupName, Description) VALUES (:GroupName, :Description)';
-    }
-
     // --- CRUD OPERATIONS ---
     public function create(UserModel $user): void
     {
         try{
-            $sql = 'INSERT INTO users (FirstName, LastName, Email, Password, Role, isVerified, isActive)
-                    VALUES (:FirstName, :LastName, :Email, :Password, :Role, :isVerified, :isActive)';
+            $sql = 'INSERT INTO users (FirstName, LastName, Email, Password, Role, isVerified, isActive, created_at)
+                    VALUES (:FirstName, :LastName, :Email, :Password, :Role, :isVerified, :isActive, NOW())';
 
             $stmt = $this->getConnection()->prepare($sql);
             $stmt->bindValue(':FirstName', $user->FirstName, PDO::PARAM_STR);
@@ -115,7 +107,7 @@ class UserRepository extends Repository implements IUserRepository
     {
         $sql = 'UPDATE users 
                 SET FirstName = :FirstName, LastName = :LastName, Email = :Email, 
-                    Role = :Role
+                    Role = :Role, updated_at = NOW()
                 WHERE UserId = :UserId';
 
         $stmt = $this->getConnection()->prepare($sql);

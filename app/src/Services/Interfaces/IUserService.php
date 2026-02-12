@@ -22,4 +22,6 @@ interface IUserService
     public function sendVerificationEmail(string $email): bool;
     public function validateVerificationToken(string $token) : ?UserModel;
     public function completeAccountVerification(string $token) :bool;
+
+    function sendUpdateNotification(string $email, array $changes): bool;
 }

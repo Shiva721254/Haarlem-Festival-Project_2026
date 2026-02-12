@@ -73,15 +73,32 @@ class UserController
     public function saveUser($vars = [])
     {
         $user = (new UserModel())->fromPost();
+
         try {
+            $errorRedirect = ($user->UserId > 0) 
+            ? "/updateUser/{$user->UserId}" 
+            : "/createUser";
+
             $token = $_POST['g-recaptcha-response'] ?? null;
             if (!$this->recaptchaService->verify($token)) {
-                header('Location: /createUser?error=recaptcha_failed');
+                header("Location: {$errorRedirect}?error=recaptcha_failed");
                 exit();
-            }       
-            
+            }
+
             if ($user->UserId > 0) {
+                $existingUser = $this->userService->getById($user->UserId);
+                
+                $changedFields = [];
+                if ($existingUser->FirstName !== $user->FirstName) $changedFields[] = 'FirstName';
+                if ($existingUser->LastName !== $user->LastName)   $changedFields[] = 'LastName';
+                if ($existingUser->Email !== $user->Email)         $changedFields[] = 'Email';
+                if ($existingUser->Role !== $user->Role)           $changedFields[] = 'Role';
+
                 $this->userService->update($user);
+
+                if (!empty($changedFields)) {
+                    $this->userService->sendUpdateNotification($user->Email, $changedFields);
+                }
             } else {
                 $this->userService->create($user);
             }
@@ -90,9 +107,11 @@ class UserController
             exit();
 
         } catch (DuplicateEntryException $e) {
-            $error = $e->getMessage();            
+            $error = "This email is already in use.";
             $vm = new ManageUserViewModel($user);
-            require __DIR__ . "/../Views/Users/createUser.php";
+            
+            $view = ($user->UserId > 0) ? "updateUser.php" : "createUser.php";
+            require __DIR__ . "/../Views/Users/{$view}";
             exit();
         } 
     }
