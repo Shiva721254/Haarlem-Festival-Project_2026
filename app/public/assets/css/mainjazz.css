@@ -146,25 +146,32 @@ p {
 /* --- Start of Artist Grid Section --- */
 .artist-grid {
   display: grid;
-  /* Creates 5 equal columns; adjusts automatically if space is tight */
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 15px; /* Space between the cards */
-  padding: 20px;
+  gap: 20px; /* Space between the cards */
+  width: 100%;
   max-width: 1200px; /* Limits width on huge screens */
   margin: 0 auto;
+  padding: 20px;
 }
 
 .artist-card {
   position: relative; /* Allows the name to sit on top of the image */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid #4A238C;
   border-radius: 8px;
   overflow: hidden; /* Ensures image/overlay don't spill out of corners */
   aspect-ratio: 1 / 1; /* Makes every card a perfect square */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); */
+}
+.artist-card:hover {
+  transform: translateY(-5px);
 }
 
 .artist-card img {
   width: 100%;
-  height: 100%;
+  height: 200px; /* Fixed height to maintain uniformity */
   object-fit: cover; /* Prevents image stretching */
   display: block;
 }
