@@ -5,7 +5,7 @@ use App\ViewModels\UsersViewModel;
 $title = "User Overview";
 require __DIR__ . "/../Partials/header.php";
 ?>
-
+<link rel="stylesheet" href="/assets/css/userCRUD.css">
 <div class="container mt-5"> <div class="d-flex justify-content-between align-items-center mb-5 border-bottom pb-3">
         <h2 class="fw-bold" style="color: var(--jazz-purple); letter-spacing: 1px;">👥 User Management</h2>
         <a href="createUser" class="btn btn-primary shadow-sm px-4 py-2">

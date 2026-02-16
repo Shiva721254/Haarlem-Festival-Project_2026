@@ -2,7 +2,7 @@
 require __DIR__ . "/../Partials/header.php"; 
 /** @var App\Models\UserModel $user */
 ?>
-
+<link rel="stylesheet" href="/assets/css/userCRUD.css">
 <div class="container mt-5">
     <?php if (isset($_GET['mail_sent'])): ?>
         <div class="alert alert-success">
