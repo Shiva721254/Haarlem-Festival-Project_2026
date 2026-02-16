@@ -74,7 +74,6 @@ class UserRepository extends Repository implements IUserRepository
             $stmt->bindValue(':LastName', $user->LastName, PDO::PARAM_STR);
             $stmt->bindValue(':Email', $user->Email, PDO::PARAM_STR);
             $stmt->bindValue(':Password', $user->Password, PDO::PARAM_STR);
-            $stmt->bindValue(':created_at', date('Y-m-d H:i:s'), PDO::PARAM_STR);
             
             // Access the scalar value (string or int) of the Enum BY USING ->value
             $roleValue = isset($user->Role) ? $user->Role->value : UserRole::Customer->value;

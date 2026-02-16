@@ -3,7 +3,7 @@
 $title = "Create New User"; 
 require __DIR__ . "/../Partials/header.php"; 
 ?>
-
+<link rel="stylesheet" href="/assets/css/userCRUD.css">
 <div class="container mt-5">
     <div class="card shadow-sm mx-auto" style="max-width: 600px;">
         <div class="card-header">
