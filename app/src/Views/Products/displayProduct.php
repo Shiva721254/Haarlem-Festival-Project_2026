@@ -1,7 +1,6 @@
 <?php 
 require __DIR__ . "/../Partials/header.php"; 
 /** @var App\Models\ProductModel $product */
-/** @var App\Models\ProductRating[] $reviews */
 ?>
 
 <div class="container mt-5 mb-5">
@@ -37,21 +36,6 @@ require __DIR__ . "/../Partials/header.php";
                     <h5 class="text-dark">Description</h5>
                     <p class="lh-base"><?= nl2br(htmlspecialchars($product->Description)) ?></p>
 
-                    <a href="#reviews-section" class="text-decoration-none">
-                        <div class="d-flex align-items-center mt-2">
-                            <span class="text-warning me-2">
-                                <?php for ($i = 1; $i <= 5; $i++): ?>
-                                    <i class="bi bi-star<?= ($i <= round($avgRating)) ? '-fill' : '' ?>"></i>
-                                <?php endfor; ?>
-                            </span>
-                            <span id="rating-number" class="text-purple fw-bold"><?= number_format($avgRating, 1) ?></span>
-                            <span id="review-count" class="ms-2 text-muted">(<?= $totalReviews ?> reviews)</span>
-                            <script>
-                                const currentProductId = <?= (int)$product->ProductId ?>; 
-                                setInterval(() => updateRating(currentProductId), 10000);
-                            </script>
-                        </div>
-                    </a> 
                 </div>
 
                 <form action="/cart/add" method="POST">
@@ -103,62 +87,5 @@ require __DIR__ . "/../Partials/header.php";
 </style>
 
 <hr class="my-5">
-
-<div id="reviews-section" class="container mb-5">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="m-0">
-                    Customer Reviews 
-                    <span id="review-count">(<?= $totalReviews ?> reviews)</span>
-                </h3>
-                <a href="/addRating/<?= $product->ProductId ?>" class="btn btn-success">
-                    <i class="bi bi-pencil-square me-2"></i> Write a Review
-                </a>
-            </div>
-
-            <?php if (empty($reviews)): ?>
-                <p class="text-muted">No reviews yet for this product.</p>
-            <?php else: ?>
-                <div id="reviews-list" class="list-group list-group-flush">
-                    <?php foreach ($reviews as $review): ?>
-                        <div class="list-group-item px-0 py-4 border-0 border-bottom">
-                            <div class="d-flex justify-content-between mb-2">
-                                <div>
-                                    <strong><?= htmlspecialchars($review->FirstName . ' ' . $review->LastName) ?></strong>
-                                    <div class="text-warning small">
-                                        <?php for ($i = 1; $i <= 5; $i++): ?>
-                                            <i class="bi bi-star<?= ($i <= $review->Rating) ? '-fill' : '' ?>"></i>
-                                        <?php endfor; ?>
-                                    </div>
-                                </div>
-                                <div class="text-end">
-                                    <small class="text-muted d-block">
-                                        <?= $review->CreatedAt ? date('F j, Y', strtotime($review->CreatedAt)) : 'Date unknown' ?>
-                                    </small>
-                                    
-                                    <div class="btn-group btn-group-sm mt-2">
-                                        <a href="/editRating/<?= $product->ProductId ?>" class="btn btn-outline-primary py-0">Edit</a>
-                                        <form action="/deleteRating/<?= $product->ProductId ?>" 
-                                            method="POST" 
-                                            class="d-inline ajax-form" 
-                                            data-product-id="<?= $product->ProductId ?>">
-                                            
-                                            <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
-                                            <button type="submit" class="btn btn-outline-danger py-0">Delete</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="mb-0 text-secondary">
-                                <?= nl2br(htmlspecialchars($review->Review ?? 'No written comment.')) ?>
-                            </p>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
 
 <?php require __DIR__ . "/../Partials/footer.php"; ?>

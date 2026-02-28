@@ -6,7 +6,7 @@
     <title><?= $title ?? 'Visit Haarlem' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="assets/css/header.css">
+    <link rel="stylesheet" href="/assets/css/header.css">
 </head>
 
 <nav class="navbar navbar-expand-lg navigation-bar">
@@ -28,7 +28,7 @@
                     <a class="nav-link" href="#">Yummy</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active-pill" href="#">Haarlem Jazz</a>
+                    <a class="nav-link active-pill" href="/mainJazz">Haarlem Jazz</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">Dance</a>

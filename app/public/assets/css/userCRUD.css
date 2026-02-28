@@ -1,0 +1,132 @@
+/* Jazz Festival Theme - Simple & Focused */
+:root {
+    --jazz-purple: #4B0082;
+    --festival-beige: #F5F5DC;
+    --off-white: #FCFAFA;
+    --text-dark: #2D2D2D;
+    --error-maroon: #800000;
+}
+
+body {
+    background-color: var(--festival-beige);
+    color: var(--text-dark);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+.card {
+    border: 1px solid #d1cfb9;
+    background-color: var(--off-white);
+    border-radius: 4px;
+}
+
+.card-header {
+    background-color: var(--jazz-purple) !important;
+    color: white !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary, .btn-success {
+    background-color: var(--jazz-purple) !important;
+    border-color: var(--jazz-purple) !important;
+    border-radius: 2px;
+}
+
+.btn-outline-secondary {
+    border-radius: 2px;
+    color: var(--jazz-purple);
+    border-color: var(--jazz-purple);
+}
+
+.form-control, .form-select {
+    border: 1px solid #ccc;
+    border-radius: 2px;
+}
+
+.form-control:focus {
+    border-color: var(--jazz-purple);
+    box-shadow: 0 0 0 0.2rem rgba(75, 0, 130, 0.25);
+}
+
+.error-message {
+    color: var(--error-maroon);
+    border: 1px solid var(--error-maroon);
+    padding: 10px;
+    background-color: #fff0f0;
+}
+
+
+
+/* Table Styles */
+.table thead {
+    background-color: var(--jazz-purple);
+    color: white;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(75, 0, 130, 0.05); /* Very light purple tint */
+}
+
+/* Custom Jazz Badges */
+.badge-jazz-success {
+    background-color: #2e7d32; /* Deep forest green */
+    color: white;
+}
+
+.badge-jazz-warn {
+    background-color: #b38f00; /* Muted gold */
+    color: white;
+}
+
+.badge-jazz-danger {
+    background-color: var(--error-maroon);
+    color: white;
+}
+/* Increase container spacing */
+.container.mt-4 {
+    margin-top: 3rem !important; /* More space at the top */
+    margin-bottom: 3rem !important; /* More space at the bottom */
+}
+
+/* Add breathing room to table cells */
+.table th, 
+.table td {
+    padding: 1.25rem 1rem !important; /* Significant vertical spacing */
+}
+
+/* Add space between the header and the table */
+.d-flex.justify-content-between.mb-4 {
+    margin-bottom: 2.5rem !important;
+}
+
+/* Increase button group spacing */
+.btn-group .btn {
+    padding: 0.5rem 0.75rem;
+    margin: 0 0.2rem;
+}
+
+/* Optional: Add a slight shadow to the table for depth */
+.table-responsive.card {
+    padding: 10px; /* Space between the table edge and the card border */
+    background-color: var(--off-white);
+}
+/* New specific styles for the filter section */
+.filter-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--jazz-purple);
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.5px;
+}
+
+.filter-card {
+    margin-bottom: 2rem;
+    border-color: #d1cfb9;
+}
+
+.icon-purple {
+    color: var(--jazz-purple);
+}

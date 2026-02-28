@@ -2,90 +2,118 @@
 use App\ViewModels\UsersViewModel;
 /** @var UsersViewModel $vm */
 
-// Include the HTML head and Bootstrap CSS
+$title = "User Overview";
 require __DIR__ . "/../Partials/header.php";
 ?>
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>👥 User Overview</h2>
-        <a href="createUser" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Create New User
+<link rel="stylesheet" href="/assets/css/userCRUD.css">
+<div class="container mt-5"> <div class="d-flex justify-content-between align-items-center mb-5 border-bottom pb-3">
+        <h2 class="fw-bold" style="color: var(--jazz-purple); letter-spacing: 1px;">👥 User Management</h2>
+        <a href="createUser" class="btn btn-primary shadow-sm px-4 py-2">
+            <i class="bi bi-plus-circle me-2"></i> Create New User
         </a>
     </div>
 
-    <?php
-    // Check if the users property exists and is iterable
-    if (empty($vm->users)):
-    ?>
-        <div class="alert alert-info text-center mt-5" role="alert">
-            No users found yet!
+    <div class="card filter-card">
+        <div class="card-body p-4">
+            <form method="GET" action="/users" class="row g-3 align-items-end">
+                
+                <div class="col-md-5">
+                    <label class="filter-label">Search</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search icon-purple"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0" 
+                            placeholder="Name or email..." 
+                            value="<?= htmlspecialchars($vm->searchTerm ?? '') ?>">
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="filter-label">Role Filter</label>
+                    <select name="role" class="form-select">
+                        <option value="">All Roles</option>
+                        <?php foreach (\App\Enums\UserRole::cases() as $role): ?>
+                            <option value="<?= $role->value ?>" <?= ($vm->roleFilter === $role->value) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($role->name) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-filter me-2"></i>Apply
+                    </button>
+                    <a href="/users" class="btn btn-outline-secondary" title="Reset Filters">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <?php if (empty($vm->users)): ?>
+        <div class="alert shadow-sm text-center py-5 mt-5" style="background-color: var(--off-white); border: 1px solid var(--jazz-purple);" role="alert">
+            <i class="bi bi-info-circle fs-4 d-block mb-3"></i> No users found in the festival database.
         </div>
     <?php else: ?>
 
-        <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-                <thead class="table-dark">
+        <div class="table-responsive card shadow-sm border-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
                     <tr>
-                        <th>ID</th>
+                        <th class="ps-4">ID</th>
                         <th>First Name</th>
                         <th>Last Name</th>
                         <th>Email</th>
                         <th>Role</th>
                         <th class="text-center">Verified</th>
                         <th class="text-center">Active</th>
-                        <th class="text-center">Actions</th>
+                        <th class="text-center pe-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    // Iterate over the users in the ViewModel
-                    foreach ($vm->users as $user):
-                        // Safely get User ID for links
+                    <?php foreach ($vm->users as $user): 
                         $user_id = $user->UserId ?? 0;
-                        //$entity_base_url = '/users'; // Base URL for User actions
                     ?>
                         <tr>
-                            <td><?= htmlspecialchars($user_id) ?></td>
+                            <td class="ps-4 fw-bold text-muted"><?= htmlspecialchars($user_id) ?></td>
                             <td><?= htmlspecialchars($user->FirstName ?? '') ?></td>
                             <td><?= htmlspecialchars($user->LastName ?? '') ?></td>
-                            <td><?= htmlspecialchars($user->Email ?? '') ?></td>
+                            <td class="text-lowercase"><?= htmlspecialchars($user->Email ?? '') ?></td>
                             <td>
-                                <?= $user->Role ? htmlspecialchars($user->Role->name) : '' ?>
+                                <span class="small text-uppercase fw-bold text-dark">
+                                    <?= $user->Role ? htmlspecialchars($user->Role->name) : '—' ?>
+                                </span>
                             </td>
-
 
                             <td class="text-center">
                                 <?php
                                 $isVerified = $user->isVerified ?? false;
-                                $verified_class = $isVerified ? 'text-bg-success' : 'text-bg-danger';
-                                $verified_text = $isVerified ? 'Yes' : 'No';
+                                $v_badge = $isVerified ? 'badge-jazz-success' : 'badge-jazz-danger';
                                 ?>
-                                <span class="badge <?= $verified_class ?>">
-                                    <?= $verified_text ?>
+                                <span class="badge <?= $v_badge ?> px-3 py-2"> <?= $isVerified ? 'Yes' : 'No' ?>
                                 </span>
                             </td>
 
                             <td class="text-center">
                                 <?php
                                 $isActive = $user->isActive ?? false;
-                                $active_class = $isActive ? 'text-bg-success' : 'text-bg-warning';
-                                $active_text = $isActive ? 'Yes' : 'No';
+                                $a_badge = $isActive ? 'badge-jazz-success' : 'badge-jazz-warn';
                                 ?>
-                                <span class="badge <?= $active_class ?>">
-                                    <?= $active_text ?>
+                                <span class="badge <?= $a_badge ?> px-3 py-2"> <?= $isActive ? 'Active' : 'Inactive' ?>
                                 </span>
                             </td>
 
-                            <td class="text-center">
-                                <div class="btn-group" role="group" aria-label="User Actions">
-                                    <a href="/updateUser/<?= $user->UserId ?>" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-pencil-square"></i> Edit
+                            <td class="text-center pe-4">
+                                <div class="btn-group" role="group">
+                                    <a href="/updateUser/<?= $user->UserId ?>" class="btn btn-sm btn-outline-secondary py-2 px-3" title="Edit">
+                                        <i class="bi bi-pencil"></i>
                                     </a>
-
-                                    <a href="<?= htmlspecialchars('/delete/' . $user_id) ?>"
-                                       class="btn btn-sm btn-outline-danger"
-                                       title="Delete User">
-                                        <i class="bi bi-trash"></i> Delete
+                                    <a href="/deleteUser/<?= $user_id ?>" class="btn btn-sm btn-outline-danger py-2 px-3" title="Delete">
+                                        <i class="bi bi-trash"></i>
                                     </a>
                                 </div>
                             </td>
@@ -99,6 +127,5 @@ require __DIR__ . "/../Partials/header.php";
 </div>
 
 <?php
-// Include the closing tags and Bootstrap JavaScript
 require __DIR__ . "/../Partials/footer.php";
 ?>

@@ -18,14 +18,20 @@ class UserService implements IUserService
         $this->mailService = new MailService();
     }
 
-    public function getAll(): array 
+    // Essentially this is a get All method. 
+    public function getFilteredUsers(?string $term = null, ?string $role = null): array
     {
-        $users = $this->userRepository->getAll();
-        return $users;
+        return $this->userRepository->getUsers($term, $role);
     }
+
+    // --- CRUD OPERATIONS ---
 
     public function create(UserModel $user): void
     {
+        if ($this->userRepository->getByEmail($user->Email)) {
+            throw new DuplicateEntryException("Warning: Email already exists. ⚠️");
+        }   
+
         if (empty($user->Password)) {
             throw new \Exception("Password is required for new users.");
         }
@@ -37,9 +43,7 @@ class UserService implements IUserService
         }
 
         $user->Password = password_hash($user->Password, PASSWORD_DEFAULT);    
-            if ($this->userRepository->getByEmail($user->Email)) {
-            throw new DuplicateEntryException("Warning: Email already exists. ⚠️");
-        }    
+         
         $this->userRepository->create($user);
     }
 
@@ -51,6 +55,10 @@ class UserService implements IUserService
 
     public function update(UserModel $user) : void
     {
+        if ($this->userRepository->getByEmail($user->Email)) {
+            throw new DuplicateEntryException("Warning: Email already exists. ⚠️");
+        }
+        
         $this->userRepository->update($user);
     }
 
@@ -59,12 +67,38 @@ class UserService implements IUserService
         $this->userRepository->delete($id);
     }    
 
-    public function sendConfirmEmail(): void
+    function sendUpdateNotification(string $email, array $changes): bool
     {
+        $user = $this->userRepository->getByEmail($email);
+        if (!$user) return false;
 
+        // Map database column names to human-readable labels
+        $labels = [
+            'FirstName' => 'First Name',
+            'LastName'  => 'Last Name',
+            'Email'     => 'Email Address',
+            'Role'      => 'User Role',
+        ];
+
+        $changedList = "";
+        foreach ($changes as $field) {
+            if (isset($labels[$field])) {
+                $changedList .= "<li><strong>" . $labels[$field] . "</strong></li>";
+            }
+        }
+
+        $message = "
+            <h2>Account Update Confirmation</h2>
+            <p>Dear {$user->FirstName} {$user->LastName},</p>
+            <p>This is a confirmation that the following details on your account were recently changed:</p>
+            <ul>{$changedList}</ul>
+            <p>If you did not make these changes, please contact our support team immediately.</p>
+        ";
+
+        return $this->mailService->send($email, "Your account has been updated", $message);
     }
-
-    // This is for login! 
+    
+    // --- AUTHENTICATION LOGIC ---
     public function authenticate(string $email, string $password): ?UserModel
     {
         $user = $this->userRepository->getByEmail($email);
@@ -76,9 +110,9 @@ class UserService implements IUserService
             return $user;
         }
         return null;
-    }
+    }    
 
-    // --- PASSWORD RESET LOGIC
+    // --- PASSWORD RESET LOGIC ---
 
     public function sendPasswordReset(string $email): bool 
     {
@@ -135,7 +169,7 @@ class UserService implements IUserService
         return true;
     }
 
-    // --- VERIFY ACCOUNT LOGIC
+    // --- VERIFY ACCOUNT LOGIC ---
 
     public function sendVerificationEmail(string $email): bool
     {

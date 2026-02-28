@@ -4,7 +4,8 @@ use App\Models\UserModel;
 
 interface IUserService
 {
-    public function getAll(): array ;
+    // CRUD
+    public function getFilteredUsers(?string $term = null, ?string $role = null): array;
     public function create(UserModel $article) : void;
     public function getById(int $id): ?UserModel;
     public function update(UserModel $article) : void;
@@ -22,4 +23,5 @@ interface IUserService
     public function sendVerificationEmail(string $email): bool;
     public function validateVerificationToken(string $token) : ?UserModel;
     public function completeAccountVerification(string $token) :bool;
+    function sendUpdateNotification(string $email, array $changes): bool;
 }

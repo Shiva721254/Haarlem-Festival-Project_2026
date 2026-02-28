@@ -27,6 +27,8 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/updateUser/{id:\d+}', ['App\Controllers\UserController', 'updateUser']);
     $r->addRoute('POST', '/saveUser', ['App\Controllers\UserController', 'saveUser']);
     $r->addRoute('GET', '/user/{id:\d+}', ['App\Controllers\UserController', 'displayUser']);
+    $r->addRoute('GET', '/deleteUser/{id:\d+}', ['App\Controllers\UserController', 'deleteUser']);
+    $r->addRoute('POST', '/deleteUser/{id:\d+}', ['App\Controllers\UserController', 'destroyUser']);
 
     // Verification Routes
     $r->addRoute('POST', '/send-verification-link', ['App\Controllers\AuthController', 'sendVerification']);
@@ -57,6 +59,17 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/orderSuccess', ['App\Controllers\ProductController', 'orderSuccess']);
 
     $r->addRoute('GET', '/mainJazz', ['App\Controllers\HaarlemController', 'showHaarlemJazz']);
+   $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'index']);
+     $r->addRoute('GET', '/restaurants/ratatouille', ['App\Controllers\HomeController', 'ratatouille']);
+
+$r->addRoute('GET', '/restaurants/ml', ['App\Controllers\HomeController', 'ml']);
+
+   $r->addRoute('GET', '/admin/edit', ['App\Controllers\AdminContentController', 'edit']);
+$r->addRoute('POST', '/admin/save', ['App\Controllers\AdminContentController', 'save']);
+
+   
+
+
 
 });
 
