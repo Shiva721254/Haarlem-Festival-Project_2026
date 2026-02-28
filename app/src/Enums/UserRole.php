@@ -3,8 +3,8 @@ namespace App\Enums;
 
 enum UserRole: string
 {
-    case Admin = 'Admin';
-    case Employee = 'Employee';
+    case Admin = 'admin';
+    case Employee = 'employee';
     case Customer = 'Customer';
 
     // Static method to prepare data for a select box
