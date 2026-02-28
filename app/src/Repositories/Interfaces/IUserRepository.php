@@ -8,7 +8,7 @@ interface IUserRepository
     public function getAll(): array ;
     public function create(UserModel $article) : void;
     public function getById(int $id): ?UserModel;
-    public function update(UserModel $article) : void;
+   // public function update(UserModel $article) : void;
     public function delete(int $id): void;
     public function getByEmail(string $email): ?UserModel;
 

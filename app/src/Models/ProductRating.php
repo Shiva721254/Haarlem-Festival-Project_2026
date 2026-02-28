@@ -12,7 +12,7 @@ class ProductRating
     public ?string $FirstName = null;
     public ?string $LastName = null;
 
-    public static function fromDb(array $data): self
+    public static function fromDb(array $data): selfone 
     {
         $rating = new self();
         $rating->ProductId = (int)$data['ProductId'];
