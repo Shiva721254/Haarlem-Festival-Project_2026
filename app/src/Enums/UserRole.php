@@ -5,7 +5,7 @@ enum UserRole: string
 {
     case Admin = 'admin';
     case Employee = 'employee';
-    case Customer = 'Customer';
+    case Customer = 'customer';
 
     // Static method to prepare data for a select box
     public static function toSelectOptions(): array

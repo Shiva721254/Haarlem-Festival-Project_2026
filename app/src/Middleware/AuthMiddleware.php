@@ -16,7 +16,7 @@ class AuthMiddleware {
     
     public static function requireAdmin() {
         self::requireAuth();
-        if ($_SESSION['Role']->value !== 'Admin') {
+        if ($_SESSION['Role']->value !== 'admin') {
             http_response_code(403);
             echo 'Access Denied';
             exit();
@@ -26,7 +26,7 @@ class AuthMiddleware {
     public static function requireOwner($requiredUserId) {
         self::requireAuth();
 
-        if ($_SESSION['UserId'] !== $requiredUserId && $_SESSION['Role']->value !== 'Admin') {
+        if ($_SESSION['UserId'] !== $requiredUserId && $_SESSION['Role']->value !== 'admin') {
             http_response_code(403);
             echo 'Unauthorized: You do not own this resource.';
             exit();
@@ -39,7 +39,7 @@ class AuthMiddleware {
         $currentUserId = $_SESSION['UserId'];
         $currentUserRole = $_SESSION['Role']->value;
 
-        $isAdmin = ($currentUserRole === 'Admin');
+        $isAdmin = ($currentUserRole === 'admin');
         $isOwner = ($currentUserId == $requiredUserId);
 
         if (!$isAdmin && !$isOwner) {

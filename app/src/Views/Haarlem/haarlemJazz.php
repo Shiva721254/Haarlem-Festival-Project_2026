@@ -140,6 +140,7 @@
             <img src="path-to-your-image2.jpg" alt="Ruis">
             <div class="artist-name">Ruis</div>
         </div>
+
     </div>
 
 </section>

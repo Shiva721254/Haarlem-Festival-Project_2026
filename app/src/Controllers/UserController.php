@@ -25,13 +25,8 @@ class UserController
     public function index()
     {
         AuthMiddleware::requireAdmin(); 
-
-        $searchTerm = $_GET['q'] ?? null;
-        $roleFilter = $_GET['role'] ?? null;
-        
-        $users = $this->userService->getFilteredUsers($searchTerm, $roleFilter);
-
-        $vm = new UsersViewModel($users, $searchTerm, $roleFilter);
+        $users = $this->userService->getAll();
+        $vm = new UsersViewModel($users);
         require __DIR__ . "/../Views/Users/index.php";       
     }
 
@@ -78,32 +73,15 @@ class UserController
     public function saveUser($vars = [])
     {
         $user = (new UserModel())->fromPost();
-
         try {
-            $errorRedirect = ($user->UserId > 0) 
-            ? "/updateUser/{$user->UserId}" 
-            : "/createUser";
-
             $token = $_POST['g-recaptcha-response'] ?? null;
             if (!$this->recaptchaService->verify($token)) {
-                header("Location: {$errorRedirect}?error=recaptcha_failed");
+                header('Location: /createUser?error=recaptcha_failed');
                 exit();
-            }
-
+            }       
+            
             if ($user->UserId > 0) {
-                $existingUser = $this->userService->getById($user->UserId);
-                
-                $changedFields = [];
-                if ($existingUser->FirstName !== $user->FirstName) $changedFields[] = 'FirstName';
-                if ($existingUser->LastName !== $user->LastName)   $changedFields[] = 'LastName';
-                if ($existingUser->Email !== $user->Email)         $changedFields[] = 'Email';
-                if ($existingUser->Role !== $user->Role)           $changedFields[] = 'Role';
-
                 $this->userService->update($user);
-
-                if (!empty($changedFields)) {
-                    $this->userService->sendUpdateNotification($user->Email, $changedFields);
-                }
             } else {
                 $this->userService->create($user);
             }
@@ -112,50 +90,11 @@ class UserController
             exit();
 
         } catch (DuplicateEntryException $e) {
-            $error = "This email is already in use.";
+            $error = $e->getMessage();            
             $vm = new ManageUserViewModel($user);
-            
-            $view = ($user->UserId > 0) ? "updateUser.php" : "createUser.php";
-            require __DIR__ . "/../Views/Users/{$view}";
+            require __DIR__ . "/../Views/Users/createUser.php";
             exit();
         } 
-    }
-
-    //GET 
-    public function deleteUser($vars = [])
-    {
-        $id = (int)($vars['id'] ?? 0);
-        AuthMiddleware::requireAdminOrOwner($id);
-
-        if ($id <= 0) {
-            header('Location: /users');
-            exit();
-        }
-
-        $user = $this->userService->getById($id);
-
-        if (!$user) {
-            header('Location: /users?error=notfound');
-            exit();
-        }
-
-        require __DIR__ . "/../Views/Users/deleteUser.php"; 
-    }
-
-    //POST
-    public function destroyUser($vars = [])
-    {
-        $id = (int)($vars['id'] ?? 0);
-        AuthMiddleware::requireAdminOrOwner($id);
-
-        if ($id <= 0) {
-            header('Location: /users');
-            exit();
-        }
-
-        $this->userService->delete($id);
-        header('Location: /users');
-        exit();
     }
     
     //GET
