@@ -20,7 +20,6 @@ class ProductService implements IProductService
         return $products;
     }
 
-    // This method is used for the search functionality on the homepage, allowing users to filter products based on various criteria.
     public function getProducts(?string $term = null, ?string $category = null, ?string $type = null, ?int $price = null): array
     {
         $products = $this->productRepository->getProducts($term, $category, $type, $price);
@@ -48,7 +47,6 @@ class ProductService implements IProductService
         $this->productRepository->delete($id);
     }
 
-    // This method is used for searching for products by a search term.
     public function getSearchMatches(string $query): array
     {
         if (empty($query)) return [];

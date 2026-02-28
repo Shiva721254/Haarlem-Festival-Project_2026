@@ -9,9 +9,6 @@ class UserModel
     public string $LastName;
     public string $Email;    
 
-    public string $created_at; 
-    public ?string $updated_at;
-
     public UserRole $Role = UserRole::Customer;
 
     public bool $isVerified;
@@ -24,7 +21,7 @@ class UserModel
     public string $Password = "";
     public ?string $reset_token_hash;
     public ?string $reset_token_expires_at; 
-    
+
     public static function fromDb(array $data): self
     {
         $user = new self();

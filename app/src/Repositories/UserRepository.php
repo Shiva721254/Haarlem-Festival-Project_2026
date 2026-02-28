@@ -10,64 +10,47 @@ use \PDO;
 
 class UserRepository extends Repository implements IUserRepository
 {
-        /**
-     * Unified method to fetch, search, and filter users.
-     * * @param string|null $term The search term (First Name, Last Name, Email).
-     * @param string|null $role The specific UserRole value.
-     * @return UserModel[]
-     */
-    public function getUsers(?string $term = null, ?string $role = null): array
+    public function getAll(): array
     {
-        // 1. Base SQL
-        $sql = 'SELECT * FROM users WHERE 1=1';
-        $params = [];
+        $sql = 'SELECT UserId, FirstName, LastName, Email, Role, isVerified, isActive 
+                FROM users ORDER BY LastName';
+        
+        $result = $this->getConnection()->query($sql);
 
-        // 2. Dynamic Filtering
-        if (!empty($term)) {
-            $sql .= ' AND (FirstName LIKE :term OR LastName LIKE :term OR Email LIKE :term)';
-            $params['term'] = '%' . $term . '%';
-        }
+        // 1. Fetch as a plain associative array (not a class yet)
+        $rows = $result->fetchAll(PDO::FETCH_ASSOC);
 
-        if (!empty($role)) {
-            $sql .= ' AND Role = :role';
-            $params['role'] = $role;
-        }
-
-        // 3. Sorting
-        $sql .= ' ORDER BY LastName ASC';
-
-        // 4. Execution
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->execute($params);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // 5. Mapping to Model
+        // 2. Map the arrays to UserModel objects manually
         $users = [];
+
         foreach ($rows as $row) {
-            $user = new \App\Models\UserModel();
+            $user = new UserModel();
+            
+            // Manual assignment
             $user->UserId = $row['UserId'];
             $user->FirstName = $row['FirstName'];
             $user->LastName = $row['LastName'];
             $user->Email = $row['Email'];
             
-            // Enum conversion
+            // --- THE FIX ---
+            // Convert the database string back into the Enum
             $user->Role = \App\Enums\UserRole::tryFrom($row['Role']);
-            
-            $user->isVerified = (bool) ($row['isVerified'] ?? false);
-            $user->isActive = (bool) ($row['isActive'] ?? false);
+            // ----------------
+
+            $user->isVerified = (bool) $row['isVerified']; // Good practice to cast bools
+            $user->isActive = (bool) $row['isActive'];
 
             $users[] = $user;
         }
 
         return $users;
     }
-
     // --- CRUD OPERATIONS ---
     public function create(UserModel $user): void
     {
         try{
-            $sql = 'INSERT INTO users (FirstName, LastName, Email, Password, Role, isVerified, isActive, created_at)
-                    VALUES (:FirstName, :LastName, :Email, :Password, :Role, :isVerified, :isActive, NOW())';
+            $sql = 'INSERT INTO users (FirstName, LastName, Email, Password, Role, isVerified, isActive)
+                    VALUES (:FirstName, :LastName, :Email, :Password, :Role, :isVerified, :isActive)';
 
             $stmt = $this->getConnection()->prepare($sql);
             $stmt->bindValue(':FirstName', $user->FirstName, PDO::PARAM_STR);
@@ -123,7 +106,7 @@ class UserRepository extends Repository implements IUserRepository
     {
         $sql = 'UPDATE users 
                 SET FirstName = :FirstName, LastName = :LastName, Email = :Email, 
-                    Role = :Role, updated_at = NOW()
+                    Role = :Role
                 WHERE UserId = :UserId';
 
         $stmt = $this->getConnection()->prepare($sql);
@@ -131,7 +114,6 @@ class UserRepository extends Repository implements IUserRepository
         $stmt->bindValue(':FirstName', $user->FirstName, PDO::PARAM_STR);
         $stmt->bindValue(':LastName', $user->LastName, PDO::PARAM_STR);
         $stmt->bindValue(':Email', $user->Email, PDO::PARAM_STR);
-        $stmt->bindValue(':updated_at', date('Y-m-d H:i:s'), PDO::PARAM_STR);
 
         $stmt->bindValue(':Role', $user->Role->value, PDO::PARAM_STR);
         $stmt->bindValue(':UserId', $user->UserId, PDO::PARAM_INT);
