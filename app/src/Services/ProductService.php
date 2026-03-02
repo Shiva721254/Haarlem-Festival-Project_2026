@@ -55,7 +55,7 @@ class ProductService implements IProductService
         
         $products = [];
         foreach ($results as $row) {
-            $products[] = ProductModel::fromArray($row);
+            $products[] = ProductModel::fromDb($row);
         }
 
         return $products; 
