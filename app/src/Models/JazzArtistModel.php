@@ -6,6 +6,8 @@ class JazzArtistModel
     public int $artist_id;
     public string $artist_name;
     public string $description;
+    public string $venue_name = '';
+    public string $session_room = '';
 
     public static function fromDb(array $data): self
     {

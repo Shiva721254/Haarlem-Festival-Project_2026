@@ -59,16 +59,13 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/orderSuccess', ['App\Controllers\ProductController', 'orderSuccess']);
 
     $r->addRoute('GET', '/mainJazz', ['App\Controllers\HaarlemController', 'showHaarlemJazz']);
-   $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'index']);
-     $r->addRoute('GET', '/restaurants/ratatouille', ['App\Controllers\HomeController', 'ratatouille']);
+    $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'index']);
+    $r->addRoute('GET', '/restaurants/ratatouille', ['App\Controllers\HomeController', 'ratatouille']);
 
-$r->addRoute('GET', '/restaurants/ml', ['App\Controllers\HomeController', 'ml']);
+    $r->addRoute('GET', '/restaurants/ml', ['App\Controllers\HomeController', 'ml']);
 
-   $r->addRoute('GET', '/admin/edit', ['App\Controllers\AdminContentController', 'edit']);
-$r->addRoute('POST', '/admin/save', ['App\Controllers\AdminContentController', 'save']);
-
-   
-
+    $r->addRoute('GET', '/admin/edit', ['App\Controllers\AdminContentController', 'edit']);
+    $r->addRoute('POST', '/admin/save', ['App\Controllers\AdminContentController', 'save']);
 
 
 });
