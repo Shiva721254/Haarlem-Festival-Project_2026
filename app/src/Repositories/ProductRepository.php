@@ -124,7 +124,6 @@ class ProductRepository extends Repository implements IProductRepository
         $stmt->bindValue(':ProductName', $product->ProductName, PDO::PARAM_STR);
         $stmt->bindValue(':Description', $product->Description, PDO::PARAM_STR);
         $stmt->bindValue(':Category', $product->Category->value, PDO::PARAM_STR);
-        $stmt->bindValue(':Type', $product->Type->value, PDO::PARAM_STR);
         $stmt->bindValue(':Price', $product->Price, PDO::PARAM_INT);
     }
 
