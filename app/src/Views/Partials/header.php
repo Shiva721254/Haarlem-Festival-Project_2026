@@ -42,10 +42,21 @@
 
         <div class="d-flex align-items-center gap-3">
             <?php if (isset($_SESSION['UserId'])): ?>
+                <?php if (isset($_SESSION['Role']) && $_SESSION['Role']->value === 'admin'): ?>
+                    <a href="/admin" class="btn login-button rounded-circle" title="Admin panel">
+                        <i class="bi bi-speedometer2"></i>
+                    </a>
+                <?php endif; ?>
                 <a href="/account" class="btn login-button rounded-circle" title="Account Information">
                     <i class="bi bi-person-circle"></i>
                     <small class="user-name-label"><?= htmlspecialchars($_SESSION['FirstName'] ?? 'User') ?></small>
                 </a>
+                <form method="POST" action="/logout" class="m-0">
+                    <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken() ?>">
+                    <button type="submit" class="btn login-button rounded-circle" title="Logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </form>
             <?php else: ?>
                 <a href="/showLogin" class="btn login-button rounded-circle" title="Login">
                     <i class="bi bi-box-arrow-in-right"></i>
