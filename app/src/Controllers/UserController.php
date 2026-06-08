@@ -86,7 +86,7 @@ class UserController
                 $this->userService->create($user);
             }
 
-            header('Location: /products');
+            header('Location: /');
             exit();
 
         } catch (DuplicateEntryException $e) {
@@ -119,7 +119,7 @@ class UserController
             $_SESSION['Role'] = $user->Role;
             $_SESSION['FirstName'] = $user->FirstName;
 
-            header('Location: /products');
+            header('Location: /');
             exit();
         } else {
             $vm = new LoginViewModel($email, "Invalid email or password.");

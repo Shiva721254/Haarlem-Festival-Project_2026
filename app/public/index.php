@@ -14,8 +14,6 @@ use function FastRoute\simpleDispatcher;
 
 $dispatcher = simpleDispatcher(function (RouteCollector $r) {
 
-    $r->addRoute('GET', '/demo', ['App\Controllers\DemoController', 'showDemo']);
-
     // login stuff
     $r->addRoute('GET', '/showLogin', ['App\Controllers\UserController', 'showLogin']);
     $r->addRoute('POST', '/login', ['App\Controllers\UserController', 'login']);
@@ -42,33 +40,14 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/resetPassword', ['App\Controllers\AuthController', 'showResetForm']);
     $r->addRoute('POST', '/update-password', ['App\Controllers\AuthController', 'handleResetSubmit']);
 
-    // product stuff
-    $r->addRoute('GET', '/products', ['App\Controllers\ProductController', 'index2']);
-    $r->addRoute('GET', '/createProduct', ['App\Controllers\ProductController', 'createProduct']);
-    $r->addRoute('GET', '/updateProduct/{id:\d+}', ['App\Controllers\ProductController', 'updateProduct']);
-    $r->addRoute('POST', '/saveProduct', ['App\Controllers\ProductController', 'saveProduct']);
-    
-    $r->addRoute('GET', '/product/{id:\d+}', ['App\Controllers\ProductController', 'displayProduct']);
-    $r->addRoute('GET', '/shoppingCart', ['App\Controllers\ProductController', 'shoppingCart']);
-    $r->addRoute('POST', '/cart/add', ['App\Controllers\ProductController', 'addProductToShoppingCart']);
-
-    $r->addRoute('GET', '/showCheckout', ['App\Controllers\ProductController', 'showCheckout']);
-    $r->addRoute('POST', '/processCheckout', ['App\Controllers\ProductController', 'processCheckout']);
-    $r->addRoute('GET', '/orderSuccess', ['App\Controllers\ProductController', 'orderSuccess']);
-
     $r->addRoute('GET', '/mainJazz', ['App\Controllers\HaarlemController', 'showHaarlemJazz']);
-   $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'index']);
-     $r->addRoute('GET', '/restaurants/ratatouille', ['App\Controllers\HomeController', 'ratatouille']);
+    $r->addRoute('GET', '/dance', ['App\Controllers\DanceController', 'index']);
+    $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'index']);
+    $r->addRoute('GET', '/restaurants/ratatouille', ['App\Controllers\HomeController', 'ratatouille']);
+    $r->addRoute('GET', '/restaurants/ml', ['App\Controllers\HomeController', 'ml']);
 
-$r->addRoute('GET', '/restaurants/ml', ['App\Controllers\HomeController', 'ml']);
-
-   $r->addRoute('GET', '/admin/edit', ['App\Controllers\AdminContentController', 'edit']);
-$r->addRoute('POST', '/admin/save', ['App\Controllers\AdminContentController', 'save']);
-
-   
-
-
-
+    $r->addRoute('GET', '/admin/edit', ['App\Controllers\AdminContentController', 'edit']);
+    $r->addRoute('POST', '/admin/save', ['App\Controllers\AdminContentController', 'save']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
@@ -93,7 +72,5 @@ switch ($routeInfo[0]) {
         $controller = new $class();
         $vars = $routeInfo[2];
         $controller->$method($vars);
-        break;
-        throw new Exception('Not implemented yet');
         break;
 }
