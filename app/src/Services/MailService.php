@@ -18,8 +18,8 @@ class MailService
             'password' => 'nycj ehjj pxdf brkb',
             'secure' => PHPMailer::ENCRYPTION_STARTTLS,
             'port' => 587,
-            'from_email' => 'noreply@webstore.com',
-            'from_name' => 'Webstore Support'
+            'from_email' => 'noreply@haarlemfestival.com',
+            'from_name' => 'Haarlem Festival Support'
         ];
     }
 
