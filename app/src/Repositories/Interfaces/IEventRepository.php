@@ -30,4 +30,24 @@ interface IEventRepository
      * @return array{slug:string,name:string,description:?string}|null
      */
     public function getTypeBySlug(string $slug): ?array;
+
+    // --- Admin CRUD ---
+
+    /** @return EventModel[] */
+    public function getAllForAdmin(): array;
+
+    public function create(EventModel $event): int;
+
+    public function update(EventModel $event): void;
+
+    public function delete(int $id): void;
+
+    /** @return array<int,array{id:int,name:string}> */
+    public function getTypeOptions(): array;
+
+    /** @return array<int,array{id:int,name:string}> */
+    public function getVenueOptions(): array;
+
+    /** @return array<int,array{id:int,name:string}> */
+    public function getRestaurantOptions(): array;
 }

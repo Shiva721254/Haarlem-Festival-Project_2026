@@ -58,6 +58,108 @@ class EventRepository extends Repository implements IEventRepository
         return $this->fetchOne($sql, ['slug' => $slug]);
     }
 
+    // --- Admin CRUD -------------------------------------------------------
+
+    /**
+     * All events (published or not) for the admin list, newest start first.
+     *
+     * @return EventModel[]
+     */
+    public function getAllForAdmin(): array
+    {
+        $sql = 'SELECT e.*, et.name AS event_type_name, et.slug AS event_type_slug
+                FROM events e
+                JOIN event_types et ON et.id = e.event_type_id
+                ORDER BY e.starts_at DESC';
+
+        $events = [];
+        foreach ($this->fetchAll($sql) as $row) {
+            $events[] = EventModel::fromDb($row);
+        }
+        return $events;
+    }
+
+    public function create(EventModel $event): int
+    {
+        $sql = 'INSERT INTO events
+                    (event_type_id, venue_id, restaurant_id, title, description, image, starts_at, ends_at, is_published)
+                VALUES
+                    (:event_type_id, :venue_id, :restaurant_id, :title, :description, :image, :starts_at, :ends_at, :is_published)';
+
+        $this->execute($sql, $this->toParams($event));
+        return $this->lastInsertId();
+    }
+
+    public function update(EventModel $event): void
+    {
+        $sql = 'UPDATE events SET
+                    event_type_id = :event_type_id,
+                    venue_id = :venue_id,
+                    restaurant_id = :restaurant_id,
+                    title = :title,
+                    description = :description,
+                    image = :image,
+                    starts_at = :starts_at,
+                    ends_at = :ends_at,
+                    is_published = :is_published
+                WHERE id = :id';
+
+        $params = $this->toParams($event);
+        $params['id'] = $event->id;
+        $this->execute($sql, $params);
+    }
+
+    public function delete(int $id): void
+    {
+        $this->execute('DELETE FROM events WHERE id = :id', ['id' => $id]);
+    }
+
+    /**
+     * Event-type options for form selects.
+     *
+     * @return array<int,array{id:int,name:string}>
+     */
+    public function getTypeOptions(): array
+    {
+        return $this->fetchAll('SELECT id, name FROM event_types ORDER BY name');
+    }
+
+    /**
+     * @return array<int,array{id:int,name:string}>
+     */
+    public function getVenueOptions(): array
+    {
+        return $this->fetchAll('SELECT id, name FROM venues ORDER BY name');
+    }
+
+    /**
+     * @return array<int,array{id:int,name:string}>
+     */
+    public function getRestaurantOptions(): array
+    {
+        return $this->fetchAll('SELECT id, name FROM restaurants ORDER BY name');
+    }
+
+    /**
+     * Map an EventModel to bound query parameters.
+     *
+     * @return array<string,mixed>
+     */
+    private function toParams(EventModel $event): array
+    {
+        return [
+            'event_type_id' => $event->event_type_id,
+            'venue_id'      => $event->venue_id,
+            'restaurant_id' => $event->restaurant_id,
+            'title'         => $event->title,
+            'description'   => $event->description,
+            'image'         => $event->image,
+            'starts_at'     => $event->starts_at,
+            'ends_at'       => $event->ends_at !== '' ? $event->ends_at : null,
+            'is_published'  => $event->is_published ? 1 : 0,
+        ];
+    }
+
     private function loadVenue(?int $venueId): ?VenueModel
     {
         if ($venueId === null) {

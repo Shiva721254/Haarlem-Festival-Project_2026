@@ -21,4 +21,22 @@ interface IEventService
      * @return array{slug:string,name:string,description:?string}|null
      */
     public function getTypeBySlug(string $slug): ?array;
+
+    // --- Admin CRUD ---
+
+    /** @return EventModel[] */
+    public function getAllForAdmin(): array;
+
+    public function create(EventModel $event): int;
+
+    public function update(EventModel $event): void;
+
+    public function delete(int $id): void;
+
+    /**
+     * Option lists for the event form selects.
+     *
+     * @return array{types:array,venues:array,restaurants:array}
+     */
+    public function getFormOptions(): array;
 }

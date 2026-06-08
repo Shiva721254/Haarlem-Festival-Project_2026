@@ -56,6 +56,15 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
 
     $r->addRoute('GET', '/admin/edit', ['App\Controllers\AdminContentController', 'edit']);
     $r->addRoute('POST', '/admin/save', ['App\Controllers\AdminContentController', 'save']);
+
+    // Admin dashboard + event management
+    $r->addRoute('GET', '/admin', ['App\Controllers\AdminController', 'dashboard']);
+    $r->addRoute('GET', '/admin/events', ['App\Controllers\AdminEventController', 'index']);
+    $r->addRoute('GET', '/admin/events/create', ['App\Controllers\AdminEventController', 'create']);
+    $r->addRoute('POST', '/admin/events', ['App\Controllers\AdminEventController', 'store']);
+    $r->addRoute('GET', '/admin/events/edit/{id:\d+}', ['App\Controllers\AdminEventController', 'edit']);
+    $r->addRoute('POST', '/admin/events/update', ['App\Controllers\AdminEventController', 'update']);
+    $r->addRoute('POST', '/admin/events/delete', ['App\Controllers\AdminEventController', 'delete']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];

@@ -34,4 +34,36 @@ class EventService implements IEventService
     {
         return $this->eventRepository->getTypeBySlug($slug);
     }
+
+    // --- Admin CRUD ---
+
+    public function getAllForAdmin(): array
+    {
+        return $this->eventRepository->getAllForAdmin();
+    }
+
+    public function create(EventModel $event): int
+    {
+        return $this->eventRepository->create($event);
+    }
+
+    public function update(EventModel $event): void
+    {
+        $this->eventRepository->update($event);
+    }
+
+    public function delete(int $id): void
+    {
+        $this->eventRepository->delete($id);
+    }
+
+    /** @return array<int,array{id:int,name:string}> */
+    public function getFormOptions(): array
+    {
+        return [
+            'types'       => $this->eventRepository->getTypeOptions(),
+            'venues'      => $this->eventRepository->getVenueOptions(),
+            'restaurants' => $this->eventRepository->getRestaurantOptions(),
+        ];
+    }
 }
