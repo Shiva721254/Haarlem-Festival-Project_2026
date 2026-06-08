@@ -26,6 +26,10 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/saveUser', ['App\Controllers\UserController', 'saveUser']);
     $r->addRoute('GET', '/user/{id:\d+}', ['App\Controllers\UserController', 'displayUser']);
 
+    // Public registration
+    $r->addRoute('GET', '/register', ['App\Controllers\AuthController', 'showRegister']);
+    $r->addRoute('POST', '/register', ['App\Controllers\AuthController', 'register']);
+
     // Verification Routes
     $r->addRoute('POST', '/send-verification-link', ['App\Controllers\AuthController', 'sendVerification']);
     $r->addRoute('GET', '/verifyAccount', ['App\Controllers\AuthController', 'verifyAccount']);    
