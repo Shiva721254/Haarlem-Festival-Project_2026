@@ -27,4 +27,20 @@ class View
         require self::VIEWS . rtrim($view, '/') . '.php';
         require self::VIEWS . 'Partials/footer.php';
     }
+
+    /**
+     * Render an admin view inside the admin panel layout (sidebar shell).
+     *
+     * @param string              $view  Path under Views/ without extension, e.g. 'Admin/events/index'.
+     * @param array<string,mixed> $data
+     */
+    public static function renderAdmin(string $view, array $data = [], string $title = 'Admin'): void
+    {
+        $data['title'] = $title;
+        extract($data, EXTR_OVERWRITE);
+
+        require self::VIEWS . 'Admin/partials/header.php';
+        require self::VIEWS . rtrim($view, '/') . '.php';
+        require self::VIEWS . 'Admin/partials/footer.php';
+    }
 }
