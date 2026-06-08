@@ -64,6 +64,55 @@ class UserService implements IUserService
 
     }
 
+    /**
+     * Update a user's own profile (name + email), enforcing email uniqueness.
+     * Sends a confirmation email after a successful change.
+     */
+    public function updateProfile(int $userId, string $firstName, string $lastName, string $email): void
+    {
+        $existing = $this->userRepository->getByEmail($email);
+        if ($existing && $existing->UserId !== $userId) {
+            throw new DuplicateEntryException("This email is already in use by another account.");
+        }
+
+        $this->userRepository->updateProfile($userId, $firstName, $lastName, $email);
+
+        $message = "
+            <h2>Your account was updated</h2>
+            <p>Hi {$firstName}, your Haarlem Festival account details were just changed.</p>
+            <p>If this wasn't you, please reset your password immediately.</p>
+        ";
+        $this->mailService->send($email, "Your Haarlem Festival account was updated", $message);
+    }
+
+    /**
+     * Change a user's password after verifying their current one.
+     *
+     * @return bool true on success, false if the current password is wrong.
+     */
+    public function changePassword(int $userId, string $currentPassword, string $newPassword): bool
+    {
+        $user = $this->userRepository->getById($userId);
+        if (!$user) {
+            return false;
+        }
+
+        // getById does not select the password, so fetch the full record by email.
+        $full = $this->userRepository->getByEmail($user->Email);
+        if (!$full || !password_verify($currentPassword, $full->Password)) {
+            return false;
+        }
+
+        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $this->userRepository->updatePassword($userId, $hash);
+        return true;
+    }
+
+    public function updateProfileImage(int $userId, string $path): void
+    {
+        $this->userRepository->updateProfileImage($userId, $path);
+    }
+
     // This is for login! 
     public function authenticate(string $email, string $password): ?UserModel
     {

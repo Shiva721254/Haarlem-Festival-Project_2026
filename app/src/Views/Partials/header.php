@@ -41,7 +41,7 @@
 
         <div class="d-flex align-items-center gap-3">
             <?php if (isset($_SESSION['UserId'])): ?>
-                <a href="/user/<?= $_SESSION['UserId'] ?>" class="btn login-button rounded-circle" title="Account Information">
+                <a href="/account" class="btn login-button rounded-circle" title="Account Information">
                     <i class="bi bi-person-circle"></i>
                     <small class="user-name-label"><?= htmlspecialchars($_SESSION['FirstName'] ?? 'User') ?></small>
                 </a>

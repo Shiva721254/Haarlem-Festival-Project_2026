@@ -30,6 +30,10 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/register', ['App\Controllers\AuthController', 'showRegister']);
     $r->addRoute('POST', '/register', ['App\Controllers\AuthController', 'register']);
 
+    // Self-service account management
+    $r->addRoute('GET', '/account', ['App\Controllers\AccountController', 'show']);
+    $r->addRoute('POST', '/account', ['App\Controllers\AccountController', 'update']);
+
     // Verification Routes
     $r->addRoute('POST', '/send-verification-link', ['App\Controllers\AuthController', 'sendVerification']);
     $r->addRoute('GET', '/verifyAccount', ['App\Controllers\AuthController', 'verifyAccount']);    
