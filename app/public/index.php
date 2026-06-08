@@ -48,6 +48,10 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/resetPassword', ['App\Controllers\AuthController', 'showResetForm']);
     $r->addRoute('POST', '/update-password', ['App\Controllers\AuthController', 'handleResetSubmit']);
 
+    // Events (DB-driven). {type} is an event_type slug, e.g. jazz, dance, yummy, history.
+    $r->addRoute('GET', '/events/{type:[a-z0-9-]+}', ['App\Controllers\EventController', 'index']);
+    $r->addRoute('GET', '/event/{id:\d+}', ['App\Controllers\EventController', 'show']);
+
     $r->addRoute('GET', '/mainJazz', ['App\Controllers\HaarlemController', 'showHaarlemJazz']);
     $r->addRoute('GET', '/dance', ['App\Controllers\DanceController', 'index']);
     $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'index']);
