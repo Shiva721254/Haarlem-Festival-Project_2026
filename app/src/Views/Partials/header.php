@@ -53,3 +53,15 @@
         </div>
     </div>
 </nav>
+
+<?php $flashes = \App\Framework\Flash::pull(); ?>
+<?php if (!empty($flashes)): ?>
+    <div class="container mt-3">
+        <?php foreach ($flashes as $flash): ?>
+            <div class="alert alert-<?= htmlspecialchars($flash['type']) ?> alert-dismissible fade show" role="alert">
+                <?= htmlspecialchars($flash['message']) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
