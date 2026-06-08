@@ -52,11 +52,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/events/{type:[a-z0-9-]+}', ['App\Controllers\EventController', 'index']);
     $r->addRoute('GET', '/event/{id:\d+}', ['App\Controllers\EventController', 'show']);
 
-    $r->addRoute('GET', '/mainJazz', ['App\Controllers\HaarlemController', 'showHaarlemJazz']);
-    $r->addRoute('GET', '/dance', ['App\Controllers\DanceController', 'index']);
     $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'index']);
-    $r->addRoute('GET', '/restaurants/ratatouille', ['App\Controllers\HomeController', 'ratatouille']);
-    $r->addRoute('GET', '/restaurants/ml', ['App\Controllers\HomeController', 'ml']);
 
     $r->addRoute('GET', '/admin/edit', ['App\Controllers\AdminContentController', 'edit']);
     $r->addRoute('POST', '/admin/save', ['App\Controllers\AdminContentController', 'save']);
