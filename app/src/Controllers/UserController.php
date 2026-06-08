@@ -9,6 +9,8 @@ use App\ViewModels\UsersViewModel;
 use App\Models\UserModel;
 use App\ViewModels\LoginViewModel;
 use App\Middleware\AuthMiddleware;
+use App\Framework\View;
+use App\Framework\Flash;
 use App\CustomException\DuplicateEntryException;
 
 class UserController
@@ -27,7 +29,7 @@ class UserController
         AuthMiddleware::requireAdmin(); 
         $users = $this->userService->getAll();
         $vm = new UsersViewModel($users);
-        require __DIR__ . "/../Views/Users/index.php";       
+        View::renderAdmin('Users/index', ['vm' => $vm], 'Users');
     }
 
     // GET
@@ -49,8 +51,8 @@ class UserController
             exit();
         }
 
-        $vm = new ManageUserViewModel($user);        
-        require __DIR__ . "/../Views/Users/updateUser.php"; 
+        $vm = new ManageUserViewModel($user);
+        View::renderAdmin('Users/updateUser', ['vm' => $vm], 'Edit user');
     }
 
     public function displayUser($vars = [])
@@ -58,17 +60,39 @@ class UserController
         $id = $vars['id'] ?? $_SESSION['UserId'];
         AuthMiddleware::requireAdminOrOwner($id);
         $user = $this->userService->getById($id);
-        require  __DIR__ . "/../Views/Users/displayUser.php";
+        View::renderAdmin('Users/displayUser', ['user' => $user], 'User');
     }
 
     // GET
     public function createUser($vars = [])
     {
-        $user = null;           
+        $user = null;
         $vm = new ManageUserViewModel($user);
-        require __DIR__ . "/../Views/Users/createUser.php";       
-    }    
+        View::renderAdmin('Users/createUser', ['vm' => $vm], 'New user');
+    }
     
+    // POST: /deleteUser
+    public function deleteUser()
+    {
+        AuthMiddleware::requireAdmin();
+
+        $id = (int)($_POST['id'] ?? 0);
+
+        if ($id === (int)($_SESSION['UserId'] ?? 0)) {
+            Flash::error('You cannot delete your own account.');
+            header('Location: /users');
+            exit();
+        }
+
+        if ($id > 0) {
+            $this->userService->delete($id);
+            Flash::success('User deleted.');
+        }
+
+        header('Location: /users');
+        exit();
+    }
+
     // POST
     public function saveUser($vars = [])
     {
@@ -83,18 +107,22 @@ class UserController
             if ($user->UserId > 0) {
                 $this->userService->update($user);
             } else {
+                // Admin-created accounts are trusted: active and pre-verified
+                // (no email-confirmation loop needed for staff-created users).
+                $user->isActive = true;
+                $user->isVerified = true;
                 $this->userService->create($user);
             }
 
-            header('Location: /');
+            header('Location: /users');
             exit();
 
         } catch (DuplicateEntryException $e) {
-            $error = $e->getMessage();            
+            $error = $e->getMessage();
             $vm = new ManageUserViewModel($user);
-            require __DIR__ . "/../Views/Users/createUser.php";
+            View::renderAdmin('Users/createUser', ['vm' => $vm, 'error' => $error], 'New user');
             exit();
-        } 
+        }
     }
     
     //GET

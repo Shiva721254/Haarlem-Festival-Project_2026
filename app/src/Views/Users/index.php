@@ -1,11 +1,8 @@
 <?php
 use App\ViewModels\UsersViewModel;
 /** @var UsersViewModel $vm */
-
-// Include the HTML head and Bootstrap CSS
-require __DIR__ . "/../Partials/header.php";
 ?>
-<div class="container mt-4">
+<div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>👥 User Overview</h2>
         <a href="createUser" class="btn btn-primary">
@@ -82,11 +79,14 @@ require __DIR__ . "/../Partials/header.php";
                                         <i class="bi bi-pencil-square"></i> Edit
                                     </a>
 
-                                    <a href="<?= htmlspecialchars('/delete/' . $user_id) ?>"
-                                       class="btn btn-sm btn-outline-danger"
-                                       title="Delete User">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </a>
+                                    <form method="POST" action="/deleteUser" class="d-inline"
+                                          onsubmit="return confirm('Delete this user? This cannot be undone.');">
+                                        <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken() ?>">
+                                        <input type="hidden" name="id" value="<?= $user_id ?>">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete User">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -97,8 +97,3 @@ require __DIR__ . "/../Partials/header.php";
 
     <?php endif; ?>
 </div>
-
-<?php
-// Include the closing tags and Bootstrap JavaScript
-require __DIR__ . "/../Partials/footer.php";
-?>

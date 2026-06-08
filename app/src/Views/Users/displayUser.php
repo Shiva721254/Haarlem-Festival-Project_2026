@@ -1,5 +1,4 @@
-<?php 
-require __DIR__ . "/../Partials/header.php"; 
+<?php
 /** @var App\Models\UserModel $user */
 ?>
 

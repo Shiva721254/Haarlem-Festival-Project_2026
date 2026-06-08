@@ -1,8 +1,6 @@
 <?php
 /** @var ManageUserViewModel $vm */
 $user = $vm->user;
-$title = "Update User: " . htmlspecialchars($user->FirstName); 
-require __DIR__ . "/../Partials/header.php"; 
 ?>
     <div class="container mt-5">
         <div class="card shadow-sm mx-auto card-form">
@@ -50,4 +48,3 @@ require __DIR__ . "/../Partials/header.php";
             </div>
         </div>
     </div>
-<?php require __DIR__ . "/../Partials/footer.php"; ?>

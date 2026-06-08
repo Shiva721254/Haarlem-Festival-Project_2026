@@ -1,7 +1,5 @@
 <?php
 /** @var ManageUserViewModel $vm */
-$title = "Create New User"; // Set the title for the header partial
-require __DIR__ . "/../Partials/header.php";
 use App\Middleware\AuthMiddleware;
 $recaptchaSiteKey = \App\Config::recaptchaSiteKey();
 ?>
@@ -127,4 +125,3 @@ $recaptchaSiteKey = \App\Config::recaptchaSiteKey();
 </script>
 <?php endif; ?>
 <script src="/assets/js/password.js" defer></script>
-<?php require __DIR__ . "/../Partials/footer.php"; ?>

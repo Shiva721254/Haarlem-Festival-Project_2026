@@ -24,6 +24,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/createUser', ['App\Controllers\UserController', 'createUser']);
     $r->addRoute('GET', '/updateUser/{id:\d+}', ['App\Controllers\UserController', 'updateUser']);
     $r->addRoute('POST', '/saveUser', ['App\Controllers\UserController', 'saveUser']);
+    $r->addRoute('POST', '/deleteUser', ['App\Controllers\UserController', 'deleteUser']);
     $r->addRoute('GET', '/user/{id:\d+}', ['App\Controllers\UserController', 'displayUser']);
 
     // Public registration
