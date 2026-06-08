@@ -19,22 +19,23 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
+        <?php $currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?'); ?>
         <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
             <ul class="navbar-nav align-items-center">
                 <li class="nav-item">
-                    <a class="nav-link" href="/">Home</a>
+                    <a class="nav-link <?= $currentPath === '/' ? 'active-pill' : '' ?>" href="/">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Yummy</a>
+                    <a class="nav-link <?= $currentPath === '/events/yummy' ? 'active-pill' : '' ?>" href="/events/yummy">Yummy</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active-pill" href="/mainJazz">Haarlem Jazz</a>
+                    <a class="nav-link <?= $currentPath === '/events/jazz' ? 'active-pill' : '' ?>" href="/events/jazz">Haarlem Jazz</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/dance">Dance</a>
+                    <a class="nav-link <?= $currentPath === '/events/dance' ? 'active-pill' : '' ?>" href="/events/dance">Dance</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Magical Players</a>
+                    <a class="nav-link <?= $currentPath === '/events/history' ? 'active-pill' : '' ?>" href="/events/history">Magical Players</a>
                 </li>
             </ul>
         </div>
