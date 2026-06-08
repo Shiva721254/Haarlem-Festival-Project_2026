@@ -5,19 +5,19 @@ require __DIR__ . "/../Partials/header.php";
 use App\Middleware\AuthMiddleware;
 ?>
     <div class="container mt-5">
-        <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+        <div class="card shadow-sm mx-auto card-form">
             <div class="card-header bg-primary text-white">
                 <h4 class="mb-0">Create New User</h4>
             </div>
             <div class="card-body">
 
                 <?php if (isset($error)): ?>
-                    <div style="color: #800000; border: 1px solid #800000; padding: 10px; margin-bottom: 10px;">
+                    <div class="error-box">
                         <?= htmlspecialchars($error) ?>
                     </div>
                 <?php endif; ?>
 
-                <form method="post" action="/saveUser" id="demo-form">
+                <form method="post" action="/saveUser" id="create-user-form">
                     <input type="hidden" name="UserId" value="0">
                     <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
 
@@ -109,7 +109,7 @@ use App\Middleware\AuthMiddleware;
 
 <script>
    function onSubmit(token) {
-        const form = document.getElementById("demo-form");
+        const form = document.getElementById("create-user-form");
 
         const input = document.createElement('input');
         input.type = 'hidden';

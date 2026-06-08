@@ -18,7 +18,7 @@ class AuthController
         $this->userRepository = new UserRepository();
     }
 
-    // GET: /forgot-password
+    // GET: /forgotPassword
     public function showForgotPassword()
     {
         $vm = new AuthViewModel();
@@ -39,7 +39,7 @@ class AuthController
         exit();
     }
 
-    // GET: /reset-password (from Email link)
+    // GET: /resetPassword (from email link)
     public function showResetForm()
     {
         $token = $_GET['token'] ?? '';
@@ -64,7 +64,7 @@ class AuthController
         $confirm = $_POST['PasswordConfirm'] ?? '';
 
         if ($password !== $confirm) {
-            header("Location: /reset-password?token=$token&error=match");
+            header("Location: /resetPassword?token=$token&error=match");
             exit();
         }
 
@@ -73,7 +73,7 @@ class AuthController
         if ($success) {
             header("Location: /showLogin?reset=success");
         } else {
-            header("Location: /forgot-password?error=expired");
+            header("Location: /forgotPassword?error=expired");
         }
         exit();
     }
@@ -107,7 +107,7 @@ class AuthController
         }
         $success = $this->userService->completeAccountVerification($token);
         if($success){
-            header("Location: /user/{id:\d+}?verified=1");
+            header("Location: /showLogin?verified=1");
         } else {
             header("Location: /showLogin?error=expired_token");
         }

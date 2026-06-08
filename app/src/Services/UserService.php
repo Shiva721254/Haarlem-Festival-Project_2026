@@ -98,7 +98,7 @@ class UserService implements IUserService
             <a href='{$resetLink}'>Reset Password</a>
         ";
 
-        return $this->mailService->send($email, "Reset your Webstore password", $message);
+        return $this->mailService->send($email, "Reset your Haarlem Festival password", $message);
     }
 
     public function validateResetToken(string $token): ?UserModel
@@ -152,7 +152,7 @@ class UserService implements IUserService
             <p>Click the link below to verify your account. This link expires in 24 hours.</p>
             <a href='{$resetLink}'>Verify Account</a>
         ";
-        return $this->mailService->send($email, "Verify your Webstore account", $message);
+        return $this->mailService->send($email, "Verify your Haarlem Festival account", $message);
     }
 
     public function validateVerificationToken(string $token) : ?UserModel 

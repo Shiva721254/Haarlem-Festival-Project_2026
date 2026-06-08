@@ -6,12 +6,12 @@
     <title><?= $title ?? 'Visit Haarlem' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="assets/css/header.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 
 <nav class="navbar navbar-expand-lg navigation-bar">
     <div class="container-fluid nav-container">
-        <a href="#">
+        <a href="/">
             <img class="nav-logo" src="/assets/images/VisitHaarlemLogo.png" alt="VisitHaarlem Logo">
         </a>
 
@@ -22,16 +22,16 @@
         <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
             <ul class="navbar-nav align-items-center">
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Home</a>
+                    <a class="nav-link" href="/">Home</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">Yummy</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active-pill" href="#">Haarlem Jazz</a>
+                    <a class="nav-link active-pill" href="/mainJazz">Haarlem Jazz</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Dance</a>
+                    <a class="nav-link" href="/dance">Dance</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">Magical Players</a>
@@ -50,11 +50,6 @@
                     <i class="bi bi-box-arrow-in-right"></i>
                 </a>
             <?php endif; ?>
-
-            <a href="/shoppingCart" class="btn shopping-cart-button rounded-circle position-relative" title="Shopping Cart">
-                <i class="bi bi-cart3"></i>
-                
-            </a>
         </div>
     </div>
 </nav>

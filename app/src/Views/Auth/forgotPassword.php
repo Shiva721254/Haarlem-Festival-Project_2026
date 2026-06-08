@@ -4,8 +4,8 @@ $title = "forgot password";
 ?>
 
 <div class="container mt-5">
-    <div class="card shadow-sm mx-auto" style="max-width: 450px;">
-        <div class="card-header text-white text-center" style="background-color: #6f42c1;">
+    <div class="card shadow-sm mx-auto card-auth">
+        <div class="card-header text-white text-center panel-header-purple">
             <h4 class="mb-0">Reset Your Password</h4>
         </div>
         <div class="card-body">
@@ -17,7 +17,7 @@ $title = "forgot password";
                     <label class="form-label fw-bold">Email Address</label>
                     <input type="email" name="Email" class="form-control" placeholder="name@example.com" required>
                 </div>
-                <button type="submit" class="btn w-100 text-white" style="background-color: #6f42c1;">
+                <button type="submit" class="btn btn-purple w-100">
                     Send Reset Link
                 </button>
             </form>
