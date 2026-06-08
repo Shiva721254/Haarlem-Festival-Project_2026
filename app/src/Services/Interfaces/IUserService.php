@@ -8,6 +8,9 @@ interface IUserService
     public function create(UserModel $article) : void;
     public function getById(int $id): ?UserModel;
     public function update(UserModel $article) : void;
+    public function updateProfile(int $userId, string $firstName, string $lastName, string $email): void;
+    public function changePassword(int $userId, string $currentPassword, string $newPassword): bool;
+    public function updateProfileImage(int $userId, string $path): void;
     public function delete(int $id): void;
 
     //login stuff

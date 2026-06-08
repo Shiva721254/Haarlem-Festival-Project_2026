@@ -3,19 +3,115 @@
 namespace App\Controllers;
 use App\Services\Interfaces\IUserService;
 use App\Services\UserService;
+use App\Services\RecaptchaService;
 use App\Repositories\Interfaces\IUserRepository;
 use App\Repositories\UserRepository;
 use App\ViewModels\AuthViewModel;
+use App\Models\UserModel;
+use App\Enums\UserRole;
+use App\Framework\View;
+use App\Framework\Flash;
+use App\CustomException\DuplicateEntryException;
 
 class AuthController
 {
     private IUserService $userService;
     private IUserRepository $userRepository;
+    private RecaptchaService $recaptchaService;
 
     public function __construct()
     {
         $this->userService = new UserService();
         $this->userRepository = new UserRepository();
+        $this->recaptchaService = new RecaptchaService();
+    }
+
+    // GET: /register
+    public function showRegister(): void
+    {
+        // Already logged in? No need to register again.
+        if (isset($_SESSION['UserId'])) {
+            header('Location: /');
+            exit();
+        }
+        View::render('Auth/register', ['vm' => new AuthViewModel(), 'old' => []], 'Create Account');
+    }
+
+    // POST: /register
+    public function register(): void
+    {
+        $old = [
+            'FirstName' => trim($_POST['FirstName'] ?? ''),
+            'LastName'  => trim($_POST['LastName'] ?? ''),
+            'Email'     => trim($_POST['Email'] ?? ''),
+        ];
+        $password = $_POST['Password'] ?? '';
+        $confirm  = $_POST['PasswordConfirm'] ?? '';
+
+        // Server-side validation, independent of any front end checks.
+        $error = $this->validateRegistration($old, $password, $confirm);
+
+        if ($error === null) {
+            $token = $_POST['g-recaptcha-response'] ?? null;
+            if (!$this->recaptchaService->verify($token)) {
+                $error = 'Captcha verification failed. Please try again.';
+            }
+        }
+
+        if ($error === null) {
+            $user = new UserModel();
+            $user->FirstName = $old['FirstName'];
+            $user->LastName  = $old['LastName'];
+            $user->Email     = $old['Email'];
+            $user->Password  = $password;
+            $user->Role      = UserRole::Customer; // public sign-ups are always customers
+            $user->isVerified = false;
+            $user->isActive   = true;
+
+            try {
+                // Service hashes the password and enforces the unique email.
+                $_POST['PasswordConfirm'] = $confirm; // service re-checks the confirmation
+                $this->userService->create($user);
+
+                // Send the account verification email on sign-up.
+                $this->userService->sendVerificationEmail($user->Email);
+
+                Flash::success('Account created! Check your email to verify your account, then log in.');
+                header('Location: /showLogin');
+                exit();
+            } catch (DuplicateEntryException $e) {
+                $error = 'An account with this email already exists.';
+            } catch (\Throwable $e) {
+                $error = 'Something went wrong creating your account. Please try again.';
+            }
+        }
+
+        View::render('Auth/register', ['vm' => new AuthViewModel($error), 'old' => $old], 'Create Account');
+    }
+
+    /**
+     * Validate registration input. Returns an error message, or null if valid.
+     *
+     * @param array<string,string> $fields
+     */
+    private function validateRegistration(array $fields, string $password, string $confirm): ?string
+    {
+        if ($fields['FirstName'] === '' || $fields['LastName'] === '') {
+            return 'Please provide your first and last name.';
+        }
+        if (!filter_var($fields['Email'], FILTER_VALIDATE_EMAIL)) {
+            return 'Please provide a valid email address.';
+        }
+        if ($password !== $confirm) {
+            return 'Passwords do not match.';
+        }
+        if (strlen($password) < 8
+            || !preg_match('/[A-Z]/', $password)
+            || !preg_match('/[0-9]/', $password)
+            || !preg_match('/[^A-Za-z0-9]/', $password)) {
+            return 'Password must be at least 8 characters and include a capital letter, a number, and a symbol.';
+        }
+        return null;
     }
 
     // GET: /forgotPassword
@@ -32,10 +128,10 @@ class AuthController
         
         // We always show success to prevent "email fishing"
         $this->userService->sendPasswordReset($email);
-        
+
+        // Always show the same message to avoid leaking which emails exist.
+        Flash::success('If that email is registered, a password reset link has been sent.');
         header("Location: /showLogin");
-        //header("Location: /login?mail_sent=1");
-        
         exit();
     }
 
@@ -71,9 +167,11 @@ class AuthController
         $success = $this->userService->completePasswordReset($token, $password);
 
         if ($success) {
-            header("Location: /showLogin?reset=success");
+            Flash::success('Your password has been reset. Please log in.');
+            header("Location: /showLogin");
         } else {
-            header("Location: /forgotPassword?error=expired");
+            Flash::error('That reset link is invalid or has expired. Please request a new one.');
+            header("Location: /forgotPassword");
         }
         exit();
     }
@@ -107,9 +205,11 @@ class AuthController
         }
         $success = $this->userService->completeAccountVerification($token);
         if($success){
-            header("Location: /showLogin?verified=1");
+            Flash::success('Your account has been verified. You can now log in.');
+            header("Location: /showLogin");
         } else {
-            header("Location: /showLogin?error=expired_token");
+            Flash::error('That verification link is invalid or has expired.');
+            header("Location: /showLogin");
         }
         exit();
     }

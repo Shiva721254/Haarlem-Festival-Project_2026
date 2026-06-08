@@ -41,7 +41,7 @@
 
         <div class="d-flex align-items-center gap-3">
             <?php if (isset($_SESSION['UserId'])): ?>
-                <a href="/user/<?= $_SESSION['UserId'] ?>" class="btn login-button rounded-circle" title="Account Information">
+                <a href="/account" class="btn login-button rounded-circle" title="Account Information">
                     <i class="bi bi-person-circle"></i>
                     <small class="user-name-label"><?= htmlspecialchars($_SESSION['FirstName'] ?? 'User') ?></small>
                 </a>
@@ -53,3 +53,15 @@
         </div>
     </div>
 </nav>
+
+<?php $flashes = \App\Framework\Flash::pull(); ?>
+<?php if (!empty($flashes)): ?>
+    <div class="container mt-3">
+        <?php foreach ($flashes as $flash): ?>
+            <div class="alert alert-<?= htmlspecialchars($flash['type']) ?> alert-dismissible fade show" role="alert">
+                <?= htmlspecialchars($flash['message']) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>

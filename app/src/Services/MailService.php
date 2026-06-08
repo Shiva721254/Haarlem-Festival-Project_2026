@@ -1,44 +1,41 @@
 <?php
 namespace App\Services;
 
+use App\Config;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-class MailService 
+class MailService
 {
-    private array $config;
-
-    public function __construct() 
-    {
-        // Ideally, move these to a config file or .env
-        $this->config = [
-            'host' => 'smtp.gmail.com', // Or your SMTP provider
-            'auth' => true,
-            'username' => 'davidkutejx21@gmail.com',
-            'password' => 'nycj ehjj pxdf brkb',
-            'secure' => PHPMailer::ENCRYPTION_STARTTLS,
-            'port' => 587,
-            'from_email' => 'noreply@haarlemfestival.com',
-            'from_name' => 'Haarlem Festival Support'
-        ];
-    }
-
-    public function send(string $to, string $subject, string $body): bool 
+    public function send(string $to, string $subject, string $body): bool
     {
         $mail = new PHPMailer(true);
 
         try {
-            // Server settings
+            // Server settings (env-driven; defaults to the local MailHog container)
             $mail->isSMTP();
-            $mail->Host       = $this->config['host'];
-            $mail->SMTPAuth   = $this->config['auth'];
-            $mail->Username   = $this->config['username'];
-            $mail->Password   = $this->config['password'];
-            $mail->SMTPSecure = $this->config['secure'];
-            $mail->Port       = $this->config['port'];
+            $mail->Host       = Config::mailHost();
+            $mail->Port       = (int) Config::mailPort();
+            $mail->SMTPAuth   = Config::mailAuth();
+
+            if (Config::mailAuth()) {
+                $mail->Username = Config::mailUser();
+                $mail->Password = Config::mailPass();
+            }
+
+            $secure = Config::mailSecure();
+            if ($secure === 'tls') {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            } elseif ($secure === 'ssl') {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            } else {
+                // MailHog speaks plain SMTP with no encryption.
+                $mail->SMTPSecure = false;
+                $mail->SMTPAutoTLS = false;
+            }
 
             // Recipients
-            $mail->setFrom($this->config['from_email'], $this->config['from_name']);
+            $mail->setFrom(Config::mailFromEmail(), Config::mailFromName());
             $mail->addAddress($to);
 
             // Content

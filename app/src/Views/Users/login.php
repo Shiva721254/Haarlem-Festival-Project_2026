@@ -33,7 +33,7 @@
                     <h5 class="mt-3">Don't have an account?</h5>
                 </div>
                 <div>
-                    <a href="/createUser" class="btn btn-success w-100 text-white">Create Account</a>
+                    <a href="/register" class="btn btn-success w-100 text-white">Create Account</a>
                 </div>
             </form>
         </div>

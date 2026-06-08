@@ -76,7 +76,7 @@ class UserRepository extends Repository implements IUserRepository
 
     public function getById(int $id): ?UserModel
     {
-        $sql = 'SELECT UserId, FirstName, LastName, Email, Role, isVerified, isActive 
+        $sql = 'SELECT UserId, FirstName, LastName, Email, Role, isVerified, isActive, profile_image
                 FROM users WHERE UserId = :UserId';
         
         $stmt = $this->getConnection()->prepare($sql);
@@ -118,6 +118,27 @@ class UserRepository extends Repository implements IUserRepository
         $stmt->bindValue(':Role', $user->Role->value, PDO::PARAM_STR);
         $stmt->bindValue(':UserId', $user->UserId, PDO::PARAM_INT);
 
+        $stmt->execute();
+    }
+
+    public function updateProfile(int $userId, string $firstName, string $lastName, string $email): void
+    {
+        $sql = 'UPDATE users SET FirstName = :FirstName, LastName = :LastName, Email = :Email
+                WHERE UserId = :UserId';
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bindValue(':FirstName', $firstName, PDO::PARAM_STR);
+        $stmt->bindValue(':LastName', $lastName, PDO::PARAM_STR);
+        $stmt->bindValue(':Email', $email, PDO::PARAM_STR);
+        $stmt->bindValue(':UserId', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function updateProfileImage(int $userId, string $path): void
+    {
+        $sql = 'UPDATE users SET profile_image = :path WHERE UserId = :id';
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bindValue(':path', $path, PDO::PARAM_STR);
+        $stmt->bindValue(':id', $userId, PDO::PARAM_INT);
         $stmt->execute();
     }
 
