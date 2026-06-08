@@ -1,0 +1,335 @@
+:root {
+    --color-bg-page: #EBD6E6;
+    --color-bg-section-warm: #F9F6F2;
+    --color-bg-card: #F4F2EB;
+    --color-bg-dark: #163A4B;
+    --color-btn-primary-bg: #C8A869;
+    --color-btn-action-bg: #E17000;
+    --color-accent-electronic: #05835C;
+    --color-accent-trance: #4B2F70;
+    --color-text-muted: #4A5568;
+    --color-text-purple: #5c2379;
+    --color-text-purple-dark: #4a1c61;
+}
+
+/* Base */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: var(--color-bg-page);
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+p {
+    color: #0D00C6;
+    text-align: left;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.text-purple {
+    color: var(--color-text-purple);
+}
+
+.btn-purple {
+    background-color: var(--color-text-purple);
+    color: #FFFFFF;
+    border: none;
+}
+
+.btn-purple:hover {
+    background-color: var(--color-text-purple-dark);
+    color: #FFFFFF;
+}
+
+.border-dashed {
+    border-style: dashed !important;
+}
+
+.card-narrow {
+    max-width: 400px;
+}
+
+.card-auth {
+    max-width: 450px;
+}
+
+.card-form {
+    max-width: 600px;
+}
+
+.card-wide-form {
+    max-width: 700px;
+}
+
+.panel-header-purple {
+    background-color: #6f42c1;
+}
+
+.error-box {
+    color: #800000;
+    border: 1px solid #800000;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+/* Navigation */
+.navigation-bar {
+    display: flex;
+    width: 100%;
+    min-height: 94px;
+    background: #FFFFFF;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(6px);
+    padding: 0 80px;
+    position: sticky;
+}
+
+.nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.nav-logo {
+    min-height: 94px;
+    height: 60px;
+    width: auto;
+}
+
+.navbar-nav .nav-link {
+    color: var(--color-text-muted);
+    font-weight: 500;
+    margin: 0 15px;
+    transition: color 0.3s ease;
+}
+
+.active-pill {
+    background-color: var(--color-bg-dark);
+    color: #FFFFFF !important;
+    border-radius: 8px;
+    padding: 12px 24px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.login-button {
+    background-color: var(--color-bg-dark) !important;
+    color: #FFFFFF !important;
+    border: none;
+    padding: 8px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    transition: transform 0.2s ease;
+}
+
+.login-button:hover {
+    background-color: #1e293b !important;
+    transform: scale(1.05);
+}
+
+.login-button i {
+    font-size: 1.2rem;
+}
+
+.user-name-label {
+    display: block;
+    font-size: 0.6rem;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+/* Haarlem Jazz */
+.hero-section {
+    background: url(../images/haarlem-homepage-hero.jpeg) no-repeat center center;
+    background-size: cover;
+    min-height: 100vh;
+    padding-top: 122px;
+    display: flex;
+    justify-content: center;
+}
+
+.hero-content {
+    max-width: 810px;
+}
+
+.hero-title {
+    width: 810px;
+    height: 96px;
+    color: #E8E9FF;
+    font-family: 'Inter', sans-serif;
+    font-size: 80px;
+    font-weight: 600;
+    letter-spacing: -1.6px;
+    margin: 0 auto;
+    line-height: 1;
+}
+
+.hero-subtitle {
+    margin-top: 4px;
+    color: #D3D4E9;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-style: italic;
+    font-weight: 600;
+    line-height: 28px;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.hero-feature-card {
+    position: relative;
+    width: 100%;
+    max-width: 810px;
+    height: 400px;
+    background-size: cover;
+    border-radius: 12px;
+}
+
+.feature-overlay {
+    position: absolute;
+    bottom: 40px;
+    left: 40px;
+    text-align: left;
+}
+
+.feature-title {
+    color: #FFFFFF;
+    font-family: 'Inter', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.purple-button {
+    background-color: #6366F1;
+    color: #FFFFFF;
+    font-weight: 700;
+    padding: 12px 30px;
+    border-radius: 50px;
+    border: none;
+    transition: background 0.3s ease;
+}
+
+.purple-button:hover {
+    background-color: #4F46E5;
+    color: #FFFFFF;
+}
+
+.festival-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    background-color: var(--color-bg-section-warm);
+}
+
+.container-one {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 120px;
+    flex-wrap: wrap;
+    margin-bottom: 160px;
+}
+
+.patronaat-container {
+    flex: 1 1 400px;
+    max-width: 600px;
+}
+
+.patronaat-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(13, 0, 198, 0.1);
+}
+
+.text-container {
+    flex: 1 1 400px;
+    max-width: 550px;
+}
+
+.front-heading {
+    color: #361883;
+    text-align: center;
+    font-family: Inter, sans-serif;
+    font-size: 34px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    margin: 60px auto 100px;
+}
+
+.artist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.artist-card {
+    position: relative;
+    background-color: var(--color-bg-card);
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.artist-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.artist-name {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #FFFFFF;
+    padding: 10px;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    backdrop-filter: blur(4px);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .custom-nav {
+        padding: 0 20px;
+    }
+
+    .active-pill {
+        display: inline-block;
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container-one {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    p {
+        text-align: center;
+    }
+}

@@ -3,14 +3,14 @@ require __DIR__ . "/../Partials/header.php";
 $title = "reset password";
 ?>
 <div class="container mt-5">
-    <div class="card shadow-sm mx-auto" style="max-width: 700px;">
+    <div class="card shadow-sm mx-auto card-wide-form">
         <div class="card-header bg-primary text-white py-3">
             <h4 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Reset Your Password</h4>
         </div>
         <div class="card-body p-4">
             <p class="text-muted mb-4">Please enter and confirm your new secure password below.</p>
 
-            <form action="/update-password" method="POST" id="demo-form">
+            <form action="/update-password" method="POST" id="reset-password-form">
                 <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
                 <input type="hidden" name="token" value="<?= htmlspecialchars($_GET['token'] ?? '') ?>">
                 
@@ -72,7 +72,7 @@ $title = "reset password";
 
 <script>
    function onSubmit(token) {
-        const form = document.getElementById("demo-form");
+        const form = document.getElementById("reset-password-form");
 
         const input = document.createElement('input');
         input.type = 'hidden';

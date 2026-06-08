@@ -1,6 +1,4 @@
-<?php require __DIR__ . "/../Partials/header.php"; 
-?>
-<link rel="stylesheet" href="assets/css/mainjazz.css">
+<?php require __DIR__ . "/../Partials/header.php"; ?>
 
 <section class="hero-section">
     <div class="container text-center hero-content">

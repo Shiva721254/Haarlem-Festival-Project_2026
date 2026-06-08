@@ -5,7 +5,7 @@ $title = "Update User: " . htmlspecialchars($user->FirstName);
 require __DIR__ . "/../Partials/header.php"; 
 ?>
     <div class="container mt-5">
-        <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+        <div class="card shadow-sm mx-auto card-form">
             <div class="card-header bg-success text-white">
                 <h4 class="mb-0">Edit User Details</h4>
             </div>
