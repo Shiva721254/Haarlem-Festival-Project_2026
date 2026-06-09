@@ -3,7 +3,9 @@
 namespace App\Controllers;
 
 use App\Services\CartService;
+use App\Services\OrderService;
 use App\Services\Interfaces\ICartService;
+use App\Services\Interfaces\IOrderService;
 use App\Framework\View;
 use App\Framework\Flash;
 
@@ -14,18 +16,29 @@ use App\Framework\Flash;
 class CartController
 {
     private ICartService $cartService;
+    private IOrderService $orderService;
 
     public function __construct()
     {
         $this->cartService = new CartService();
+        $this->orderService = new OrderService();
     }
 
     // GET: /cart
     public function index(): void
     {
+        $pendingOrders = [];
+        if (isset($_SESSION['UserId'])) {
+            $pendingOrders = array_filter(
+                $this->orderService->getByUser((int) $_SESSION['UserId']),
+                static fn($order) => $order->canPayLater()
+            );
+        }
+
         View::render('Cart/index', [
-            'items'  => $this->cartService->getItems(),
-            'totals' => $this->cartService->totals(),
+            'items'         => $this->cartService->getItems(),
+            'totals'        => $this->cartService->totals(),
+            'pendingOrders' => $pendingOrders,
         ], 'Your cart');
     }
 
