@@ -1,7 +1,6 @@
 <?php
 /** @var ManageUserViewModel $vm */
 use App\Middleware\AuthMiddleware;
-$recaptchaSiteKey = \App\Config::recaptchaSiteKey();
 ?>
     <div class="container mt-5">
         <div class="card shadow-sm mx-auto card-form">
@@ -89,39 +88,11 @@ $recaptchaSiteKey = \App\Config::recaptchaSiteKey();
                     <div class="mt-4 d-flex justify-content-between">
                         <a href="/users" class="btn btn-outline-secondary">Cancel</a>
 
-                        <?php if ($recaptchaSiteKey !== ''): ?>
-                            <button
-                                type="submit"
-                                id="submitBtn"
-                                class="btn btn-primary px-4 g-recaptcha"
-                                data-sitekey="<?= htmlspecialchars($recaptchaSiteKey) ?>"
-                                data-callback='onSubmit'
-                                data-action='submit'
-                                disabled>Create User
-                            </button>
-                        <?php else: ?>
-                            <button type="submit" id="submitBtn" class="btn btn-primary px-4" disabled>Create User</button>
-                        <?php endif; ?>
+                        <button type="submit" id="submitBtn" class="btn btn-primary px-4" disabled>Create User</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-<?php if ($recaptchaSiteKey !== ''): ?>
-<script src="https://www.google.com/recaptcha/api.js"></script>
-<script>
-   function onSubmit(token) {
-        const form = document.getElementById("create-user-form");
-
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'g-recaptcha-response';
-        input.value = token;
-
-        form.appendChild(input);
-        form.submit();
-    }
-</script>
-<?php endif; ?>
 <script src="/assets/js/password.js" defer></script>

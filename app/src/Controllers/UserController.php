@@ -3,7 +3,6 @@
 namespace App\Controllers;
 use App\Services\Interfaces\IUserService;
 use App\Services\UserService;
-use App\Services\RecaptchaService;
 use App\ViewModels\ManageUserViewModel;
 use App\ViewModels\UsersViewModel;
 use App\Models\UserModel;
@@ -16,12 +15,10 @@ use App\CustomException\DuplicateEntryException;
 class UserController
 {
     private IUserService $userService;
-    private RecaptchaService $recaptchaService;
 
     public function __construct()
     {
         $this->userService = new UserService();
-        $this->recaptchaService = new RecaptchaService();
     }
 
     public function index()
@@ -103,12 +100,6 @@ class UserController
     {
         $user = (new UserModel())->fromPost();
         try {
-            $token = $_POST['g-recaptcha-response'] ?? null;
-            if (!$this->recaptchaService->verify($token)) {
-                header('Location: /createUser?error=recaptcha_failed');
-                exit();
-            }       
-            
             if ($user->UserId > 0) {
                 $this->userService->update($user);
             } else {

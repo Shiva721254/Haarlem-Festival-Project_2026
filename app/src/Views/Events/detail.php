@@ -129,8 +129,12 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                                     <?php else: ?>
                                         <?php if ($isReservation): ?>
                                             <label class="form-label small mb-1">Special requests (allergies, diets, wheelchair…)</label>
-                                            <textarea name="special_requests" class="form-control form-control-sm mb-2" rows="2"
+                                            <textarea name="special_requests" class="form-control form-control-sm mb-1" rows="2"
                                                       maxlength="500" placeholder="Optional"></textarea>
+                                            <p class="text-muted small mb-2">
+                                                Optional. Shared only with the venue to handle your request — see our
+                                                <a href="/privacy" target="_blank">privacy policy</a>.
+                                            </p>
                                         <?php endif; ?>
                                         <?php if ($isStories): ?>
                                             <div class="form-check mb-2">

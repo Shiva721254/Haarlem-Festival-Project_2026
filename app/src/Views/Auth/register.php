@@ -3,7 +3,6 @@
 /** @var array<string,string> $old */
 $old = $old ?? [];
 use App\Middleware\AuthMiddleware;
-$recaptchaSiteKey = \App\Config::recaptchaSiteKey();
 ?>
 <div class="container mt-5">
     <div class="card shadow-sm mx-auto card-form">
@@ -67,37 +66,21 @@ $recaptchaSiteKey = \App\Config::recaptchaSiteKey();
                     </div>
                 </div>
 
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" name="consent" value="1" id="consent" required
+                           <?= !empty($old['consent']) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="consent">
+                        I agree to the <a href="/privacy" target="_blank">privacy policy</a> and the processing of my data as described.
+                    </label>
+                </div>
+
                 <div class="mt-4 d-flex justify-content-between align-items-center">
                     <a href="/showLogin" class="btn btn-outline-secondary">Back to login</a>
-                    <?php if ($recaptchaSiteKey !== ''): ?>
-                        <button type="submit"
-                                id="submitBtn"
-                                class="btn btn-purple px-4 g-recaptcha"
-                                data-sitekey="<?= htmlspecialchars($recaptchaSiteKey) ?>"
-                                data-callback="onSubmit"
-                                data-action="submit">Create Account
-                        </button>
-                    <?php else: ?>
-                        <button type="submit" id="submitBtn" class="btn btn-purple px-4">Create Account</button>
-                    <?php endif; ?>
+                    <button type="submit" id="submitBtn" class="btn btn-purple px-4">Create Account</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<?php if ($recaptchaSiteKey !== ''): ?>
-    <script src="https://www.google.com/recaptcha/api.js"></script>
-    <script>
-        function onSubmit(token) {
-            const form = document.getElementById("register-form");
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'g-recaptcha-response';
-            input.value = token;
-            form.appendChild(input);
-            form.submit();
-        }
-    </script>
-<?php endif; ?>
 <script src="/assets/js/password.js" defer></script>
