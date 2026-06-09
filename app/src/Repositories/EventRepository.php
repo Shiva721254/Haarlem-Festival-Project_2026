@@ -12,10 +12,11 @@ class EventRepository extends Repository implements IEventRepository
 {
     public function getPublishedByType(string $typeSlug): array
     {
+        // Passes are excluded here; they are shown in their own section.
         $sql = 'SELECT e.*, et.name AS event_type_name, et.slug AS event_type_slug
                 FROM events e
                 JOIN event_types et ON et.id = e.event_type_id
-                WHERE et.slug = :slug AND e.is_published = 1
+                WHERE et.slug = :slug AND e.is_published = 1 AND e.is_pass = 0
                 ORDER BY e.starts_at ASC';
 
         $rows = $this->fetchAll($sql, ['slug' => $typeSlug]);
@@ -25,6 +26,25 @@ class EventRepository extends Repository implements IEventRepository
             $events[] = EventModel::fromDb($row);
         }
         return $events;
+    }
+
+    /**
+     * Pass "events" for an event type (the all-access passes on sale).
+     *
+     * @return EventModel[]
+     */
+    public function getPassesByType(string $typeSlug): array
+    {
+        $sql = 'SELECT e.*, et.name AS event_type_name, et.slug AS event_type_slug
+                FROM events e
+                JOIN event_types et ON et.id = e.event_type_id
+                WHERE et.slug = :slug AND e.is_published = 1 AND e.is_pass = 1
+                ORDER BY e.id';
+
+        return array_map(
+            static fn(array $r) => EventModel::fromDb($r),
+            $this->fetchAll($sql, ['slug' => $typeSlug])
+        );
     }
 
     public function getById(int $id): ?EventModel
