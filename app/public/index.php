@@ -85,6 +85,14 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/admin/tickets/edit/{id:\d+}', ['App\Controllers\AdminTicketTypeController', 'edit']);
     $r->addRoute('POST', '/admin/tickets/update', ['App\Controllers\AdminTicketTypeController', 'update']);
     $r->addRoute('POST', '/admin/tickets/delete', ['App\Controllers\AdminTicketTypeController', 'delete']);
+
+    // Admin venue management
+    $r->addRoute('GET', '/admin/venues', ['App\Controllers\AdminVenueController', 'index']);
+    $r->addRoute('GET', '/admin/venues/create', ['App\Controllers\AdminVenueController', 'create']);
+    $r->addRoute('POST', '/admin/venues', ['App\Controllers\AdminVenueController', 'store']);
+    $r->addRoute('GET', '/admin/venues/edit/{id:\d+}', ['App\Controllers\AdminVenueController', 'edit']);
+    $r->addRoute('POST', '/admin/venues/update', ['App\Controllers\AdminVenueController', 'update']);
+    $r->addRoute('POST', '/admin/venues/delete', ['App\Controllers\AdminVenueController', 'delete']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];

@@ -36,6 +36,9 @@ $usersActive = preg_match('#^/(users|createUser|updateUser|user|saveUser)#', $ad
             <a class="admin-nav-link <?= $active('/admin/events') ?>" href="/admin/events">
                 <i class="bi bi-calendar-event"></i> Events
             </a>
+            <a class="admin-nav-link <?= $active('/admin/venues') ?>" href="/admin/venues">
+                <i class="bi bi-geo-alt"></i> Venues
+            </a>
             <a class="admin-nav-link <?= $active('/admin/edit') ?>" href="/admin/edit">
                 <i class="bi bi-pencil-square"></i> Homepage
             </a>
