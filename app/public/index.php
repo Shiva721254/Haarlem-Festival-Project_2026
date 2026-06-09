@@ -35,6 +35,9 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/account', ['App\Controllers\AccountController', 'show']);
     $r->addRoute('POST', '/account', ['App\Controllers\AccountController', 'update']);
 
+    // Personal program (a customer's purchased events)
+    $r->addRoute('GET', '/program', ['App\Controllers\ProgramController', 'index']);
+
     // Verification Routes
     $r->addRoute('POST', '/send-verification-link', ['App\Controllers\AuthController', 'sendVerification']);
     $r->addRoute('GET', '/verifyAccount', ['App\Controllers\AuthController', 'verifyAccount']);    
