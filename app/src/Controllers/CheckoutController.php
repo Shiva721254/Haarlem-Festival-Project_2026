@@ -41,6 +41,18 @@ class CheckoutController
 
         // Reload with enriched items (names) for the Stripe line items.
         $order = $this->orderService->getById($result['order']->id);
+        if ($order === null) {
+            Flash::error('Could not load your order. Please try again.');
+            header('Location: /cart');
+            exit();
+        }
+
+        $check = $this->orderService->canStartPayment($order);
+        if (!$check['ok']) {
+            Flash::error($check['message']);
+            header('Location: /cart');
+            exit();
+        }
 
         try {
             $url = $this->paymentService->createCheckoutSession(
@@ -91,11 +103,25 @@ class CheckoutController
         View::render('Checkout/success', ['order' => $order], 'Order confirmed');
     }
 
-    // GET: /checkout/cancel — user backed out of Stripe.
+    // GET: /checkout/cancel - user backed out of Stripe.
     public function cancel(): void
     {
-        Flash::error('Payment cancelled. Your cart is still saved.');
-        header('Location: /cart');
+        AuthMiddleware::requireAuth();
+
+        $orderId = (int) ($_GET['order'] ?? 0);
+        $order = $orderId > 0
+            ? $this->orderService->getByIdForUser($orderId, (int) $_SESSION['UserId'])
+            : null;
+
+        if ($order !== null && $order->canPayLater()) {
+            $deadline = date('j M Y, H:i', strtotime($order->pay_later_until));
+            Flash::error('Payment cancelled. You can still pay this order until ' . $deadline . '.');
+            header('Location: /orders');
+            exit();
+        }
+
+        Flash::error('Payment cancelled.');
+        header('Location: /orders');
         exit();
     }
 }
