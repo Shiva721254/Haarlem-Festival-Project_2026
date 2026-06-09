@@ -31,7 +31,16 @@ class TicketTypeRepository extends Repository implements ITicketTypeRepository
 
     public function getById(int $id): ?TicketTypeModel
     {
-        $row = $this->fetchOne('SELECT * FROM ticket_types WHERE id = :id', ['id' => $id]);
+        // Join the event type so callers can apply type-specific pricing rules
+        // (e.g. the HaarlemPas reduction on Stories).
+        $row = $this->fetchOne(
+            'SELECT tt.*, et.slug AS event_type_slug
+             FROM ticket_types tt
+             JOIN events e ON e.id = tt.event_id
+             JOIN event_types et ON et.id = e.event_type_id
+             WHERE tt.id = :id',
+            ['id' => $id]
+        );
         return $row ? TicketTypeModel::fromDb($row) : null;
     }
 
