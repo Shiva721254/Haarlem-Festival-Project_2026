@@ -65,7 +65,12 @@ use App\Middleware\AuthMiddleware;
                             <td>
                                 <a href="/event/<?= $item->event_id ?>"><?= htmlspecialchars($item->event_title) ?></a>
                             </td>
-                            <td class="text-end">&euro;<?= number_format($item->price, 2) ?></td>
+                            <td class="text-end">
+                                &euro;<?= number_format($item->effectivePrice(), 2) ?>
+                                <?php if ($item->custom_price !== null && $item->custom_price < $item->price): ?>
+                                    <div class="small text-muted"><s>&euro;<?= number_format($item->price, 2) ?></s></div>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <form method="POST" action="/cart/update" class="d-flex gap-1">
                                     <input type="hidden" name="csrf_token" value="<?= AuthMiddleware::generateCsrfToken() ?>">
