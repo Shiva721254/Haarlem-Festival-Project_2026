@@ -155,3 +155,37 @@ $heroImage = $hero->image_path ?: '/assets/images/haarlem-homepage-hero.jpeg';
         <?php endforeach; ?>
     </div>
 </section>
+
+<?php if (!empty($schedule)): ?>
+<section class="container my-5">
+    <div class="home-info-header text-center">
+        <h2>Festival schedule</h2>
+        <p>A day-by-day overview of what&rsquo;s on during the festival.</p>
+    </div>
+    <div class="row g-3">
+        <?php foreach ($schedule as $day => $rows): ?>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-header text-center fw-semibold">
+                        <?= htmlspecialchars(date('l', strtotime($day))) ?>
+                        <span class="d-block small text-muted"><?= htmlspecialchars(date('j M Y', strtotime($day))) ?></span>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <?php foreach ($rows as $r): ?>
+                            <?php $from = substr($r['first_t'], 0, 5); $to = substr($r['last_t'], 0, 5); ?>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a href="/events/<?= htmlspecialchars($r['slug']) ?>" class="text-decoration-none">
+                                    <?= htmlspecialchars($r['type_name']) ?>
+                                </a>
+                                <span class="small text-muted">
+                                    <?= $from === $to ? htmlspecialchars($from) : htmlspecialchars($from) . '&ndash;' . htmlspecialchars($to) ?>
+                                </span>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</section>
+<?php endif; ?>

@@ -26,10 +26,17 @@ class HomeController
             $passes[$p['type_name']][] = $p;
         }
 
+        // Group the schedule by festival day for the condensed schedule strip.
+        $schedule = [];
+        foreach ($this->eventService->getScheduleSummary() as $row) {
+            $schedule[$row['day']][] = $row;
+        }
+
         View::render('Home/index', [
             'blocks'    => $this->contentService->getPageBlocks('home'),
             'summaries' => $this->eventService->getHomeSummaries(),
             'passes'    => $passes,
+            'schedule'  => $schedule,
         ], 'Haarlem Festival');
     }
 
