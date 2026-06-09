@@ -1,5 +1,14 @@
 <?php
 require __DIR__ . '/../vendor/autoload.php';
+// Harden the session cookie: not readable from JS (XSS), sent same-site only
+// (CSRF defence in depth), and Secure when served over HTTPS.
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path'     => '/',
+    'httponly' => true,
+    'samesite' => 'Lax',
+    'secure'   => (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off'),
+]);
 session_start();
 date_default_timezone_set('Europe/Brussels');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -34,6 +43,12 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     // Self-service account management
     $r->addRoute('GET', '/account', ['App\Controllers\AccountController', 'show']);
     $r->addRoute('POST', '/account', ['App\Controllers\AccountController', 'update']);
+    // GDPR rights: data access (export) and erasure (delete account)
+    $r->addRoute('GET', '/account/data', ['App\Controllers\AccountController', 'exportData']);
+    $r->addRoute('POST', '/account/delete', ['App\Controllers\AccountController', 'deleteAccount']);
+
+    // Privacy policy
+    $r->addRoute('GET', '/privacy', ['App\Controllers\HomeController', 'privacy']);
 
     // Personal program (a customer's purchased events)
     $r->addRoute('GET', '/program', ['App\Controllers\ProgramController', 'index']);
