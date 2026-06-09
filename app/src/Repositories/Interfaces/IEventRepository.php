@@ -50,4 +50,7 @@ interface IEventRepository
 
     /** @return array<int,array{id:int,name:string}> */
     public function getRestaurantOptions(): array;
+
+    /** @return array<int,array{id:int,name:string}> */
+    public function getArtistOptions(): array;
 }

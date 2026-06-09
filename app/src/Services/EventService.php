@@ -64,6 +64,7 @@ class EventService implements IEventService
             'types'       => $this->eventRepository->getTypeOptions(),
             'venues'      => $this->eventRepository->getVenueOptions(),
             'restaurants' => $this->eventRepository->getRestaurantOptions(),
+            'artists'     => $this->eventRepository->getArtistOptions(),
         ];
     }
 }

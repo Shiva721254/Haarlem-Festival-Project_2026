@@ -36,7 +36,7 @@ interface IEventService
     /**
      * Option lists for the event form selects.
      *
-     * @return array{types:array,venues:array,restaurants:array}
+     * @return array{types:array,venues:array,restaurants:array,artists:array}
      */
     public function getFormOptions(): array;
 }
