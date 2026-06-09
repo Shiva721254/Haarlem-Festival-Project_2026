@@ -20,6 +20,11 @@ class EventService implements IEventService
         return $this->eventRepository->getPublishedByType($typeSlug);
     }
 
+    public function getPassesByType(string $typeSlug): array
+    {
+        return $this->eventRepository->getPassesByType($typeSlug);
+    }
+
     public function getById(int $id): ?EventModel
     {
         return $this->eventRepository->getById($id);
@@ -64,6 +69,7 @@ class EventService implements IEventService
             'types'       => $this->eventRepository->getTypeOptions(),
             'venues'      => $this->eventRepository->getVenueOptions(),
             'restaurants' => $this->eventRepository->getRestaurantOptions(),
+            'artists'     => $this->eventRepository->getArtistOptions(),
         ];
     }
 }

@@ -13,6 +13,7 @@ class EventModel
     public string $starts_at;
     public ?string $ends_at = null;
     public bool $is_published = false;
+    public bool $is_pass = false;
 
     // Joined / related data (populated by the repository when available).
     public ?string $event_type_name = null;
@@ -21,6 +22,8 @@ class EventModel
     public ?RestaurantModel $restaurant = null;
     /** @var ArtistModel[] */
     public array $artists = [];
+    /** @var int[] */
+    public array $artist_ids = [];
 
     public static function fromDb(array $data): self
     {
@@ -35,6 +38,7 @@ class EventModel
         $e->starts_at = $data['starts_at'];
         $e->ends_at = $data['ends_at'] ?? null;
         $e->is_published = (bool)($data['is_published'] ?? false);
+        $e->is_pass = (bool)($data['is_pass'] ?? false);
 
         // Optional joined columns (aliased in the repository query).
         $e->event_type_name = $data['event_type_name'] ?? null;

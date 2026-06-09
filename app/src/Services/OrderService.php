@@ -65,6 +65,7 @@ class OrderService implements IOrderService
             $line->quantity = $item->quantity;
             $line->unit_price = $item->price;
             $line->vat_rate = $item->vat_rate;
+            $line->special_requests = $item->special_requests;
             $order->items[] = $line;
         }
 
@@ -80,6 +81,16 @@ class OrderService implements IOrderService
     public function getByUser(int $userId): array
     {
         return $this->orderRepo->getByUser($userId);
+    }
+
+    public function getAllForAdmin(?string $status = null): array
+    {
+        return $this->orderRepo->getAllForAdmin($status);
+    }
+
+    public function getExportRows(?string $status = null): array
+    {
+        return $this->orderRepo->getExportRows($status);
     }
 
     public function setPaymentIntent(int $orderId, string $paymentIntentId): void

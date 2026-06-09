@@ -37,7 +37,7 @@ class TicketPdfService implements ITicketPdfService
                       display:flex; }
             .ticket-info { width:70%; }
             .ticket-qr { width:30%; text-align:right; }
-            .ticket-qr img { width:120px; height:120px; }
+            .ticket-qr img { width:170px; height:170px; }
             .event { font-size:18px; font-weight:bold; }
             .type { color:#5c2379; font-weight:bold; margin-top:4px; }
             .meta { color:#555; margin-top:6px; font-size:12px; }

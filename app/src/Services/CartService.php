@@ -58,7 +58,7 @@ class CartService implements ICartService
      *
      * @return array{ok:bool,message:string}
      */
-    public function add(int $ticketTypeId, int $quantity): array
+    public function add(int $ticketTypeId, int $quantity, string $notes = ''): array
     {
         if ($quantity < 1) {
             return ['ok' => false, 'message' => 'Quantity must be at least 1.'];
@@ -80,7 +80,8 @@ class CartService implements ICartService
             ];
         }
 
-        $this->cartRepo->setQuantity($cartId, $ticketTypeId, $desired);
+        // Empty notes are stored as null so a plain ticket keeps no requests.
+        $this->cartRepo->setQuantity($cartId, $ticketTypeId, $desired, $notes !== '' ? $notes : null);
         return ['ok' => true, 'message' => 'Added to cart.'];
     }
 

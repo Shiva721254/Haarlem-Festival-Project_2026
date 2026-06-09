@@ -19,24 +19,24 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <?php $currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?'); ?>
+        <?php
+            $currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
+            // Data-driven nav: list the active event types from the database.
+            $navTypes = (new \App\Services\EventService())->getActiveTypes();
+        ?>
         <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
             <ul class="navbar-nav align-items-center">
                 <li class="nav-item">
                     <a class="nav-link <?= $currentPath === '/' ? 'active-pill' : '' ?>" href="/">Home</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPath === '/events/yummy' ? 'active-pill' : '' ?>" href="/events/yummy">Yummy</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPath === '/events/jazz' ? 'active-pill' : '' ?>" href="/events/jazz">Haarlem Jazz</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPath === '/events/dance' ? 'active-pill' : '' ?>" href="/events/dance">Dance</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPath === '/events/history' ? 'active-pill' : '' ?>" href="/events/history">Magical Players</a>
-                </li>
+                <?php foreach ($navTypes as $type): ?>
+                    <?php $href = '/events/' . $type['slug']; ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $currentPath === $href ? 'active-pill' : '' ?>" href="<?= htmlspecialchars($href) ?>">
+                            <?= htmlspecialchars($type['name']) ?>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
             </ul>
         </div>
 
@@ -51,11 +51,23 @@
                 <?php endif; ?>
             </a>
             <?php if (isset($_SESSION['UserId'])): ?>
-                <?php if (isset($_SESSION['Role']) && $_SESSION['Role']->value === 'admin'): ?>
+                <?php
+                    $role = $_SESSION['Role'] ?? null;
+                    $roleValue = is_object($role) && property_exists($role, 'value') ? $role->value : (is_string($role) ? $role : null);
+                ?>
+                <?php if (in_array($roleValue, ['admin', 'employee'], true)): ?>
+                    <a href="/scanner" class="btn login-button rounded-circle" title="Ticket scanner">
+                        <i class="bi bi-qr-code-scan"></i>
+                    </a>
+                <?php endif; ?>
+                <?php if ($roleValue === 'admin'): ?>
                     <a href="/admin" class="btn login-button rounded-circle" title="Admin panel">
                         <i class="bi bi-speedometer2"></i>
                     </a>
                 <?php endif; ?>
+                <a href="/program" class="btn login-button rounded-circle" title="My program">
+                    <i class="bi bi-calendar-heart"></i>
+                </a>
                 <a href="/account" class="btn login-button rounded-circle" title="Account Information">
                     <i class="bi bi-person-circle"></i>
                     <small class="user-name-label"><?= htmlspecialchars($_SESSION['FirstName'] ?? 'User') ?></small>

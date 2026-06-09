@@ -29,16 +29,17 @@ class OrderRepository extends Repository implements IOrderRepository
             $orderId = (int)$pdo->lastInsertId();
 
             $itemStmt = $pdo->prepare(
-                'INSERT INTO order_items (order_id, ticket_type_id, quantity, unit_price, vat_rate)
-                 VALUES (:order_id, :ticket_type_id, :quantity, :unit_price, :vat_rate)'
+                'INSERT INTO order_items (order_id, ticket_type_id, quantity, unit_price, vat_rate, special_requests)
+                 VALUES (:order_id, :ticket_type_id, :quantity, :unit_price, :vat_rate, :special_requests)'
             );
             foreach ($order->items as $item) {
                 $itemStmt->execute([
-                    'order_id'       => $orderId,
-                    'ticket_type_id' => $item->ticket_type_id,
-                    'quantity'       => $item->quantity,
-                    'unit_price'     => $item->unit_price,
-                    'vat_rate'       => $item->vat_rate,
+                    'order_id'         => $orderId,
+                    'ticket_type_id'   => $item->ticket_type_id,
+                    'quantity'         => $item->quantity,
+                    'unit_price'       => $item->unit_price,
+                    'vat_rate'         => $item->vat_rate,
+                    'special_requests' => $item->special_requests,
                 ]);
             }
 
@@ -65,6 +66,48 @@ class OrderRepository extends Repository implements IOrderRepository
     {
         $rows = $this->fetchAll('SELECT * FROM orders WHERE user_id = :uid ORDER BY created_at DESC', ['uid' => $userId]);
         return array_map(static fn(array $r) => OrderModel::fromDb($r), $rows);
+    }
+
+    public function getAllForAdmin(?string $status = null): array
+    {
+        [$where, $params] = $this->statusFilter($status);
+        $sql = 'SELECT o.*,
+                       CONCAT(u.FirstName, " ", u.LastName) AS customer_name,
+                       u.Email AS customer_email,
+                       COALESCE(SUM(oi.quantity), 0) AS item_count
+                FROM orders o
+                JOIN users u ON u.UserId = o.user_id
+                LEFT JOIN order_items oi ON oi.order_id = o.id
+                ' . $where . '
+                GROUP BY o.id, u.FirstName, u.LastName, u.Email
+                ORDER BY o.created_at DESC';
+
+        return array_map(static fn(array $row) => OrderModel::fromDb($row), $this->fetchAll($sql, $params));
+    }
+
+    public function getExportRows(?string $status = null): array
+    {
+        [$where, $params] = $this->statusFilter($status);
+        $sql = 'SELECT o.id,
+                       o.invoice_number,
+                       o.status,
+                       o.subtotal,
+                       o.vat_total,
+                       o.total,
+                       o.created_at,
+                       o.paid_at,
+                       o.payment_intent_id,
+                       CONCAT(u.FirstName, " ", u.LastName) AS customer_name,
+                       u.Email AS customer_email,
+                       COALESCE(SUM(oi.quantity), 0) AS item_count
+                FROM orders o
+                JOIN users u ON u.UserId = o.user_id
+                LEFT JOIN order_items oi ON oi.order_id = o.id
+                ' . $where . '
+                GROUP BY o.id, u.FirstName, u.LastName, u.Email
+                ORDER BY o.created_at DESC';
+
+        return $this->fetchAll($sql, $params);
     }
 
     public function setPaymentIntent(int $orderId, string $paymentIntentId): void
@@ -95,6 +138,35 @@ class OrderRepository extends Repository implements IOrderRepository
                 $stmt->execute(['oi' => (int)$item['id'], 'qr' => bin2hex(random_bytes(16))]);
             }
         }
+    }
+
+    /**
+     * A user's personal program: the events they hold paid tickets for,
+     * one row per event, chronologically.
+     *
+     * @return \App\Models\ProgramItemModel[]
+     */
+    public function getProgramEvents(int $userId): array
+    {
+        $sql = 'SELECT e.id AS event_id, e.title, e.starts_at, e.ends_at, e.image,
+                       v.name AS venue_name,
+                       et.slug AS type_slug, et.name AS type_name,
+                       GROUP_CONCAT(DISTINCT tt.name ORDER BY tt.name SEPARATOR ", ") AS ticket_types,
+                       SUM(oi.quantity) AS total_tickets
+                FROM orders o
+                JOIN order_items oi ON oi.order_id = o.id
+                JOIN ticket_types tt ON tt.id = oi.ticket_type_id
+                JOIN events e ON e.id = tt.event_id
+                JOIN event_types et ON et.id = e.event_type_id
+                LEFT JOIN venues v ON v.id = e.venue_id
+                WHERE o.user_id = :uid AND o.status = "paid"
+                GROUP BY e.id, e.title, e.starts_at, e.ends_at, e.image, v.name, et.slug, et.name
+                ORDER BY e.starts_at';
+
+        return array_map(
+            static fn(array $r) => \App\Models\ProgramItemModel::fromDb($r),
+            $this->fetchAll($sql, ['uid' => $userId])
+        );
     }
 
     /**
@@ -132,5 +204,17 @@ class OrderRepository extends Repository implements IOrderRepository
             static fn(array $r) => OrderItemModel::fromDb($r),
             $this->fetchAll($sql, ['oid' => $orderId])
         );
+    }
+
+    /**
+     * @return array{0:string,1:array<string,string>}
+     */
+    private function statusFilter(?string $status): array
+    {
+        $allowed = ['pending', 'paid', 'failed', 'cancelled'];
+        if ($status === null || $status === '' || !in_array($status, $allowed, true)) {
+            return ['', []];
+        }
+        return ['WHERE o.status = :status', ['status' => $status]];
     }
 }

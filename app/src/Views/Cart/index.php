@@ -32,7 +32,12 @@ use App\Middleware\AuthMiddleware;
                 <tbody>
                     <?php foreach ($items as $item): ?>
                         <tr>
-                            <td><?= htmlspecialchars($item->ticket_type_name) ?></td>
+                            <td>
+                                <?= htmlspecialchars($item->ticket_type_name) ?>
+                                <?php if (!empty($item->special_requests)): ?>
+                                    <div class="small text-muted"><i class="bi bi-info-circle"></i> <?= htmlspecialchars($item->special_requests) ?></div>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <a href="/event/<?= $item->event_id ?>"><?= htmlspecialchars($item->event_title) ?></a>
                             </td>

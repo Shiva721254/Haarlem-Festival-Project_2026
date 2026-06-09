@@ -17,6 +17,14 @@ interface IOrderService
     /** @return OrderModel[] */
     public function getByUser(int $userId): array;
 
+    /** @return OrderModel[] */
+    public function getAllForAdmin(?string $status = null): array;
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    public function getExportRows(?string $status = null): array;
+
     public function setPaymentIntent(int $orderId, string $paymentIntentId): void;
 
     /**

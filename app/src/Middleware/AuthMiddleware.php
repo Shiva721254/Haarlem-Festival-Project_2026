@@ -16,7 +16,16 @@ class AuthMiddleware {
     
     public static function requireAdmin() {
         self::requireAuth();
-        if ($_SESSION['Role']->value !== 'admin') {
+        if (self::currentRole() !== 'admin') {
+            http_response_code(403);
+            echo 'Access Denied';
+            exit();
+        }
+    }
+
+    public static function requireStaff() {
+        self::requireAuth();
+        if (!in_array(self::currentRole(), ['admin', 'employee'], true)) {
             http_response_code(403);
             echo 'Access Denied';
             exit();
@@ -26,7 +35,7 @@ class AuthMiddleware {
     public static function requireOwner($requiredUserId) {
         self::requireAuth();
 
-        if ($_SESSION['UserId'] !== $requiredUserId && $_SESSION['Role']->value !== 'admin') {
+        if ($_SESSION['UserId'] !== $requiredUserId && self::currentRole() !== 'admin') {
             http_response_code(403);
             echo 'Unauthorized: You do not own this resource.';
             exit();
@@ -37,7 +46,7 @@ class AuthMiddleware {
         self::requireAuth();
 
         $currentUserId = $_SESSION['UserId'];
-        $currentUserRole = $_SESSION['Role']->value;
+        $currentUserRole = self::currentRole();
 
         $isAdmin = ($currentUserRole === 'admin');
         $isOwner = ($currentUserId == $requiredUserId);
@@ -61,5 +70,10 @@ class AuthMiddleware {
         $sessionToken = $_SESSION['csrf_token'] ?? '';
 
         return !empty($token) && hash_equals($sessionToken, $token);
+    }
+
+    private static function currentRole(): ?string {
+        $role = $_SESSION['Role'] ?? null;
+        return is_object($role) && property_exists($role, 'value') ? $role->value : (is_string($role) ? $role : null);
     }
 }

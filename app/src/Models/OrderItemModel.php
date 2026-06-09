@@ -9,6 +9,7 @@ class OrderItemModel
     public int $quantity;
     public float $unit_price;
     public float $vat_rate;
+    public ?string $special_requests = null;
 
     // Optional joined display data.
     public ?string $ticket_type_name = null;
@@ -23,6 +24,7 @@ class OrderItemModel
         $i->quantity = (int)$data['quantity'];
         $i->unit_price = (float)$data['unit_price'];
         $i->vat_rate = (float)$data['vat_rate'];
+        $i->special_requests = $data['special_requests'] ?? null;
         $i->ticket_type_name = $data['ticket_type_name'] ?? null;
         $i->event_title = $data['event_title'] ?? null;
         return $i;

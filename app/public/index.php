@@ -35,6 +35,9 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/account', ['App\Controllers\AccountController', 'show']);
     $r->addRoute('POST', '/account', ['App\Controllers\AccountController', 'update']);
 
+    // Personal program (a customer's purchased events)
+    $r->addRoute('GET', '/program', ['App\Controllers\ProgramController', 'index']);
+
     // Verification Routes
     $r->addRoute('POST', '/send-verification-link', ['App\Controllers\AuthController', 'sendVerification']);
     $r->addRoute('GET', '/verifyAccount', ['App\Controllers\AuthController', 'verifyAccount']);    
@@ -59,6 +62,10 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/cart/update', ['App\Controllers\CartController', 'update']);
     $r->addRoute('POST', '/cart/remove', ['App\Controllers\CartController', 'remove']);
 
+    // Ticket scanner (employee + admin)
+    $r->addRoute('GET', '/scanner', ['App\Controllers\ScannerController', 'index']);
+    $r->addRoute('POST', '/scanner/scan', ['App\Controllers\ScannerController', 'scan']);
+
     // Checkout + Stripe payment (login required)
     $r->addRoute('POST', '/checkout', ['App\Controllers\CheckoutController', 'start']);
     $r->addRoute('GET', '/checkout/success', ['App\Controllers\CheckoutController', 'success']);
@@ -78,6 +85,11 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/admin/events/update', ['App\Controllers\AdminEventController', 'update']);
     $r->addRoute('POST', '/admin/events/delete', ['App\Controllers\AdminEventController', 'delete']);
 
+    // Admin order management
+    $r->addRoute('GET', '/admin/orders', ['App\Controllers\AdminOrderController', 'index']);
+    $r->addRoute('GET', '/admin/orders/export', ['App\Controllers\AdminOrderController', 'export']);
+    $r->addRoute('GET', '/admin/orders/{id:\d+}', ['App\Controllers\AdminOrderController', 'show']);
+
     // Admin ticket-type management (scoped to an event)
     $r->addRoute('GET', '/admin/events/{eventId:\d+}/tickets', ['App\Controllers\AdminTicketTypeController', 'index']);
     $r->addRoute('GET', '/admin/events/{eventId:\d+}/tickets/create', ['App\Controllers\AdminTicketTypeController', 'create']);
@@ -85,6 +97,30 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/admin/tickets/edit/{id:\d+}', ['App\Controllers\AdminTicketTypeController', 'edit']);
     $r->addRoute('POST', '/admin/tickets/update', ['App\Controllers\AdminTicketTypeController', 'update']);
     $r->addRoute('POST', '/admin/tickets/delete', ['App\Controllers\AdminTicketTypeController', 'delete']);
+
+    // Admin venue management
+    $r->addRoute('GET', '/admin/venues', ['App\Controllers\AdminVenueController', 'index']);
+    $r->addRoute('GET', '/admin/venues/create', ['App\Controllers\AdminVenueController', 'create']);
+    $r->addRoute('POST', '/admin/venues', ['App\Controllers\AdminVenueController', 'store']);
+    $r->addRoute('GET', '/admin/venues/edit/{id:\d+}', ['App\Controllers\AdminVenueController', 'edit']);
+    $r->addRoute('POST', '/admin/venues/update', ['App\Controllers\AdminVenueController', 'update']);
+    $r->addRoute('POST', '/admin/venues/delete', ['App\Controllers\AdminVenueController', 'delete']);
+
+    // Admin restaurant management
+    $r->addRoute('GET', '/admin/restaurants', ['App\Controllers\AdminRestaurantController', 'index']);
+    $r->addRoute('GET', '/admin/restaurants/create', ['App\Controllers\AdminRestaurantController', 'create']);
+    $r->addRoute('POST', '/admin/restaurants', ['App\Controllers\AdminRestaurantController', 'store']);
+    $r->addRoute('GET', '/admin/restaurants/edit/{id:\d+}', ['App\Controllers\AdminRestaurantController', 'edit']);
+    $r->addRoute('POST', '/admin/restaurants/update', ['App\Controllers\AdminRestaurantController', 'update']);
+    $r->addRoute('POST', '/admin/restaurants/delete', ['App\Controllers\AdminRestaurantController', 'delete']);
+
+    // Admin artist management
+    $r->addRoute('GET', '/admin/artists', ['App\Controllers\AdminArtistController', 'index']);
+    $r->addRoute('GET', '/admin/artists/create', ['App\Controllers\AdminArtistController', 'create']);
+    $r->addRoute('POST', '/admin/artists', ['App\Controllers\AdminArtistController', 'store']);
+    $r->addRoute('GET', '/admin/artists/edit/{id:\d+}', ['App\Controllers\AdminArtistController', 'edit']);
+    $r->addRoute('POST', '/admin/artists/update', ['App\Controllers\AdminArtistController', 'update']);
+    $r->addRoute('POST', '/admin/artists/delete', ['App\Controllers\AdminArtistController', 'delete']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];

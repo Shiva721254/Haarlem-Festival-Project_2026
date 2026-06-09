@@ -3,7 +3,7 @@
  * Create / edit event form.
  *
  * @var \App\Models\EventModel|null $event   null = creating, otherwise editing
- * @var array{types:array,venues:array,restaurants:array} $options
+ * @var array{types:array,venues:array,restaurants:array,artists:array} $options
  *
  * TODO (you): restyle/lay this out to taste. It is fully functional as-is.
  * Image is a path field for now — the image-upload ticket will replace it.
@@ -19,6 +19,10 @@ $val = static fn($v) => htmlspecialchars((string)($v ?? ''));
 
 // datetime-local inputs want "Y-m-d\TH:i".
 $dt = static fn(?string $s) => $s ? date('Y-m-d\TH:i', strtotime($s)) : '';
+$selectedArtistIds = array_map(static fn($a) => (int)$a->id, $event->artists ?? []);
+if (!empty($event?->artist_ids)) {
+    $selectedArtistIds = array_map('intval', $event->artist_ids);
+}
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0"><?= $heading ?></h4>
@@ -88,6 +92,18 @@ $dt = static fn(?string $s) => $s ? date('Y-m-d\TH:i', strtotime($s)) : '';
     <div class="mb-3">
         <label class="form-label">Image path <span class="text-muted">(e.g. /assets/images/gumbo.jpg — upload coming later)</span></label>
         <input type="text" name="image" class="form-control" value="<?= $val($event->image ?? '') ?>">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Artists <span class="text-muted">(optional)</span></label>
+        <select name="artist_ids[]" class="form-select" multiple size="5">
+            <?php foreach ($options['artists'] as $artist): ?>
+                <option value="<?= (int)$artist['id'] ?>" <?= in_array((int)$artist['id'], $selectedArtistIds, true) ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($artist['name']) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+        <div class="form-text">Hold Ctrl/Cmd to select multiple artists.</div>
     </div>
 
     <div class="mb-3">

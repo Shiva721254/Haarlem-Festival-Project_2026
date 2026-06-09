@@ -10,36 +10,48 @@ use \PDO;
 
 class UserRepository extends Repository implements IUserRepository
 {
-    public function getAll(): array
+    /**
+     * Users for the admin list, with optional search, role filter and sorting.
+     *
+     * @return UserModel[]
+     */
+    public function getAll(string $search = '', string $role = '', string $sort = 'LastName', string $dir = 'ASC'): array
     {
-        $sql = 'SELECT UserId, FirstName, LastName, Email, Role, isVerified, isActive 
-                FROM users ORDER BY LastName';
-        
-        $result = $this->getConnection()->query($sql);
+        // Whitelist sort column and direction to avoid SQL injection.
+        $sortable = ['FirstName', 'LastName', 'Email', 'Role', 'created_at'];
+        if (!in_array($sort, $sortable, true)) {
+            $sort = 'LastName';
+        }
+        $dir = strtoupper($dir) === 'DESC' ? 'DESC' : 'ASC';
 
-        // 1. Fetch as a plain associative array (not a class yet)
-        $rows = $result->fetchAll(PDO::FETCH_ASSOC);
+        $where = [];
+        $params = [];
+        if ($search !== '') {
+            $where[] = '(FirstName LIKE :q OR LastName LIKE :q OR Email LIKE :q)';
+            $params['q'] = '%' . $search . '%';
+        }
+        if ($role !== '') {
+            $where[] = 'Role = :role';
+            $params['role'] = $role;
+        }
+        $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
-        // 2. Map the arrays to UserModel objects manually
+        $sql = "SELECT UserId, FirstName, LastName, Email, Role, isVerified, isActive, created_at
+                FROM users {$whereSql} ORDER BY {$sort} {$dir}";
+
+        $rows = $this->fetchAll($sql, $params);
+
         $users = [];
-
         foreach ($rows as $row) {
             $user = new UserModel();
-            
-            // Manual assignment
-            $user->UserId = $row['UserId'];
+            $user->UserId = (int) $row['UserId'];
             $user->FirstName = $row['FirstName'];
             $user->LastName = $row['LastName'];
             $user->Email = $row['Email'];
-            
-            // --- THE FIX ---
-            // Convert the database string back into the Enum
             $user->Role = \App\Enums\UserRole::tryFrom($row['Role']);
-            // ----------------
-
-            $user->isVerified = (bool) $row['isVerified']; // Good practice to cast bools
+            $user->isVerified = (bool) $row['isVerified'];
             $user->isActive = (bool) $row['isActive'];
-
+            $user->created_at = $row['created_at'] ?? null;
             $users[] = $user;
         }
 

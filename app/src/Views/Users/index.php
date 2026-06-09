@@ -10,12 +10,30 @@ use App\ViewModels\UsersViewModel;
         </a>
     </div>
 
-    <?php
-    // Check if the users property exists and is iterable
-    if (empty($vm->users)):
-    ?>
-        <div class="alert alert-info text-center mt-5" role="alert">
-            No users found yet!
+    <form method="GET" action="/users" class="row g-2 mb-4">
+        <div class="col-sm-5">
+            <input type="text" name="q" class="form-control" placeholder="Search name or email"
+                   value="<?= htmlspecialchars($vm->search) ?>">
+        </div>
+        <div class="col-sm-3">
+            <select name="role" class="form-select">
+                <option value="">All roles</option>
+                <?php foreach (\App\Enums\UserRole::cases() as $r): ?>
+                    <option value="<?= $r->value ?>" <?= $vm->role === $r->value ? 'selected' : '' ?>><?= $r->name ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-sm-4 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i> Search</button>
+            <?php if ($vm->search !== '' || $vm->role !== ''): ?>
+                <a href="/users" class="btn btn-outline-secondary">Clear</a>
+            <?php endif; ?>
+        </div>
+    </form>
+
+    <?php if (empty($vm->users)): ?>
+        <div class="alert alert-info text-center" role="alert">
+            No users match your search.
         </div>
     <?php else: ?>
 
@@ -24,10 +42,11 @@ use App\ViewModels\UsersViewModel;
                 <thead class="table-dark">
                     <tr>
                         <th>ID</th>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                        <th>Email</th>
-                        <th>Role</th>
+                        <th><a class="text-white text-decoration-none" href="<?= $vm->sortLink('FirstName') ?>">First Name<?= $vm->sortIndicator('FirstName') ?></a></th>
+                        <th><a class="text-white text-decoration-none" href="<?= $vm->sortLink('LastName') ?>">Last Name<?= $vm->sortIndicator('LastName') ?></a></th>
+                        <th><a class="text-white text-decoration-none" href="<?= $vm->sortLink('Email') ?>">Email<?= $vm->sortIndicator('Email') ?></a></th>
+                        <th><a class="text-white text-decoration-none" href="<?= $vm->sortLink('Role') ?>">Role<?= $vm->sortIndicator('Role') ?></a></th>
+                        <th><a class="text-white text-decoration-none" href="<?= $vm->sortLink('created_at') ?>">Registered<?= $vm->sortIndicator('created_at') ?></a></th>
                         <th class="text-center">Verified</th>
                         <th class="text-center">Active</th>
                         <th class="text-center">Actions</th>
@@ -49,7 +68,9 @@ use App\ViewModels\UsersViewModel;
                             <td>
                                 <?= $user->Role ? htmlspecialchars($user->Role->name) : '' ?>
                             </td>
-
+                            <td>
+                                <?= $user->created_at ? htmlspecialchars(date('j M Y', strtotime($user->created_at))) : '—' ?>
+                            </td>
 
                             <td class="text-center">
                                 <?php

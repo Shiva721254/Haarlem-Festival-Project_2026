@@ -38,9 +38,19 @@ class EventController
 
         $events = $this->eventService->getByType($typeSlug);
 
+        // All-access passes for this type, each with its purchasable options.
+        $passes = [];
+        foreach ($this->eventService->getPassesByType($typeSlug) as $passEvent) {
+            $passes[] = [
+                'event'   => $passEvent,
+                'options' => $this->ticketTypeService->getActiveByEvent($passEvent->id),
+            ];
+        }
+
         View::render('Events/index', [
             'eventType' => $eventType,   // ['slug'=>, 'name'=>, 'description'=>]
             'events'    => $events,
+            'passes'    => $passes,
         ], $eventType['name']);
     }
 

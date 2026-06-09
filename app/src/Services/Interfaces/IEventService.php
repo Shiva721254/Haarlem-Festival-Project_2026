@@ -10,6 +10,13 @@ interface IEventService
      */
     public function getByType(string $typeSlug): array;
 
+    /**
+     * Pass "events" (all-access passes) for an event type.
+     *
+     * @return EventModel[]
+     */
+    public function getPassesByType(string $typeSlug): array;
+
     public function getById(int $id): ?EventModel;
 
     /**
@@ -36,7 +43,7 @@ interface IEventService
     /**
      * Option lists for the event form selects.
      *
-     * @return array{types:array,venues:array,restaurants:array}
+     * @return array{types:array,venues:array,restaurants:array,artists:array}
      */
     public function getFormOptions(): array;
 }
