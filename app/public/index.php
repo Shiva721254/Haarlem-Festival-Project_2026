@@ -85,6 +85,10 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/admin/events/update', ['App\Controllers\AdminEventController', 'update']);
     $r->addRoute('POST', '/admin/events/delete', ['App\Controllers\AdminEventController', 'delete']);
 
+    // Admin order management
+    $r->addRoute('GET', '/admin/orders', ['App\Controllers\AdminOrderController', 'index']);
+    $r->addRoute('GET', '/admin/orders/export', ['App\Controllers\AdminOrderController', 'export']);
+
     // Admin ticket-type management (scoped to an event)
     $r->addRoute('GET', '/admin/events/{eventId:\d+}/tickets', ['App\Controllers\AdminTicketTypeController', 'index']);
     $r->addRoute('GET', '/admin/events/{eventId:\d+}/tickets/create', ['App\Controllers\AdminTicketTypeController', 'create']);

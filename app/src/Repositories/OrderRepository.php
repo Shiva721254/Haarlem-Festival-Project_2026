@@ -67,6 +67,48 @@ class OrderRepository extends Repository implements IOrderRepository
         return array_map(static fn(array $r) => OrderModel::fromDb($r), $rows);
     }
 
+    public function getAllForAdmin(?string $status = null): array
+    {
+        [$where, $params] = $this->statusFilter($status);
+        $sql = 'SELECT o.*,
+                       CONCAT(u.FirstName, " ", u.LastName) AS customer_name,
+                       u.Email AS customer_email,
+                       COALESCE(SUM(oi.quantity), 0) AS item_count
+                FROM orders o
+                JOIN users u ON u.UserId = o.user_id
+                LEFT JOIN order_items oi ON oi.order_id = o.id
+                ' . $where . '
+                GROUP BY o.id, u.FirstName, u.LastName, u.Email
+                ORDER BY o.created_at DESC';
+
+        return array_map(static fn(array $row) => OrderModel::fromDb($row), $this->fetchAll($sql, $params));
+    }
+
+    public function getExportRows(?string $status = null): array
+    {
+        [$where, $params] = $this->statusFilter($status);
+        $sql = 'SELECT o.id,
+                       o.invoice_number,
+                       o.status,
+                       o.subtotal,
+                       o.vat_total,
+                       o.total,
+                       o.created_at,
+                       o.paid_at,
+                       o.payment_intent_id,
+                       CONCAT(u.FirstName, " ", u.LastName) AS customer_name,
+                       u.Email AS customer_email,
+                       COALESCE(SUM(oi.quantity), 0) AS item_count
+                FROM orders o
+                JOIN users u ON u.UserId = o.user_id
+                LEFT JOIN order_items oi ON oi.order_id = o.id
+                ' . $where . '
+                GROUP BY o.id, u.FirstName, u.LastName, u.Email
+                ORDER BY o.created_at DESC';
+
+        return $this->fetchAll($sql, $params);
+    }
+
     public function setPaymentIntent(int $orderId, string $paymentIntentId): void
     {
         $this->execute(
@@ -161,5 +203,17 @@ class OrderRepository extends Repository implements IOrderRepository
             static fn(array $r) => OrderItemModel::fromDb($r),
             $this->fetchAll($sql, ['oid' => $orderId])
         );
+    }
+
+    /**
+     * @return array{0:string,1:array<string,string>}
+     */
+    private function statusFilter(?string $status): array
+    {
+        $allowed = ['pending', 'paid', 'failed', 'cancelled'];
+        if ($status === null || $status === '' || !in_array($status, $allowed, true)) {
+            return ['', []];
+        }
+        return ['WHERE o.status = :status', ['status' => $status]];
     }
 }
