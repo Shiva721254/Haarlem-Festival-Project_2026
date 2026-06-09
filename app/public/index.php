@@ -66,6 +66,14 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/admin/events/edit/{id:\d+}', ['App\Controllers\AdminEventController', 'edit']);
     $r->addRoute('POST', '/admin/events/update', ['App\Controllers\AdminEventController', 'update']);
     $r->addRoute('POST', '/admin/events/delete', ['App\Controllers\AdminEventController', 'delete']);
+
+    // Admin ticket-type management (scoped to an event)
+    $r->addRoute('GET', '/admin/events/{eventId:\d+}/tickets', ['App\Controllers\AdminTicketTypeController', 'index']);
+    $r->addRoute('GET', '/admin/events/{eventId:\d+}/tickets/create', ['App\Controllers\AdminTicketTypeController', 'create']);
+    $r->addRoute('POST', '/admin/tickets', ['App\Controllers\AdminTicketTypeController', 'store']);
+    $r->addRoute('GET', '/admin/tickets/edit/{id:\d+}', ['App\Controllers\AdminTicketTypeController', 'edit']);
+    $r->addRoute('POST', '/admin/tickets/update', ['App\Controllers\AdminTicketTypeController', 'update']);
+    $r->addRoute('POST', '/admin/tickets/delete', ['App\Controllers\AdminTicketTypeController', 'delete']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
