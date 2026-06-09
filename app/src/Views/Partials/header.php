@@ -19,24 +19,24 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <?php $currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?'); ?>
+        <?php
+            $currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
+            // Data-driven nav: list the active event types from the database.
+            $navTypes = (new \App\Services\EventService())->getActiveTypes();
+        ?>
         <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
             <ul class="navbar-nav align-items-center">
                 <li class="nav-item">
                     <a class="nav-link <?= $currentPath === '/' ? 'active-pill' : '' ?>" href="/">Home</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPath === '/events/yummy' ? 'active-pill' : '' ?>" href="/events/yummy">Yummy</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPath === '/events/jazz' ? 'active-pill' : '' ?>" href="/events/jazz">Haarlem Jazz</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPath === '/events/dance' ? 'active-pill' : '' ?>" href="/events/dance">Dance</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPath === '/events/history' ? 'active-pill' : '' ?>" href="/events/history">Magical Players</a>
-                </li>
+                <?php foreach ($navTypes as $type): ?>
+                    <?php $href = '/events/' . $type['slug']; ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $currentPath === $href ? 'active-pill' : '' ?>" href="<?= htmlspecialchars($href) ?>">
+                            <?= htmlspecialchars($type['name']) ?>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
             </ul>
         </div>
 
