@@ -68,6 +68,9 @@
                 <a href="/program" class="btn login-button rounded-circle" title="My program">
                     <i class="bi bi-calendar-heart"></i>
                 </a>
+                <a href="/orders" class="btn login-button rounded-circle" title="My orders">
+                    <i class="bi bi-receipt"></i>
+                </a>
                 <a href="/account" class="btn login-button rounded-circle" title="Account Information">
                     <i class="bi bi-person-circle"></i>
                     <small class="user-name-label"><?= htmlspecialchars($_SESSION['FirstName'] ?? 'User') ?></small>
