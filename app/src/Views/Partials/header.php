@@ -65,6 +65,9 @@
                         <i class="bi bi-speedometer2"></i>
                     </a>
                 <?php endif; ?>
+                <a href="/program" class="btn login-button rounded-circle" title="My program">
+                    <i class="bi bi-calendar-heart"></i>
+                </a>
                 <a href="/account" class="btn login-button rounded-circle" title="Account Information">
                     <i class="bi bi-person-circle"></i>
                     <small class="user-name-label"><?= htmlspecialchars($_SESSION['FirstName'] ?? 'User') ?></small>
