@@ -10,6 +10,13 @@ interface IEventService
      */
     public function getByType(string $typeSlug): array;
 
+    /**
+     * Pass "events" (all-access passes) for an event type.
+     *
+     * @return EventModel[]
+     */
+    public function getPassesByType(string $typeSlug): array;
+
     public function getById(int $id): ?EventModel;
 
     /**

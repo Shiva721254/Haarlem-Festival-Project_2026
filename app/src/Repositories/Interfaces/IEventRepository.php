@@ -13,6 +13,13 @@ interface IEventRepository
     public function getPublishedByType(string $typeSlug): array;
 
     /**
+     * Pass "events" (all-access passes) for an event type.
+     *
+     * @return EventModel[]
+     */
+    public function getPassesByType(string $typeSlug): array;
+
+    /**
      * A single event with its venue, restaurant and artists loaded.
      */
     public function getById(int $id): ?EventModel;
