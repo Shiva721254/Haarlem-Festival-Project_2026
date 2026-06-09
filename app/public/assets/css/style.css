@@ -705,3 +705,45 @@ p {
         text-align: left;
     }
 }
+
+.scanner-page {
+    background: #f4f2eb;
+    min-height: calc(100vh - 120px);
+}
+
+.scanner-shell {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.scanner-title {
+    color: #361883;
+    font-size: 34px;
+    font-weight: 800;
+}
+
+.scanner-camera,
+.scanner-form,
+.scanner-result {
+    border-radius: 8px;
+}
+
+.scanner-camera {
+    background: #fff;
+    border: 1px solid rgba(54, 24, 131, 0.12);
+    padding: 14px;
+}
+
+#qr-reader {
+    width: 100%;
+}
+
+#qr-reader video {
+    border-radius: 6px;
+}
+
+.scanner-ticket-meta {
+    display: grid;
+    gap: 3px;
+    font-size: 14px;
+}

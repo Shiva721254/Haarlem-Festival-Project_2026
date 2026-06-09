@@ -51,7 +51,16 @@
                 <?php endif; ?>
             </a>
             <?php if (isset($_SESSION['UserId'])): ?>
-                <?php if (isset($_SESSION['Role']) && $_SESSION['Role']->value === 'admin'): ?>
+                <?php
+                    $role = $_SESSION['Role'] ?? null;
+                    $roleValue = is_object($role) && property_exists($role, 'value') ? $role->value : (is_string($role) ? $role : null);
+                ?>
+                <?php if (in_array($roleValue, ['admin', 'employee'], true)): ?>
+                    <a href="/scanner" class="btn login-button rounded-circle" title="Ticket scanner">
+                        <i class="bi bi-qr-code-scan"></i>
+                    </a>
+                <?php endif; ?>
+                <?php if ($roleValue === 'admin'): ?>
                     <a href="/admin" class="btn login-button rounded-circle" title="Admin panel">
                         <i class="bi bi-speedometer2"></i>
                     </a>
