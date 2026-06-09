@@ -3,6 +3,7 @@
  * Shopping cart page.
  *
  * @var \App\Models\CartItemModel[] $items
+ * @var \App\Models\OrderModel[] $pendingOrders
  * @var array{subtotal:float,vat:float,total:float} $totals
  *
  * TODO (you): restyle to match the design. Fully functional as-is.
@@ -11,6 +12,29 @@ use App\Middleware\AuthMiddleware;
 ?>
 <div class="container my-5">
     <h1 class="mb-4">Your cart</h1>
+
+    <?php if (!empty($pendingOrders)): ?>
+        <div class="alert alert-warning d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <strong>You have an unpaid order.</strong>
+                <?php $latestPending = reset($pendingOrders); ?>
+                <div class="small">
+                    Order #<?= (int)$latestPending->id ?> can be paid until
+                    <?= htmlspecialchars(date('j M Y, H:i', strtotime($latestPending->pay_later_until))) ?>.
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/orders" class="btn btn-sm btn-outline-secondary">View orders</a>
+                <form method="POST" action="/orders/pay" class="m-0">
+                    <input type="hidden" name="csrf_token" value="<?= AuthMiddleware::generateCsrfToken() ?>">
+                    <input type="hidden" name="order_id" value="<?= (int)$latestPending->id ?>">
+                    <button type="submit" class="btn btn-sm btn-purple">
+                        <i class="bi bi-credit-card"></i> Pay now
+                    </button>
+                </form>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <?php if (empty($items)): ?>
         <div class="alert alert-info">

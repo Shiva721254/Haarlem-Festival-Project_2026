@@ -68,6 +68,21 @@ class OrderRepository extends Repository implements IOrderRepository
         return array_map(static fn(array $r) => OrderModel::fromDb($r), $rows);
     }
 
+    public function getByIdForUser(int $orderId, int $userId): ?OrderModel
+    {
+        $row = $this->fetchOne(
+            'SELECT * FROM orders WHERE id = :id AND user_id = :uid',
+            ['id' => $orderId, 'uid' => $userId]
+        );
+        if ($row === null) {
+            return null;
+        }
+
+        $order = OrderModel::fromDb($row);
+        $order->items = $this->loadItems($orderId);
+        return $order;
+    }
+
     public function getAllForAdmin(?string $status = null): array
     {
         [$where, $params] = $this->statusFilter($status);

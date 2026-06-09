@@ -43,10 +43,10 @@ class OrderService implements IOrderService
         foreach ($items as $item) {
             $ticket = $this->ticketRepo->getById($item->ticket_type_id);
             if ($ticket === null || !$ticket->is_active) {
-                return ['ok' => false, 'order' => null, 'message' => "“{$item->ticket_type_name}” is no longer available."];
+                return ['ok' => false, 'order' => null, 'message' => "\"{$item->ticket_type_name}\" is no longer available."];
             }
             if ($item->quantity > $ticket->available()) {
-                return ['ok' => false, 'order' => null, 'message' => "Only {$ticket->available()} left for “{$ticket->name}”."];
+                return ['ok' => false, 'order' => null, 'message' => "Only {$ticket->available()} left for \"{$ticket->name}\"."];
             }
         }
 
@@ -58,6 +58,7 @@ class OrderService implements IOrderService
         $order->subtotal = $totals['subtotal'];
         $order->vat_total = $totals['vat'];
         $order->total = $totals['total'];
+        $order->pay_later_until = date('Y-m-d H:i:s', time() + 24 * 60 * 60);
 
         foreach ($items as $item) {
             $line = new OrderItemModel();
@@ -81,6 +82,35 @@ class OrderService implements IOrderService
     public function getByUser(int $userId): array
     {
         return $this->orderRepo->getByUser($userId);
+    }
+
+    public function getByIdForUser(int $orderId, int $userId): ?OrderModel
+    {
+        return $this->orderRepo->getByIdForUser($orderId, $userId);
+    }
+
+    /**
+     * Validate a pending order before sending the customer back to Stripe.
+     *
+     * @return array{ok:bool,message:string}
+     */
+    public function canStartPayment(OrderModel $order): array
+    {
+        if (!$order->canPayLater()) {
+            return ['ok' => false, 'message' => 'This order can no longer be paid. Please create a new order.'];
+        }
+
+        foreach ($order->items as $item) {
+            $ticket = $this->ticketRepo->getById($item->ticket_type_id);
+            if ($ticket === null || !$ticket->is_active) {
+                return ['ok' => false, 'message' => "\"{$item->ticket_type_name}\" is no longer available."];
+            }
+            if ($item->quantity > $ticket->available()) {
+                return ['ok' => false, 'message' => "Only {$ticket->available()} left for \"{$ticket->name}\"."];
+            }
+        }
+
+        return ['ok' => true, 'message' => 'Order can be paid.'];
     }
 
     public function getAllForAdmin(?string $status = null): array
