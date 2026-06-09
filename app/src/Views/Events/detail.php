@@ -90,7 +90,11 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                 <?php
                     $isReservation = $event->restaurant !== null;
                     $isStories = ($event->event_type_slug ?? null) === 'stories';
+                    $isMagic = ($event->event_type_slug ?? null) === 'magic';
                 ?>
+                <?php if ($isMagic): ?>
+                    <?php require __DIR__ . '/partials/magic.php'; ?>
+                <?php else: ?>
                 <h6 class="mb-3"><?= $isReservation ? 'Reservation' : 'Tickets' ?></h6>
 
                 <?php if (empty($ticketTypes)): ?>
@@ -159,6 +163,7 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
+                <?php endif; /* isMagic */ ?>
             </div>
         </div>
 
