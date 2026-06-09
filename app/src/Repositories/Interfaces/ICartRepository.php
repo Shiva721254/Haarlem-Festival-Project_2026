@@ -19,4 +19,6 @@ interface ICartRepository
     public function removeItem(int $cartId, int $ticketTypeId): void;
 
     public function itemCount(int $cartId): int;
+
+    public function clearCart(int $cartId): void;
 }

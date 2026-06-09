@@ -18,4 +18,6 @@ interface ITicketTypeRepository
     public function update(TicketTypeModel $t): void;
 
     public function delete(int $id): void;
+
+    public function incrementSold(int $id, int $quantity): void;
 }

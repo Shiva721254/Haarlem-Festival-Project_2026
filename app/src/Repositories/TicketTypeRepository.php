@@ -72,6 +72,18 @@ class TicketTypeRepository extends Repository implements ITicketTypeRepository
     }
 
     /**
+     * Increase the sold count (called when an order is paid). Guards against
+     * overselling by only updating while stock remains.
+     */
+    public function incrementSold(int $id, int $quantity): void
+    {
+        $this->execute(
+            'UPDATE ticket_types SET sold = sold + :q WHERE id = :id AND sold + :q <= capacity',
+            ['q' => $quantity, 'id' => $id]
+        );
+    }
+
+    /**
      * @param array<int,array<string,mixed>> $rows
      * @return TicketTypeModel[]
      */
