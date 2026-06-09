@@ -59,6 +59,11 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/cart/update', ['App\Controllers\CartController', 'update']);
     $r->addRoute('POST', '/cart/remove', ['App\Controllers\CartController', 'remove']);
 
+    // Checkout + Stripe payment (login required)
+    $r->addRoute('POST', '/checkout', ['App\Controllers\CheckoutController', 'start']);
+    $r->addRoute('GET', '/checkout/success', ['App\Controllers\CheckoutController', 'success']);
+    $r->addRoute('GET', '/checkout/cancel', ['App\Controllers\CheckoutController', 'cancel']);
+
     $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'index']);
 
     $r->addRoute('GET', '/admin/edit', ['App\Controllers\AdminContentController', 'edit']);
