@@ -4,7 +4,9 @@ namespace App\Controllers;
 use App\Framework\View;
 use App\Middleware\AuthMiddleware;
 use App\Services\Interfaces\IOrderService;
+use App\Services\Interfaces\IUserService;
 use App\Services\OrderService;
+use App\Services\UserService;
 
 class AdminOrderController
 {
@@ -25,10 +27,30 @@ class AdminOrderController
     ];
 
     private IOrderService $orderService;
+    private IUserService $userService;
 
     public function __construct()
     {
         $this->orderService = new OrderService();
+        $this->userService = new UserService();
+    }
+
+    // GET: /admin/orders/{id}
+    public function show(array $vars = []): void
+    {
+        AuthMiddleware::requireAdmin();
+
+        $order = $this->orderService->getById((int)($vars['id'] ?? 0));
+        if ($order === null) {
+            http_response_code(404);
+            echo 'Order not found';
+            return;
+        }
+
+        View::renderAdmin('Admin/orders/show', [
+            'order'    => $order,
+            'customer' => $this->userService->getById($order->user_id),
+        ], 'Order #' . $order->id);
     }
 
     public function index(): void

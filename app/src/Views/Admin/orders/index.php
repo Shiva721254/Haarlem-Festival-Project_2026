@@ -78,7 +78,7 @@
                 <?php foreach ($orders as $order): ?>
                     <tr>
                         <td>
-                            <strong>#<?= (int)$order->id ?></strong><br>
+                            <a href="/admin/orders/<?= (int)$order->id ?>"><strong>#<?= (int)$order->id ?></strong></a><br>
                             <span class="text-muted small"><?= htmlspecialchars($order->invoice_number ?? 'No invoice yet') ?></span>
                         </td>
                         <td>
