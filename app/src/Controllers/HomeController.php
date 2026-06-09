@@ -5,17 +5,21 @@ namespace App\Controllers;
 use App\Framework\View;
 use App\Services\ContentService;
 use App\Services\EventService;
+use App\Services\VenueService;
 use App\Services\Interfaces\IEventService;
+use App\Services\Interfaces\IVenueService;
 
 class HomeController
 {
     private ContentService $contentService;
     private IEventService $eventService;
+    private IVenueService $venueService;
 
     public function __construct()
     {
         $this->contentService = new ContentService();
         $this->eventService = new EventService();
+        $this->venueService = new VenueService();
     }
 
     public function index(): void
@@ -37,6 +41,7 @@ class HomeController
             'summaries' => $this->eventService->getHomeSummaries(),
             'passes'    => $passes,
             'schedule'  => $schedule,
+            'locations' => $this->venueService->getFestivalLocations(),
         ], 'Haarlem Festival');
     }
 

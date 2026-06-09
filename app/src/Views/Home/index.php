@@ -189,3 +189,36 @@ $heroImage = $hero->image_path ?: '/assets/images/haarlem-homepage-hero.jpeg';
     </div>
 </section>
 <?php endif; ?>
+
+<section class="container my-5">
+    <div class="home-info-header text-center">
+        <h2>Where it happens</h2>
+        <p>The festival takes place across Haarlem and nearby Bloemendaal &amp; Overveen. Walking tours start at the St. Bavo Church on the Grote Markt.</p>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="ratio ratio-16x9 rounded overflow-hidden border">
+                <iframe
+                    title="Festival locations in Haarlem"
+                    src="https://www.openstreetmap.org/export/embed.html?bbox=4.585%2C52.370%2C4.665%2C52.412&amp;layer=mapnik&amp;marker=52.3814%2C4.6376"
+                    style="border:0;" loading="lazy"></iframe>
+            </div>
+            <a class="small" href="https://www.openstreetmap.org/?mlat=52.3814&amp;mlon=4.6376#map=14/52.3850/4.6300" target="_blank" rel="noopener">
+                View a larger map &rarr;
+            </a>
+        </div>
+        <div class="col-lg-5">
+            <h3 class="h5 mb-3">Festival locations</h3>
+            <ul class="list-group list-group-flush">
+                <?php foreach (($locations ?? []) as $loc): ?>
+                    <li class="list-group-item px-0">
+                        <span class="fw-semibold"><?= htmlspecialchars($loc['name']) ?></span>
+                        <?php if (!empty($loc['address'])): ?>
+                            <span class="d-block small text-muted"><?= htmlspecialchars($loc['address']) ?></span>
+                        <?php endif; ?>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </div>
+</section>
