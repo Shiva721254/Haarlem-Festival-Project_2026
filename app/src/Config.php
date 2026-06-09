@@ -34,4 +34,13 @@ final class Config
     // disabled; set both in .env to enforce it in production.
     public static function recaptchaSiteKey(): string { return self::env('RECAPTCHA_SITE_KEY', ''); }
     public static function recaptchaSecretKey(): string { return self::env('RECAPTCHA_SECRET_KEY', ''); }
+
+    // Stripe (test/sandbox in development). Keys live in .env, never committed.
+    public static function stripePublishableKey(): string { return self::env('STRIPE_PUBLISHABLE_KEY', ''); }
+    public static function stripeSecretKey(): string { return self::env('STRIPE_SECRET_KEY', ''); }
+
+    /**
+     * Base URL used to build absolute return URLs for Stripe redirects.
+     */
+    public static function appUrl(): string { return self::env('APP_URL', 'http://localhost'); }
 }
