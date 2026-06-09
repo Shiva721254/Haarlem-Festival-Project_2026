@@ -5,7 +5,7 @@ use App\Models\UserModel;
 
 interface IUserRepository
 {
-    public function getAll(): array ;
+    public function getAll(string $search = '', string $role = '', string $sort = 'LastName', string $dir = 'ASC'): array ;
     public function create(UserModel $article) : void;
     public function getById(int $id): ?UserModel;
     public function update(UserModel $article) : void;

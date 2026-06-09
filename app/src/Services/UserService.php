@@ -18,10 +18,9 @@ class UserService implements IUserService
         $this->mailService = new MailService();
     }
 
-    public function getAll(): array 
+    public function getAll(string $search = '', string $role = '', string $sort = 'LastName', string $dir = 'ASC'): array
     {
-        $users = $this->userRepository->getAll();
-        return $users;
+        return $this->userRepository->getAll($search, $role, $sort, $dir);
     }
 
     public function create(UserModel $user): void

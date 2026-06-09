@@ -27,8 +27,13 @@ class UserController
     public function index()
     {
         AuthMiddleware::requireAdmin(); 
-        $users = $this->userService->getAll();
-        $vm = new UsersViewModel($users);
+        $search = trim($_GET['q'] ?? '');
+        $role   = trim($_GET['role'] ?? '');
+        $sort   = $_GET['sort'] ?? 'LastName';
+        $dir    = $_GET['dir'] ?? 'ASC';
+
+        $users = $this->userService->getAll($search, $role, $sort, $dir);
+        $vm = new UsersViewModel($users, $search, $role, $sort, $dir);
         View::renderAdmin('Users/index', ['vm' => $vm], 'Users');
     }
 
