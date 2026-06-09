@@ -104,6 +104,15 @@ class CartRepository extends Repository implements ICartRepository
         $this->execute($sql, ['cid' => $cartId, 'tid' => $ticketTypeId, 'qty' => $quantity]);
     }
 
+    /** Set the effective unit price for a line (donation amount or discount). */
+    public function setCustomPrice(int $cartId, int $ticketTypeId, ?float $price): void
+    {
+        $this->execute(
+            'UPDATE cart_items SET custom_price = :price WHERE cart_id = :cid AND ticket_type_id = :tid',
+            ['price' => $price, 'cid' => $cartId, 'tid' => $ticketTypeId]
+        );
+    }
+
     public function removeItem(int $cartId, int $ticketTypeId): void
     {
         $this->execute(
