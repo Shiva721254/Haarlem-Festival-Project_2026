@@ -67,4 +67,26 @@ use App\Middleware\AuthMiddleware;
             </form>
         </div>
     </div>
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">Your data &amp; privacy</h5>
+            <p class="text-muted small mb-3">
+                Read our <a href="/privacy">privacy policy</a>. You can download a copy of your data,
+                or delete your account.
+            </p>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <a href="/account/data" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-download"></i> Download my data
+                </a>
+                <form method="POST" action="/account/delete" class="d-inline"
+                      onsubmit="return confirm('Delete your account? Your personal data will be removed. This cannot be undone.');">
+                    <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken() ?>">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-trash"></i> Delete my account
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>

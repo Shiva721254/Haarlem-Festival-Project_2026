@@ -3,7 +3,9 @@
 namespace App\Controllers;
 
 use App\Services\Interfaces\IUserService;
+use App\Services\Interfaces\IOrderService;
 use App\Services\UserService;
+use App\Services\OrderService;
 use App\Framework\View;
 use App\Framework\Flash;
 use App\Middleware\AuthMiddleware;
@@ -21,10 +23,12 @@ class AccountController
     private const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB
 
     private IUserService $userService;
+    private IOrderService $orderService;
 
     public function __construct()
     {
         $this->userService = new UserService();
+        $this->orderService = new OrderService();
     }
 
     // GET: /account
@@ -33,6 +37,59 @@ class AccountController
         AuthMiddleware::requireAuth();
         $user = $this->userService->getById((int) $_SESSION['UserId']);
         View::render('Account/index', ['user' => $user], 'My Account');
+    }
+
+    // GET: /account/data — GDPR right of access: download a copy of your data.
+    public function exportData(): void
+    {
+        AuthMiddleware::requireAuth();
+        $userId = (int) $_SESSION['UserId'];
+        $user = $this->userService->getById($userId);
+
+        $orders = [];
+        foreach ($this->orderService->getByUser($userId) as $order) {
+            $orders[] = [
+                'id'             => $order->id,
+                'invoice_number' => $order->invoice_number,
+                'status'         => $order->status,
+                'total'          => $order->total,
+                'created_at'     => $order->created_at,
+                'paid_at'        => $order->paid_at,
+            ];
+        }
+
+        $payload = [
+            'exported_at' => date('c'),
+            'account'     => [
+                'first_name' => $user->FirstName ?? null,
+                'last_name'  => $user->LastName ?? null,
+                'email'      => $user->Email ?? null,
+                'role'       => $user->Role->value ?? null,
+                'created_at' => $user->created_at ?? null,
+            ],
+            'orders'      => $orders,
+        ];
+
+        header('Content-Type: application/json; charset=utf-8');
+        header('Content-Disposition: attachment; filename="my-haarlem-festival-data.json"');
+        echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        exit();
+    }
+
+    // POST: /account/delete — GDPR right to erasure of your own account.
+    public function deleteAccount(): void
+    {
+        AuthMiddleware::requireAuth();
+        $this->userService->deleteOwnAccount((int) $_SESSION['UserId']);
+
+        // Log out: drop the auth identity and rotate the session id, but keep
+        // the session so the confirmation message survives the redirect.
+        unset($_SESSION['UserId'], $_SESSION['Role'], $_SESSION['FirstName']);
+        session_regenerate_id(true);
+
+        Flash::success('Your account has been deleted and your personal data removed.');
+        header('Location: /');
+        exit();
     }
 
     // POST: /account

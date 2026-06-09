@@ -12,6 +12,7 @@ interface IUserService
     public function changePassword(int $userId, string $currentPassword, string $newPassword): bool;
     public function updateProfileImage(int $userId, string $path): void;
     public function delete(int $id): void;
+    public function deleteOwnAccount(int $userId): void;
 
     //login stuff
     public function authenticate(string $email, string $password): ?UserModel;

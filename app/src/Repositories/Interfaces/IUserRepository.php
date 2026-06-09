@@ -12,6 +12,7 @@ interface IUserRepository
     public function updateProfile(int $userId, string $firstName, string $lastName, string $email): void;
     public function updateProfileImage(int $userId, string $path): void;
     public function delete(int $id): void;
+    public function anonymize(int $userId): void;
     public function getByEmail(string $email): ?UserModel;
 
     // password

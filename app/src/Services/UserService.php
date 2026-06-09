@@ -56,7 +56,16 @@ class UserService implements IUserService
     public function delete(int $id): void
     {
         $this->userRepository->delete($id);
-    }    
+    }
+
+    /**
+     * GDPR erasure of the user's own account: anonymise personal data while
+     * keeping linked transaction records intact.
+     */
+    public function deleteOwnAccount(int $userId): void
+    {
+        $this->userRepository->anonymize($userId);
+    }
 
     public function sendConfirmEmail(): void
     {

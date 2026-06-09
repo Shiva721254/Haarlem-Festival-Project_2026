@@ -164,6 +164,26 @@ class UserRepository extends Repository implements IUserRepository
         $stmt->execute();
     }
 
+    /**
+     * GDPR erasure: strip personal data but keep the row so linked transaction
+     * records (orders, invoices) stay intact. The account is deactivated and
+     * the email freed with a non-routable placeholder.
+     */
+    public function anonymize(int $userId): void
+    {
+        $sql = "UPDATE users SET
+                    FirstName = 'Deleted', LastName = 'User',
+                    Email = CONCAT('deleted+', UserId, '@removed.invalid'),
+                    Password = '', profile_image = NULL,
+                    verification_token = NULL, verification_token_expires_at = NULL,
+                    reset_token_hash = NULL, reset_token_expires_at = NULL,
+                    isActive = 0, isVerified = 0
+                WHERE UserId = :id";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bindValue(':id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
     // --- RESET PASSWORD OPERATIONS ---
     public function updateResetToken(int $userId, ?string $hash, ?string $expiry): void
     {
