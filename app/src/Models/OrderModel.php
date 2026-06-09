@@ -47,4 +47,16 @@ class OrderModel
     {
         return $this->status === 'paid';
     }
+
+    public function isPending(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function canPayLater(): bool
+    {
+        return $this->isPending()
+            && $this->pay_later_until !== null
+            && strtotime($this->pay_later_until) >= time();
+    }
 }

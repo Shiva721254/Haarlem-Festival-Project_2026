@@ -15,6 +15,8 @@ interface IOrderRepository
     /** @return OrderModel[] */
     public function getByUser(int $userId): array;
 
+    public function getByIdForUser(int $orderId, int $userId): ?OrderModel;
+
     /** @return OrderModel[] */
     public function getAllForAdmin(?string $status = null): array;
 
