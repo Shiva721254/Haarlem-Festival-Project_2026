@@ -11,6 +11,10 @@ class TicketTypeModel
     public int $capacity;
     public int $sold;
     public bool $is_active;
+    public bool $is_donation = false;       // pay-what-you-like
+
+    // Joined when loaded with its event (e.g. for HaarlemPas eligibility).
+    public ?string $event_type_slug = null;
 
     public static function fromDb(array $data): self
     {
@@ -23,6 +27,8 @@ class TicketTypeModel
         $t->capacity = (int)$data['capacity'];
         $t->sold = (int)$data['sold'];
         $t->is_active = (bool)$data['is_active'];
+        $t->is_donation = (bool)($data['is_donation'] ?? false);
+        $t->event_type_slug = $data['event_type_slug'] ?? null;
         return $t;
     }
 
