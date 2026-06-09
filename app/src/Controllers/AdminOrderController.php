@@ -57,9 +57,9 @@ class AdminOrderController
         header('Content-Disposition: attachment; filename="' . $filename . '"');
 
         $out = fopen('php://output', 'w');
-        fputcsv($out, array_map(static fn(string $key) => self::EXPORT_COLUMNS[$key], $columns));
+        fputcsv($out, array_map(static fn(string $key) => self::EXPORT_COLUMNS[$key], $columns), ',', '"', '');
         foreach ($rows as $row) {
-            fputcsv($out, array_map(static fn(string $key) => $row[$key] ?? '', $columns));
+            fputcsv($out, array_map(static fn(string $key) => $row[$key] ?? '', $columns), ',', '"', '');
         }
         fclose($out);
         exit();
