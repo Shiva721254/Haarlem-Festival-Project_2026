@@ -11,7 +11,7 @@ interface ICartService
     public function itemCount(): int;
 
     /** @return array{ok:bool,message:string} */
-    public function add(int $ticketTypeId, int $quantity, string $notes = ''): array;
+    public function add(int $ticketTypeId, int $quantity, string $notes = '', ?float $amount = null, bool $haarlemPas = false): array;
 
     /** @return array{ok:bool,message:string} */
     public function updateQuantity(int $ticketTypeId, int $quantity): array;

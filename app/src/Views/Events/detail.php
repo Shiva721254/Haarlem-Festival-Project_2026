@@ -87,7 +87,10 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                 <?php endif; ?>
 
                 <hr>
-                <?php $isReservation = $event->restaurant !== null; ?>
+                <?php
+                    $isReservation = $event->restaurant !== null;
+                    $isStories = ($event->event_type_slug ?? null) === 'stories';
+                ?>
                 <h6 class="mb-3"><?= $isReservation ? 'Reservation' : 'Tickets' ?></h6>
 
                 <?php if (empty($ticketTypes)): ?>
@@ -102,7 +105,7 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                         <div class="ticket-option mb-3">
                             <div class="d-flex justify-content-between">
                                 <span class="fw-semibold"><?= htmlspecialchars($ticket->name) ?></span>
-                                <span>&euro;<?= number_format($ticket->price, 2) ?></span>
+                                <span><?= $ticket->is_donation ? 'Pay what you like' : '&euro;' . number_format($ticket->price, 2) ?></span>
                             </div>
                             <?php if ($ticket->isSoldOut()): ?>
                                 <span class="badge text-bg-secondary mt-1">Sold out</span>
@@ -111,19 +114,42 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                                     <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken() ?>">
                                     <input type="hidden" name="ticket_type_id" value="<?= $ticket->id ?>">
                                     <input type="hidden" name="return_to" value="/event/<?= $event->id ?>">
-                                    <?php if ($isReservation): ?>
-                                        <label class="form-label small mb-1">Special requests (allergies, diets, wheelchair…)</label>
-                                        <textarea name="special_requests" class="form-control form-control-sm mb-2" rows="2"
-                                                  maxlength="500" placeholder="Optional"></textarea>
+
+                                    <?php if ($ticket->is_donation): ?>
+                                        <p class="text-muted small mb-1">
+                                            Choose what you'd like to pay — the proceeds support the storytellers' causes.
+                                        </p>
+                                        <input type="hidden" name="quantity" value="1">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">&euro;</span>
+                                            <input type="number" name="amount" value="5.00" min="1" step="0.50"
+                                                   class="form-control" aria-label="Donation amount" required>
+                                            <button type="submit" class="btn purple-button">Donate &amp; reserve</button>
+                                        </div>
+                                    <?php else: ?>
+                                        <?php if ($isReservation): ?>
+                                            <label class="form-label small mb-1">Special requests (allergies, diets, wheelchair…)</label>
+                                            <textarea name="special_requests" class="form-control form-control-sm mb-2" rows="2"
+                                                      maxlength="500" placeholder="Optional"></textarea>
+                                        <?php endif; ?>
+                                        <?php if ($isStories): ?>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="haarlempas" value="1"
+                                                       id="hp-<?= $ticket->id ?>">
+                                                <label class="form-check-label small" for="hp-<?= $ticket->id ?>">
+                                                    I have a HaarlemPas (25% off)
+                                                </label>
+                                            </div>
+                                        <?php endif; ?>
+                                        <div class="d-flex gap-2">
+                                            <input type="number" name="quantity" value="1" min="1" max="<?= $ticket->available() ?>"
+                                                   class="form-control form-control-sm" style="width:80px;"
+                                                   aria-label="<?= $isReservation ? 'Guests' : 'Quantity' ?>">
+                                            <button type="submit" class="btn btn-sm purple-button flex-grow-1">
+                                                <?= $isReservation ? 'Reserve' : 'Add to cart' ?>
+                                            </button>
+                                        </div>
                                     <?php endif; ?>
-                                    <div class="d-flex gap-2">
-                                        <input type="number" name="quantity" value="1" min="1" max="<?= $ticket->available() ?>"
-                                               class="form-control form-control-sm" style="width:80px;"
-                                               aria-label="<?= $isReservation ? 'Guests' : 'Quantity' ?>">
-                                        <button type="submit" class="btn btn-sm purple-button flex-grow-1">
-                                            <?= $isReservation ? 'Reserve' : 'Add to cart' ?>
-                                        </button>
-                                    </div>
                                 </form>
                             <?php endif; ?>
                         </div>

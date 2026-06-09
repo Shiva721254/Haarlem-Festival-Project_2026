@@ -10,6 +10,9 @@ use App\Services\Interfaces\ICartService;
 
 class CartService implements ICartService
 {
+    private const MIN_DONATION = 1.00;        // pay-what-you-like floor
+    private const HAARLEMPAS_RATE = 0.25;     // 25% off Stories entry fees
+
     private ICartRepository $cartRepo;
     private ITicketTypeRepository $ticketRepo;
 
@@ -58,7 +61,7 @@ class CartService implements ICartService
      *
      * @return array{ok:bool,message:string}
      */
-    public function add(int $ticketTypeId, int $quantity, string $notes = ''): array
+    public function add(int $ticketTypeId, int $quantity, string $notes = '', ?float $amount = null, bool $haarlemPas = false): array
     {
         if ($quantity < 1) {
             return ['ok' => false, 'message' => 'Quantity must be at least 1.'];
@@ -67,6 +70,19 @@ class CartService implements ICartService
         $ticket = $this->ticketRepo->getById($ticketTypeId);
         if ($ticket === null || !$ticket->is_active) {
             return ['ok' => false, 'message' => 'That ticket is not available.'];
+        }
+
+        // Effective price: a chosen donation amount, the HaarlemPas reduction on
+        // Stories, or null (use the ticket's own price). Never trust a client
+        // price for a fixed ticket — the discount is computed server-side.
+        $customPrice = null;
+        if ($ticket->is_donation) {
+            if ($amount === null || $amount < self::MIN_DONATION) {
+                return ['ok' => false, 'message' => 'Please enter an amount of at least 1.00 euro.'];
+            }
+            $customPrice = round($amount, 2);
+        } elseif ($haarlemPas && $ticket->event_type_slug === 'stories') {
+            $customPrice = round($ticket->price * (1 - self::HAARLEMPAS_RATE), 2);
         }
 
         $cartId = $this->cartId();
@@ -82,6 +98,7 @@ class CartService implements ICartService
 
         // Empty notes are stored as null so a plain ticket keeps no requests.
         $this->cartRepo->setQuantity($cartId, $ticketTypeId, $desired, $notes !== '' ? $notes : null);
+        $this->cartRepo->setCustomPrice($cartId, $ticketTypeId, $customPrice);
         return ['ok' => true, 'message' => 'Added to cart.'];
     }
 

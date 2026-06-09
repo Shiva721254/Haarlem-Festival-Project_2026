@@ -64,7 +64,7 @@ class OrderService implements IOrderService
             $line = new OrderItemModel();
             $line->ticket_type_id = $item->ticket_type_id;
             $line->quantity = $item->quantity;
-            $line->unit_price = $item->price;
+            $line->unit_price = $item->effectivePrice();
             $line->vat_rate = $item->vat_rate;
             $line->special_requests = $item->special_requests;
             $order->items[] = $line;
