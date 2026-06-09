@@ -1,9 +1,12 @@
 FROM php:fpm
 
 # Install system dependencies and Composer
+# GD (with PNG/JPEG/freetype) is needed for QR-code and PDF image generation.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git unzip libzip-dev \
-    && docker-php-ext-install pdo pdo_mysql \
+       libpng-dev libjpeg-dev libfreetype6-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_mysql gd \
     && curl -sS https://getcomposer.org/installer -o composer-setup.php \
     && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
     && rm composer-setup.php \
