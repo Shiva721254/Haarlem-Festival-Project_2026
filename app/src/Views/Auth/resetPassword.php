@@ -52,13 +52,7 @@ $title = "reset password";
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                     <a href="/login" class="btn btn-link text-decoration-none me-md-2">Back to Login</a>
-                    <button type="submit" 
-                        id="submitBtn" 
-                        class="btn btn-primary px-5 g-recaptcha"
-                        data-sitekey="6LcRjF8sAAAAAA8Yhjp-lQFxIpea53uZMsYTbMSR"
-                        data-callback='onSubmit'
-                        data-action='submit'
-                        disabled>
+                    <button type="submit" id="submitBtn" class="btn btn-primary px-5">
                         Update Password
                     </button>
                 </div>
@@ -68,19 +62,4 @@ $title = "reset password";
 </div>
 
 <script src="/assets/js/password.js" defer></script>
-<script src="https://www.google.com/recaptcha/api.js"></script>
-
-<script>
-   function onSubmit(token) {
-        const form = document.getElementById("reset-password-form");
-
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'g-recaptcha-response';
-        input.value = token;
-
-        form.appendChild(input);
-        form.submit();
-    }
-</script>
 <?php require __DIR__ . "/../Partials/footer.php"; ?>
