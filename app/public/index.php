@@ -101,6 +101,14 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/admin/restaurants/edit/{id:\d+}', ['App\Controllers\AdminRestaurantController', 'edit']);
     $r->addRoute('POST', '/admin/restaurants/update', ['App\Controllers\AdminRestaurantController', 'update']);
     $r->addRoute('POST', '/admin/restaurants/delete', ['App\Controllers\AdminRestaurantController', 'delete']);
+
+    // Admin artist management
+    $r->addRoute('GET', '/admin/artists', ['App\Controllers\AdminArtistController', 'index']);
+    $r->addRoute('GET', '/admin/artists/create', ['App\Controllers\AdminArtistController', 'create']);
+    $r->addRoute('POST', '/admin/artists', ['App\Controllers\AdminArtistController', 'store']);
+    $r->addRoute('GET', '/admin/artists/edit/{id:\d+}', ['App\Controllers\AdminArtistController', 'edit']);
+    $r->addRoute('POST', '/admin/artists/update', ['App\Controllers\AdminArtistController', 'update']);
+    $r->addRoute('POST', '/admin/artists/delete', ['App\Controllers\AdminArtistController', 'delete']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
