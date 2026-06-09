@@ -1,0 +1,82 @@
+<?php
+namespace App\Repositories;
+
+use App\Framework\Repository;
+use App\Repositories\Interfaces\ITicketTypeRepository;
+use App\Models\TicketTypeModel;
+
+class TicketTypeRepository extends Repository implements ITicketTypeRepository
+{
+    /**
+     * Active ticket types for an event (what a visitor can buy).
+     *
+     * @return TicketTypeModel[]
+     */
+    public function getActiveByEvent(int $eventId): array
+    {
+        $sql = 'SELECT * FROM ticket_types WHERE event_id = :eid AND is_active = 1 ORDER BY price';
+        return $this->mapAll($this->fetchAll($sql, ['eid' => $eventId]));
+    }
+
+    /**
+     * All ticket types for an event (admin view).
+     *
+     * @return TicketTypeModel[]
+     */
+    public function getByEvent(int $eventId): array
+    {
+        $sql = 'SELECT * FROM ticket_types WHERE event_id = :eid ORDER BY price';
+        return $this->mapAll($this->fetchAll($sql, ['eid' => $eventId]));
+    }
+
+    public function getById(int $id): ?TicketTypeModel
+    {
+        $row = $this->fetchOne('SELECT * FROM ticket_types WHERE id = :id', ['id' => $id]);
+        return $row ? TicketTypeModel::fromDb($row) : null;
+    }
+
+    public function create(TicketTypeModel $t): int
+    {
+        $sql = 'INSERT INTO ticket_types (event_id, name, price, vat_rate, capacity, sold, is_active)
+                VALUES (:event_id, :name, :price, :vat_rate, :capacity, 0, :is_active)';
+        $this->execute($sql, [
+            'event_id'  => $t->event_id,
+            'name'      => $t->name,
+            'price'     => $t->price,
+            'vat_rate'  => $t->vat_rate,
+            'capacity'  => $t->capacity,
+            'is_active' => $t->is_active ? 1 : 0,
+        ]);
+        return $this->lastInsertId();
+    }
+
+    public function update(TicketTypeModel $t): void
+    {
+        $sql = 'UPDATE ticket_types
+                SET name = :name, price = :price, vat_rate = :vat_rate,
+                    capacity = :capacity, is_active = :is_active
+                WHERE id = :id';
+        $this->execute($sql, [
+            'name'      => $t->name,
+            'price'     => $t->price,
+            'vat_rate'  => $t->vat_rate,
+            'capacity'  => $t->capacity,
+            'is_active' => $t->is_active ? 1 : 0,
+            'id'        => $t->id,
+        ]);
+    }
+
+    public function delete(int $id): void
+    {
+        $this->execute('DELETE FROM ticket_types WHERE id = :id', ['id' => $id]);
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $rows
+     * @return TicketTypeModel[]
+     */
+    private function mapAll(array $rows): array
+    {
+        return array_map(static fn(array $r) => TicketTypeModel::fromDb($r), $rows);
+    }
+}
