@@ -93,6 +93,14 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/admin/venues/edit/{id:\d+}', ['App\Controllers\AdminVenueController', 'edit']);
     $r->addRoute('POST', '/admin/venues/update', ['App\Controllers\AdminVenueController', 'update']);
     $r->addRoute('POST', '/admin/venues/delete', ['App\Controllers\AdminVenueController', 'delete']);
+
+    // Admin restaurant management
+    $r->addRoute('GET', '/admin/restaurants', ['App\Controllers\AdminRestaurantController', 'index']);
+    $r->addRoute('GET', '/admin/restaurants/create', ['App\Controllers\AdminRestaurantController', 'create']);
+    $r->addRoute('POST', '/admin/restaurants', ['App\Controllers\AdminRestaurantController', 'store']);
+    $r->addRoute('GET', '/admin/restaurants/edit/{id:\d+}', ['App\Controllers\AdminRestaurantController', 'edit']);
+    $r->addRoute('POST', '/admin/restaurants/update', ['App\Controllers\AdminRestaurantController', 'update']);
+    $r->addRoute('POST', '/admin/restaurants/delete', ['App\Controllers\AdminRestaurantController', 'delete']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
