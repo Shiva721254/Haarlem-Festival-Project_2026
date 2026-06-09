@@ -98,6 +98,35 @@ class OrderRepository extends Repository implements IOrderRepository
     }
 
     /**
+     * A user's personal program: the events they hold paid tickets for,
+     * one row per event, chronologically.
+     *
+     * @return \App\Models\ProgramItemModel[]
+     */
+    public function getProgramEvents(int $userId): array
+    {
+        $sql = 'SELECT e.id AS event_id, e.title, e.starts_at, e.ends_at, e.image,
+                       v.name AS venue_name,
+                       et.slug AS type_slug, et.name AS type_name,
+                       GROUP_CONCAT(DISTINCT tt.name ORDER BY tt.name SEPARATOR ", ") AS ticket_types,
+                       SUM(oi.quantity) AS total_tickets
+                FROM orders o
+                JOIN order_items oi ON oi.order_id = o.id
+                JOIN ticket_types tt ON tt.id = oi.ticket_type_id
+                JOIN events e ON e.id = tt.event_id
+                JOIN event_types et ON et.id = e.event_type_id
+                LEFT JOIN venues v ON v.id = e.venue_id
+                WHERE o.user_id = :uid AND o.status = "paid"
+                GROUP BY e.id, e.title, e.starts_at, e.ends_at, e.image, v.name, et.slug, et.name
+                ORDER BY e.starts_at';
+
+        return array_map(
+            static fn(array $r) => \App\Models\ProgramItemModel::fromDb($r),
+            $this->fetchAll($sql, ['uid' => $userId])
+        );
+    }
+
+    /**
      * Issued tickets for an order with the detail needed on a PDF ticket.
      *
      * @return array<int,array<string,mixed>>

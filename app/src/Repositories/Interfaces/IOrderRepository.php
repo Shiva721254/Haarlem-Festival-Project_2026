@@ -33,4 +33,11 @@ interface IOrderRepository
      * @return array<int,array<string,mixed>>
      */
     public function getIssuedTickets(int $orderId): array;
+
+    /**
+     * A user's personal program — events they hold paid tickets for.
+     *
+     * @return \App\Models\ProgramItemModel[]
+     */
+    public function getProgramEvents(int $userId): array;
 }
