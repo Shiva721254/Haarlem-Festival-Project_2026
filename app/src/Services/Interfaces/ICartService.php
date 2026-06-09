@@ -18,6 +18,8 @@ interface ICartService
 
     public function remove(int $ticketTypeId): void;
 
+    public function clear(): void;
+
     /** @return array{subtotal:float,vat:float,total:float} */
     public function totals(): array;
 }

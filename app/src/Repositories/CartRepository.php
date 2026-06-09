@@ -110,4 +110,9 @@ class CartRepository extends Repository implements ICartRepository
         $row = $this->fetchOne('SELECT COALESCE(SUM(quantity),0) AS n FROM cart_items WHERE cart_id = :cid', ['cid' => $cartId]);
         return $row ? (int)$row['n'] : 0;
     }
+
+    public function clearCart(int $cartId): void
+    {
+        $this->execute('DELETE FROM cart_items WHERE cart_id = :cid', ['cid' => $cartId]);
+    }
 }

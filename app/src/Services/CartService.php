@@ -114,24 +114,35 @@ class CartService implements ICartService
     }
 
     /**
+     * Empty the current cart (e.g. after a successful order).
+     */
+    public function clear(): void
+    {
+        $id = $this->existingCartId();
+        if ($id !== null) {
+            $this->cartRepo->clearCart($id);
+        }
+    }
+
+    /**
      * Money totals for the current cart.
      *
      * @return array{subtotal:float,vat:float,total:float}
      */
     public function totals(): array
     {
-        $subtotal = 0.0;
-        $vat = 0.0;
+        $total = 0.0; // VAT-inclusive grand total (what the customer pays)
+        $vat = 0.0;   // VAT portion contained within the total
         foreach ($this->getItems() as $item) {
             $line = $item->lineSubtotal();
-            $subtotal += $line;
-            // Prices are treated as VAT-inclusive; derive the VAT portion.
+            $total += $line;
+            // Prices are VAT-inclusive; derive the VAT portion of each line.
             $vat += $line - ($line / (1 + $item->vat_rate / 100));
         }
         return [
-            'subtotal' => round($subtotal, 2),
+            'subtotal' => round($total - $vat, 2), // net, excl. VAT
             'vat'      => round($vat, 2),
-            'total'    => round($subtotal, 2),
+            'total'    => round($total, 2),         // subtotal + vat
         ];
     }
 }
