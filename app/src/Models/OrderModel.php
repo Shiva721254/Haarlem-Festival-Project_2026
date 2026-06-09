@@ -15,6 +15,11 @@ class OrderModel
     public ?string $created_at = null;
     public ?string $paid_at = null;
 
+    // Optional admin/list display data.
+    public ?string $customer_name = null;
+    public ?string $customer_email = null;
+    public int $item_count = 0;
+
     /** @var OrderItemModel[] */
     public array $items = [];
 
@@ -32,6 +37,9 @@ class OrderModel
         $o->pay_later_until = $data['pay_later_until'] ?? null;
         $o->created_at = $data['created_at'] ?? null;
         $o->paid_at = $data['paid_at'] ?? null;
+        $o->customer_name = $data['customer_name'] ?? null;
+        $o->customer_email = $data['customer_email'] ?? null;
+        $o->item_count = isset($data['item_count']) ? (int)$data['item_count'] : 0;
         return $o;
     }
 

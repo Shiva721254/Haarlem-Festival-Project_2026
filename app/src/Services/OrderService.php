@@ -82,6 +82,16 @@ class OrderService implements IOrderService
         return $this->orderRepo->getByUser($userId);
     }
 
+    public function getAllForAdmin(?string $status = null): array
+    {
+        return $this->orderRepo->getAllForAdmin($status);
+    }
+
+    public function getExportRows(?string $status = null): array
+    {
+        return $this->orderRepo->getExportRows($status);
+    }
+
     public function setPaymentIntent(int $orderId, string $paymentIntentId): void
     {
         $this->orderRepo->setPaymentIntent($orderId, $paymentIntentId);
