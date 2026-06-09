@@ -38,6 +38,10 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     // Personal program (a customer's purchased events)
     $r->addRoute('GET', '/program', ['App\Controllers\ProgramController', 'index']);
 
+    // Customer order history and pay-later retry
+    $r->addRoute('GET', '/orders', ['App\Controllers\CustomerOrderController', 'index']);
+    $r->addRoute('POST', '/orders/pay', ['App\Controllers\CustomerOrderController', 'pay']);
+
     // Verification Routes
     $r->addRoute('POST', '/send-verification-link', ['App\Controllers\AuthController', 'sendVerification']);
     $r->addRoute('GET', '/verifyAccount', ['App\Controllers\AuthController', 'verifyAccount']);    
