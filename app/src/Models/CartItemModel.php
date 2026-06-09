@@ -19,6 +19,7 @@ class CartItemModel
     public int $event_id;
     public string $event_title;
     public int $available;     // remaining stock for this ticket type
+    public ?string $special_requests = null;
 
     public static function fromDb(array $data): self
     {
@@ -34,6 +35,7 @@ class CartItemModel
         $i->event_id = (int)($data['event_id'] ?? 0);
         $i->event_title = $data['event_title'] ?? '';
         $i->available = (int)($data['available'] ?? 0);
+        $i->special_requests = $data['special_requests'] ?? null;
         return $i;
     }
 
