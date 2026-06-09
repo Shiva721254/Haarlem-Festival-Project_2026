@@ -45,6 +45,9 @@ use App\Middleware\AuthMiddleware;
                                 <a href="/event/<?= $event->id ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="View">
                                     <i class="bi bi-box-arrow-up-right"></i>
                                 </a>
+                                <a href="/admin/events/<?= $event->id ?>/tickets" class="btn btn-sm btn-outline-secondary" title="Ticket types">
+                                    <i class="bi bi-ticket-perforated"></i> Tickets
+                                </a>
                                 <a href="/admin/events/edit/<?= $event->id ?>" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-pencil-square"></i> Edit
                                 </a>

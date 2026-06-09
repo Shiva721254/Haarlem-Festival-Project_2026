@@ -2,7 +2,9 @@
 namespace App\Controllers;
 
 use App\Services\Interfaces\IEventService;
+use App\Services\Interfaces\ITicketTypeService;
 use App\Services\EventService;
+use App\Services\TicketTypeService;
 use App\Framework\View;
 
 /**
@@ -14,10 +16,12 @@ use App\Framework\View;
 class EventController
 {
     private IEventService $eventService;
+    private ITicketTypeService $ticketTypeService;
 
     public function __construct()
     {
         $this->eventService = new EventService();
+        $this->ticketTypeService = new TicketTypeService();
     }
 
     // GET: /events/{type}
@@ -52,6 +56,11 @@ class EventController
             return;
         }
 
-        View::render('Events/detail', ['event' => $event], $event->title);
+        $ticketTypes = $this->ticketTypeService->getActiveByEvent($event->id);
+
+        View::render('Events/detail', [
+            'event'       => $event,
+            'ticketTypes' => $ticketTypes,
+        ], $event->title);
     }
 }

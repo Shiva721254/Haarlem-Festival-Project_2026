@@ -53,6 +53,12 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/events/{type:[a-z0-9-]+}', ['App\Controllers\EventController', 'index']);
     $r->addRoute('GET', '/event/{id:\d+}', ['App\Controllers\EventController', 'show']);
 
+    // Shopping cart (guests + logged-in users)
+    $r->addRoute('GET', '/cart', ['App\Controllers\CartController', 'index']);
+    $r->addRoute('POST', '/cart/add', ['App\Controllers\CartController', 'add']);
+    $r->addRoute('POST', '/cart/update', ['App\Controllers\CartController', 'update']);
+    $r->addRoute('POST', '/cart/remove', ['App\Controllers\CartController', 'remove']);
+
     $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'index']);
 
     $r->addRoute('GET', '/admin/edit', ['App\Controllers\AdminContentController', 'edit']);
@@ -66,6 +72,14 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/admin/events/edit/{id:\d+}', ['App\Controllers\AdminEventController', 'edit']);
     $r->addRoute('POST', '/admin/events/update', ['App\Controllers\AdminEventController', 'update']);
     $r->addRoute('POST', '/admin/events/delete', ['App\Controllers\AdminEventController', 'delete']);
+
+    // Admin ticket-type management (scoped to an event)
+    $r->addRoute('GET', '/admin/events/{eventId:\d+}/tickets', ['App\Controllers\AdminTicketTypeController', 'index']);
+    $r->addRoute('GET', '/admin/events/{eventId:\d+}/tickets/create', ['App\Controllers\AdminTicketTypeController', 'create']);
+    $r->addRoute('POST', '/admin/tickets', ['App\Controllers\AdminTicketTypeController', 'store']);
+    $r->addRoute('GET', '/admin/tickets/edit/{id:\d+}', ['App\Controllers\AdminTicketTypeController', 'edit']);
+    $r->addRoute('POST', '/admin/tickets/update', ['App\Controllers\AdminTicketTypeController', 'update']);
+    $r->addRoute('POST', '/admin/tickets/delete', ['App\Controllers\AdminTicketTypeController', 'delete']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];

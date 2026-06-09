@@ -86,8 +86,34 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                     </p>
                 <?php endif; ?>
 
-                <!-- TODO: wire to the real ticketing flow in the next ticket -->
-                <button class="btn purple-button w-100 mt-2" disabled>Buy tickets (coming soon)</button>
+                <hr>
+                <h6 class="mb-3">Tickets</h6>
+
+                <?php if (empty($ticketTypes)): ?>
+                    <p class="text-muted small">Tickets are not on sale yet.</p>
+                <?php else: ?>
+                    <?php foreach ($ticketTypes as $ticket): ?>
+                        <div class="ticket-option mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-semibold"><?= htmlspecialchars($ticket->name) ?></span>
+                                <span>&euro;<?= number_format($ticket->price, 2) ?></span>
+                            </div>
+                            <?php if ($ticket->isSoldOut()): ?>
+                                <span class="badge text-bg-secondary mt-1">Sold out</span>
+                            <?php else: ?>
+                                <!-- TODO (you): style this add-to-cart row to taste -->
+                                <form method="POST" action="/cart/add" class="d-flex gap-2 mt-1">
+                                    <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken() ?>">
+                                    <input type="hidden" name="ticket_type_id" value="<?= $ticket->id ?>">
+                                    <input type="hidden" name="return_to" value="/event/<?= $event->id ?>">
+                                    <input type="number" name="quantity" value="1" min="1" max="<?= $ticket->available() ?>"
+                                           class="form-control form-control-sm" style="width:80px;">
+                                    <button type="submit" class="btn btn-sm purple-button flex-grow-1">Add to cart</button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
 
