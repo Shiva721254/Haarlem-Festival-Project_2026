@@ -21,6 +21,11 @@ class VenueService implements IVenueService
         return $this->repo->getAll();
     }
 
+    public function getFestivalLocations(): array
+    {
+        return $this->repo->getFestivalLocations();
+    }
+
     public function getById(int $id): ?VenueModel
     {
         return $this->repo->getById($id);
