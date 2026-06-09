@@ -34,8 +34,12 @@ class CartController
     {
         $ticketTypeId = (int)($_POST['ticket_type_id'] ?? 0);
         $quantity = (int)($_POST['quantity'] ?? 1);
+        $notes = trim((string)($_POST['special_requests'] ?? ''));
+        if (mb_strlen($notes) > 500) {
+            $notes = mb_substr($notes, 0, 500);
+        }
 
-        $result = $this->cartService->add($ticketTypeId, $quantity);
+        $result = $this->cartService->add($ticketTypeId, $quantity, $notes);
         $result['ok'] ? Flash::success($result['message']) : Flash::error($result['message']);
 
         // Return to where the user came from (the event page), or the cart.

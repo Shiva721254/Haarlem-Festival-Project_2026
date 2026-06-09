@@ -28,6 +28,9 @@
                             <?= (int)$item->quantity ?> &times;
                             <?= htmlspecialchars($item->ticket_type_name ?? 'Ticket') ?>
                             <span class="text-muted">— <?= htmlspecialchars($item->event_title ?? '') ?></span>
+                            <?php if (!empty($item->special_requests)): ?>
+                                <div class="small text-muted"><i class="bi bi-info-circle"></i> Special requests: <?= htmlspecialchars($item->special_requests) ?></div>
+                            <?php endif; ?>
                         </span>
                         <span>&euro;<?= number_format($item->lineTotal(), 2) ?></span>
                     </li>

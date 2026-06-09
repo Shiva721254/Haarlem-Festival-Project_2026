@@ -29,16 +29,17 @@ class OrderRepository extends Repository implements IOrderRepository
             $orderId = (int)$pdo->lastInsertId();
 
             $itemStmt = $pdo->prepare(
-                'INSERT INTO order_items (order_id, ticket_type_id, quantity, unit_price, vat_rate)
-                 VALUES (:order_id, :ticket_type_id, :quantity, :unit_price, :vat_rate)'
+                'INSERT INTO order_items (order_id, ticket_type_id, quantity, unit_price, vat_rate, special_requests)
+                 VALUES (:order_id, :ticket_type_id, :quantity, :unit_price, :vat_rate, :special_requests)'
             );
             foreach ($order->items as $item) {
                 $itemStmt->execute([
-                    'order_id'       => $orderId,
-                    'ticket_type_id' => $item->ticket_type_id,
-                    'quantity'       => $item->quantity,
-                    'unit_price'     => $item->unit_price,
-                    'vat_rate'       => $item->vat_rate,
+                    'order_id'         => $orderId,
+                    'ticket_type_id'   => $item->ticket_type_id,
+                    'quantity'         => $item->quantity,
+                    'unit_price'       => $item->unit_price,
+                    'vat_rate'         => $item->vat_rate,
+                    'special_requests' => $item->special_requests,
                 ]);
             }
 

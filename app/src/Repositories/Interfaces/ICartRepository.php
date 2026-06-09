@@ -14,7 +14,7 @@ interface ICartRepository
 
     public function findItemQuantity(int $cartId, int $ticketTypeId): int;
 
-    public function setQuantity(int $cartId, int $ticketTypeId, int $quantity): void;
+    public function setQuantity(int $cartId, int $ticketTypeId, int $quantity, ?string $notes = null): void;
 
     public function removeItem(int $cartId, int $ticketTypeId): void;
 

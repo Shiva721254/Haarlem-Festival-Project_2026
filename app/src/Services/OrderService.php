@@ -65,6 +65,7 @@ class OrderService implements IOrderService
             $line->quantity = $item->quantity;
             $line->unit_price = $item->price;
             $line->vat_rate = $item->vat_rate;
+            $line->special_requests = $item->special_requests;
             $order->items[] = $line;
         }
 

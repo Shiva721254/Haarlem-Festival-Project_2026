@@ -81,10 +81,20 @@ class CartRepository extends Repository implements ICartRepository
      * Set the absolute quantity for a ticket type in the cart (insert or update).
      * A quantity of 0 or less removes the line.
      */
-    public function setQuantity(int $cartId, int $ticketTypeId, int $quantity): void
+    public function setQuantity(int $cartId, int $ticketTypeId, int $quantity, ?string $notes = null): void
     {
         if ($quantity <= 0) {
             $this->removeItem($cartId, $ticketTypeId);
+            return;
+        }
+
+        // When notes are given (a reservation) store them; otherwise (a plain
+        // quantity change) leave any existing special requests untouched.
+        if ($notes !== null) {
+            $sql = 'INSERT INTO cart_items (cart_id, ticket_type_id, quantity, special_requests)
+                    VALUES (:cid, :tid, :qty, :notes)
+                    ON DUPLICATE KEY UPDATE quantity = :qty, special_requests = :notes';
+            $this->execute($sql, ['cid' => $cartId, 'tid' => $ticketTypeId, 'qty' => $quantity, 'notes' => $notes]);
             return;
         }
 
