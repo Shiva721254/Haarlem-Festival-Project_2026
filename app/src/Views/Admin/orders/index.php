@@ -3,6 +3,7 @@
  * @var \App\Models\OrderModel[] $orders
  * @var string|null $status
  * @var string[] $statuses
+ * @var array<string,string> $exportColumns
  */
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -27,6 +28,31 @@
                 <i class="bi bi-funnel"></i> Filter
             </button>
         </div>
+    </div>
+</form>
+
+<form method="GET" action="/admin/orders/export" class="card card-body mb-3">
+    <?php if ($status !== null): ?>
+        <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
+    <?php endif; ?>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <strong>Export orders</strong>
+        <button type="submit" class="btn btn-purple btn-sm">
+            <i class="bi bi-download"></i> Export CSV
+        </button>
+    </div>
+    <div class="row g-2">
+        <?php foreach ($exportColumns as $key => $label): ?>
+            <div class="col-sm-6 col-lg-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="columns[]" id="col-<?= htmlspecialchars($key) ?>"
+                           value="<?= htmlspecialchars($key) ?>" checked>
+                    <label class="form-check-label" for="col-<?= htmlspecialchars($key) ?>">
+                        <?= htmlspecialchars($label) ?>
+                    </label>
+                </div>
+            </div>
+        <?php endforeach; ?>
     </div>
 </form>
 
