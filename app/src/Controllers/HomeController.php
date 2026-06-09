@@ -20,4 +20,10 @@ class HomeController
             'blocks' => $this->contentService->getPageBlocks('home'),
         ], 'Haarlem Festival');
     }
+
+    // GET: /privacy
+    public function privacy(): void
+    {
+        View::render('Home/privacy', [], 'Privacy policy');
+    }
 }
