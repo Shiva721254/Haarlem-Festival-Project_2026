@@ -93,6 +93,25 @@ class EventRepository extends Repository implements IEventRepository
     }
 
     /**
+     * Condensed schedule: per festival day and event type, the number of
+     * sessions and the time span. For the homepage schedule strip.
+     *
+     * @return array<int,array{day:string,type_name:string,slug:string,sessions:int,first_t:string,last_t:string}>
+     */
+    public function getScheduleSummary(): array
+    {
+        $sql = 'SELECT DATE(e.starts_at) AS day, et.name AS type_name, et.slug,
+                       COUNT(*) AS sessions,
+                       MIN(TIME(e.starts_at)) AS first_t, MAX(TIME(e.starts_at)) AS last_t
+                FROM events e
+                JOIN event_types et ON et.id = e.event_type_id
+                WHERE e.is_published = 1 AND e.is_pass = 0
+                GROUP BY DATE(e.starts_at), et.id, et.name, et.slug
+                ORDER BY day, et.id';
+        return $this->fetchAll($sql);
+    }
+
+    /**
      * All-access pass options on sale, for the homepage passes section.
      *
      * @return array<int,array{type_name:string,slug:string,option_name:string,price:string}>

@@ -37,6 +37,9 @@ interface IEventRepository
     /** @return array<int,array{type_name:string,slug:string,option_name:string,price:string}> */
     public function getPassSummaries(): array;
 
+    /** @return array<int,array{day:string,type_name:string,slug:string,sessions:int,first_t:string,last_t:string}> */
+    public function getScheduleSummary(): array;
+
     /**
      * A single active event type by slug, for the overview hero/header.
      *
