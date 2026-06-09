@@ -134,6 +134,7 @@ class AdminEventController
         $event->starts_at     = trim($_POST['starts_at'] ?? '');
         $event->ends_at       = trim($_POST['ends_at'] ?? '') ?: null;
         $event->is_published  = !empty($_POST['is_published']);
+        $event->artist_ids    = array_map('intval', $_POST['artist_ids'] ?? []);
         return $event;
     }
 

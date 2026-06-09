@@ -87,7 +87,9 @@ class EventRepository extends Repository implements IEventRepository
                     (:event_type_id, :venue_id, :restaurant_id, :title, :description, :image, :starts_at, :ends_at, :is_published)';
 
         $this->execute($sql, $this->toParams($event));
-        return $this->lastInsertId();
+        $id = $this->lastInsertId();
+        $this->syncArtists($id, $event->artist_ids);
+        return $id;
     }
 
     public function update(EventModel $event): void
@@ -107,6 +109,7 @@ class EventRepository extends Repository implements IEventRepository
         $params = $this->toParams($event);
         $params['id'] = $event->id;
         $this->execute($sql, $params);
+        $this->syncArtists($event->id, $event->artist_ids);
     }
 
     public function delete(int $id): void
@@ -138,6 +141,14 @@ class EventRepository extends Repository implements IEventRepository
     public function getRestaurantOptions(): array
     {
         return $this->fetchAll('SELECT id, name FROM restaurants ORDER BY name');
+    }
+
+    /**
+     * @return array<int,array{id:int,name:string}>
+     */
+    public function getArtistOptions(): array
+    {
+        return $this->fetchAll('SELECT id, name FROM artists ORDER BY name');
     }
 
     /**
@@ -194,5 +205,27 @@ class EventRepository extends Repository implements IEventRepository
             $artists[] = ArtistModel::fromDb($row);
         }
         return $artists;
+    }
+
+    /**
+     * Replace the event's artist line-up with the submitted artist ids.
+     *
+     * @param int[] $artistIds
+     */
+    private function syncArtists(int $eventId, array $artistIds): void
+    {
+        $this->execute('DELETE FROM event_artist WHERE event_id = :id', ['id' => $eventId]);
+
+        $artistIds = array_values(array_unique(array_filter(array_map('intval', $artistIds))));
+        if (empty($artistIds)) {
+            return;
+        }
+
+        $stmt = $this->getConnection()->prepare(
+            'INSERT INTO event_artist (event_id, artist_id) VALUES (:event_id, :artist_id)'
+        );
+        foreach ($artistIds as $artistId) {
+            $stmt->execute(['event_id' => $eventId, 'artist_id' => $artistId]);
+        }
     }
 }

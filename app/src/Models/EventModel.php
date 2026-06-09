@@ -21,6 +21,8 @@ class EventModel
     public ?RestaurantModel $restaurant = null;
     /** @var ArtistModel[] */
     public array $artists = [];
+    /** @var int[] */
+    public array $artist_ids = [];
 
     public static function fromDb(array $data): self
     {
