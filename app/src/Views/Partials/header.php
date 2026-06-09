@@ -41,6 +41,15 @@
         </div>
 
         <div class="d-flex align-items-center gap-3">
+            <?php $cartCount = (new \App\Services\CartService())->itemCount(); ?>
+            <a href="/cart" class="btn login-button rounded-circle position-relative" title="Cart">
+                <i class="bi bi-cart3"></i>
+                <?php if ($cartCount > 0): ?>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-danger">
+                        <?= $cartCount ?>
+                    </span>
+                <?php endif; ?>
+            </a>
             <?php if (isset($_SESSION['UserId'])): ?>
                 <?php if (isset($_SESSION['Role']) && $_SESSION['Role']->value === 'admin'): ?>
                     <a href="/admin" class="btn login-button rounded-circle" title="Admin panel">

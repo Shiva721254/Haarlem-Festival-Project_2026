@@ -9,6 +9,16 @@ class MailService
 {
     public function send(string $to, string $subject, string $body): bool
     {
+        return $this->sendWithAttachments($to, $subject, $body, []);
+    }
+
+    /**
+     * Send an HTML email with optional in-memory attachments.
+     *
+     * @param array<int,array{name:string,content:string,type:string}> $attachments
+     */
+    public function sendWithAttachments(string $to, string $subject, string $body, array $attachments): bool
+    {
         $mail = new PHPMailer(true);
 
         try {
@@ -37,6 +47,11 @@ class MailService
             // Recipients
             $mail->setFrom(Config::mailFromEmail(), Config::mailFromName());
             $mail->addAddress($to);
+
+            // In-memory attachments (e.g. ticket / invoice PDFs)
+            foreach ($attachments as $att) {
+                $mail->addStringAttachment($att['content'], $att['name'], PHPMailer::ENCODING_BASE64, $att['type']);
+            }
 
             // Content
             $mail->isHTML(true);
