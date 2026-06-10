@@ -72,6 +72,61 @@ class EventRepository extends Repository implements IEventRepository
         return $this->fetchAll($sql);
     }
 
+    /**
+     * Per event type: name, description and the cheapest single-ticket price
+     * (NULL when nothing is sold online, e.g. Magic@Teylers). For the homepage.
+     *
+     * @return array<int,array{slug:string,name:string,description:?string,from_price:?string}>
+     */
+    public function getHomeSummaries(): array
+    {
+        $sql = 'SELECT et.slug, et.name, et.description,
+                       MIN(CASE WHEN e.is_pass = 0 AND tt.is_active = 1 AND tt.price > 0
+                                THEN tt.price END) AS from_price
+                FROM event_types et
+                LEFT JOIN events e ON e.event_type_id = et.id AND e.is_published = 1
+                LEFT JOIN ticket_types tt ON tt.event_id = e.id
+                WHERE et.is_active = 1
+                GROUP BY et.id, et.slug, et.name, et.description
+                ORDER BY et.id';
+        return $this->fetchAll($sql);
+    }
+
+    /**
+     * Condensed schedule: per festival day and event type, the number of
+     * sessions and the time span. For the homepage schedule strip.
+     *
+     * @return array<int,array{day:string,type_name:string,slug:string,sessions:int,first_t:string,last_t:string}>
+     */
+    public function getScheduleSummary(): array
+    {
+        $sql = 'SELECT DATE(e.starts_at) AS day, et.name AS type_name, et.slug,
+                       COUNT(*) AS sessions,
+                       MIN(TIME(e.starts_at)) AS first_t, MAX(TIME(e.starts_at)) AS last_t
+                FROM events e
+                JOIN event_types et ON et.id = e.event_type_id
+                WHERE e.is_published = 1 AND e.is_pass = 0
+                GROUP BY DATE(e.starts_at), et.id, et.name, et.slug
+                ORDER BY day, et.id';
+        return $this->fetchAll($sql);
+    }
+
+    /**
+     * All-access pass options on sale, for the homepage passes section.
+     *
+     * @return array<int,array{type_name:string,slug:string,option_name:string,price:string}>
+     */
+    public function getPassSummaries(): array
+    {
+        $sql = 'SELECT et.name AS type_name, et.slug, tt.name AS option_name, tt.price
+                FROM ticket_types tt
+                JOIN events e ON e.id = tt.event_id
+                JOIN event_types et ON et.id = e.event_type_id
+                WHERE e.is_pass = 1 AND tt.is_active = 1
+                ORDER BY et.id, tt.price';
+        return $this->fetchAll($sql);
+    }
+
     public function getTypeBySlug(string $slug): ?array
     {
         $sql = 'SELECT slug, name, description FROM event_types WHERE slug = :slug AND is_active = 1';

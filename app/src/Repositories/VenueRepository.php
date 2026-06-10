@@ -14,6 +14,22 @@ class VenueRepository extends Repository implements IVenueRepository
         return array_map(static fn(array $row) => VenueModel::fromDb($row), $rows);
     }
 
+    /**
+     * Venues that host at least one published event, for the homepage map.
+     *
+     * @return array<int,array{name:string,address:?string}>
+     */
+    public function getFestivalLocations(): array
+    {
+        return $this->fetchAll(
+            'SELECT DISTINCT v.name, v.address
+             FROM venues v
+             JOIN events e ON e.venue_id = v.id
+             WHERE e.is_published = 1
+             ORDER BY v.name'
+        );
+    }
+
     public function getById(int $id): ?VenueModel
     {
         $row = $this->fetchOne('SELECT * FROM venues WHERE id = :id', ['id' => $id]);
