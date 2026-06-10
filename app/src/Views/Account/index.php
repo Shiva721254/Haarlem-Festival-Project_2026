@@ -41,6 +41,16 @@ use App\Middleware\AuthMiddleware;
                         <input type="email" class="form-control" id="Email" name="Email"
                                value="<?= htmlspecialchars($user->Email) ?>" required>
                     </div>
+                    <div class="col-md-6">
+                        <label for="Phone" class="form-label">Phone <span class="text-muted small">(for invoices)</span></label>
+                        <input type="text" class="form-control" id="Phone" name="Phone"
+                               value="<?= htmlspecialchars($user->phone ?? '') ?>">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="Address" class="form-label">Address <span class="text-muted small">(for invoices)</span></label>
+                        <input type="text" class="form-control" id="Address" name="Address"
+                               value="<?= htmlspecialchars($user->address ?? '') ?>">
+                    </div>
                 </div>
 
                 <hr class="my-4">

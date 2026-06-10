@@ -22,6 +22,8 @@ class UserModel
     public ?string $reset_token_hash;
     public ?string $reset_token_expires_at;
     public ?string $profile_image = null;
+    public ?string $phone = null;
+    public ?string $address = null;
     public ?string $created_at = null;
 
     public static function fromDb(array $data): self
@@ -48,6 +50,8 @@ class UserModel
         $user->reset_token_hash = $data['reset_token_hash'] ?? null;
         $user->reset_token_expires_at = $data['reset_token_expires_at'] ?? null;
         $user->profile_image = $data['profile_image'] ?? null;
+        $user->phone = $data['phone'] ?? null;
+        $user->address = $data['address'] ?? null;
         $user->created_at = $data['created_at'] ?? null;
 
         return $user;

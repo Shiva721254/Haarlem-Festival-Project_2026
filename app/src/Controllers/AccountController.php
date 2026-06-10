@@ -101,6 +101,8 @@ class AccountController
         $firstName = trim($_POST['FirstName'] ?? '');
         $lastName  = trim($_POST['LastName'] ?? '');
         $email     = trim($_POST['Email'] ?? '');
+        $phone     = trim($_POST['Phone'] ?? '') ?: null;
+        $address   = trim($_POST['Address'] ?? '') ?: null;
 
         if ($firstName === '' || $lastName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             Flash::error('Please provide a valid name and email address.');
@@ -109,7 +111,7 @@ class AccountController
         }
 
         try {
-            $this->userService->updateProfile($userId, $firstName, $lastName, $email);
+            $this->userService->updateProfile($userId, $firstName, $lastName, $email, $phone, $address);
             $_SESSION['FirstName'] = $firstName;
             Flash::success('Your profile has been updated.');
         } catch (DuplicateEntryException $e) {

@@ -51,7 +51,7 @@ class TicketPdfService implements ITicketPdfService
         return $this->toPdf($html);
     }
 
-    public function renderInvoice(OrderModel $order, string $customerName, string $customerEmail): string
+    public function renderInvoice(OrderModel $order, string $customerName, string $customerEmail, ?string $customerPhone = null, ?string $customerAddress = null): string
     {
         $rows = '';
         foreach ($order->items as $item) {
@@ -65,6 +65,13 @@ class TicketPdfService implements ITicketPdfService
         }
 
         $date = $order->paid_at ? date('j F Y', strtotime($order->paid_at)) : date('j F Y');
+        $billed = htmlspecialchars($customerName) . ' (' . htmlspecialchars($customerEmail) . ')';
+        if (!empty($customerPhone)) {
+            $billed .= '<br>' . htmlspecialchars($customerPhone);
+        }
+        if (!empty($customerAddress)) {
+            $billed .= '<br>' . htmlspecialchars($customerAddress);
+        }
 
         $html = '<html><head><style>
             body { font-family: DejaVu Sans, sans-serif; color:#222; font-size:13px; }
@@ -78,8 +85,8 @@ class TicketPdfService implements ITicketPdfService
             <h1>Invoice</h1>
             <p>
                 <strong>Invoice number:</strong> ' . htmlspecialchars($order->invoice_number ?? '') . '<br>
-                <strong>Date:</strong> ' . htmlspecialchars($date) . '<br>
-                <strong>Billed to:</strong> ' . htmlspecialchars($customerName) . ' (' . htmlspecialchars($customerEmail) . ')
+                <strong>Payment date:</strong> ' . htmlspecialchars($date) . '<br>
+                <strong>Billed to:</strong> ' . $billed . '
             </p>
             <table>
                 <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Unit</th><th style="text-align:center;">VAT</th><th style="text-align:right;">Line total</th></tr></thead>

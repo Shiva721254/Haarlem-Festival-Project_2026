@@ -171,7 +171,7 @@ class OrderService implements IOrderService
             $name = trim($user->FirstName . ' ' . $user->LastName);
 
             $ticketsPdf = $this->pdfService->renderTickets($order, $tickets);
-            $invoicePdf = $this->pdfService->renderInvoice($order, $name, $user->Email);
+            $invoicePdf = $this->pdfService->renderInvoice($order, $name, $user->Email, $user->phone ?? null, $user->address ?? null);
 
             $body = '<h2>Thank you for your order!</h2>'
                 . '<p>Your tickets and invoice are attached (invoice '

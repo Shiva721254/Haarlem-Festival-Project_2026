@@ -133,14 +133,17 @@ class UserRepository extends Repository implements IUserRepository
         $stmt->execute();
     }
 
-    public function updateProfile(int $userId, string $firstName, string $lastName, string $email): void
+    public function updateProfile(int $userId, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void
     {
-        $sql = 'UPDATE users SET FirstName = :FirstName, LastName = :LastName, Email = :Email
+        $sql = 'UPDATE users SET FirstName = :FirstName, LastName = :LastName, Email = :Email,
+                    phone = :phone, address = :address
                 WHERE UserId = :UserId';
         $stmt = $this->getConnection()->prepare($sql);
         $stmt->bindValue(':FirstName', $firstName, PDO::PARAM_STR);
         $stmt->bindValue(':LastName', $lastName, PDO::PARAM_STR);
         $stmt->bindValue(':Email', $email, PDO::PARAM_STR);
+        $stmt->bindValue(':phone', $phone, $phone === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        $stmt->bindValue(':address', $address, $address === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindValue(':UserId', $userId, PDO::PARAM_INT);
         $stmt->execute();
     }
