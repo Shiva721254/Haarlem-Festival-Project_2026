@@ -5,6 +5,7 @@ use App\Enums\UserRole;
 class UserModel 
 {
     public int $UserId;
+    public string $Username;
     public string $FirstName;
     public string $LastName;
     public string $Email;    
@@ -30,6 +31,7 @@ class UserModel
     {
         $user = new self();
         $user->UserId = (int)$data['UserId'];
+        $user->Username = $data['Username'] ?? '';
         $user->FirstName = $data['FirstName'];
         $user->LastName = $data['LastName'];
         $user->Email = $data['Email'];
@@ -61,6 +63,7 @@ class UserModel
     {
         $user = new UserModel();
         $user->UserId = isset($_POST['UserId']) ? (int)$_POST['UserId'] : 0;
+        $user->Username = trim($_POST['Username'] ?? '');
         $user->FirstName = $_POST['FirstName'];
         $user->LastName = $_POST['LastName'];
         $user->Email = $_POST['Email'];
