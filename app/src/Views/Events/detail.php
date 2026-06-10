@@ -33,10 +33,8 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
 
         <div class="col-lg-8">
             <?php if (!empty($event->description)): ?>
-                <!-- plain text for now; switch to raw HTML once the CMS owns this field -->
-                <div class="event-description">
-                    <p><?= htmlspecialchars($event->description) ?></p>
-                </div>
+                <!-- Rich HTML authored in the admin WYSIWYG (admin-trusted content). -->
+                <div class="event-description"><?= $event->description ?></div>
             <?php endif; ?>
 
             <?php if (!empty($event->artists)): ?>

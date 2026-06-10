@@ -24,14 +24,14 @@ $hero = $artist->image ?: ($gallery[0] ?? '/assets/images/grote-markt.png');
                 <p class="text-muted mb-3"><?= htmlspecialchars($artist->genre) ?></p>
             <?php endif; ?>
             <?php if ($artist->bio): ?>
-                <p class="lead fs-6"><?= htmlspecialchars($artist->bio) ?></p>
+                <div class="lead fs-6"><?= $artist->bio ?></div>
             <?php endif; ?>
         </div>
     </div>
 
     <?php if ($artist->career_highlights): ?>
         <h4>Career highlights</h4>
-        <p><?= nl2br(htmlspecialchars($artist->career_highlights)) ?></p>
+        <div><?= $artist->career_highlights ?></div>
     <?php endif; ?>
 
     <?php if (!empty($gallery)): ?>
