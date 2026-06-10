@@ -52,6 +52,36 @@ class ArtistRepository extends Repository implements IArtistRepository
         return array_map(static fn(array $r) => $r['path'], $rows);
     }
 
+    /**
+     * Gallery rows with ids, for admin management.
+     *
+     * @return array<int,array{id:int,path:string}>
+     */
+    public function getGallery(int $artistId): array
+    {
+        return $this->fetchAll(
+            'SELECT id, path FROM artist_images WHERE artist_id = :id ORDER BY sort_order, id',
+            ['id' => $artistId]
+        );
+    }
+
+    public function addImage(int $artistId, string $path): void
+    {
+        $row = $this->fetchOne(
+            'SELECT COALESCE(MAX(sort_order), 0) + 1 AS next FROM artist_images WHERE artist_id = :id',
+            ['id' => $artistId]
+        );
+        $this->execute(
+            'INSERT INTO artist_images (artist_id, path, sort_order) VALUES (:a, :p, :s)',
+            ['a' => $artistId, 'p' => $path, 's' => (int)($row['next'] ?? 1)]
+        );
+    }
+
+    public function deleteImage(int $imageId): void
+    {
+        $this->execute('DELETE FROM artist_images WHERE id = :id', ['id' => $imageId]);
+    }
+
     public function create(ArtistModel $artist): int
     {
         $sql = 'INSERT INTO artists (name, genre, bio, image, career_highlights, tracks, audio_url)
