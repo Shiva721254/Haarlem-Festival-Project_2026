@@ -75,6 +75,9 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/events/{type:[a-z0-9-]+}', ['App\Controllers\EventController', 'index']);
     $r->addRoute('GET', '/event/{id:\d+}', ['App\Controllers\EventController', 'show']);
 
+    // Participant (artist) detail page
+    $r->addRoute('GET', '/artist/{id:\d+}', ['App\Controllers\ArtistController', 'show']);
+
     // Shopping cart (guests + logged-in users)
     $r->addRoute('GET', '/cart', ['App\Controllers\CartController', 'index']);
     $r->addRoute('POST', '/cart/add', ['App\Controllers\CartController', 'add']);
@@ -140,6 +143,8 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/admin/artists/edit/{id:\d+}', ['App\Controllers\AdminArtistController', 'edit']);
     $r->addRoute('POST', '/admin/artists/update', ['App\Controllers\AdminArtistController', 'update']);
     $r->addRoute('POST', '/admin/artists/delete', ['App\Controllers\AdminArtistController', 'delete']);
+    $r->addRoute('POST', '/admin/artists/images/delete', ['App\Controllers\AdminArtistController', 'deleteImage']);
+    $r->addRoute('POST', '/admin/artists/{id:\d+}/images', ['App\Controllers\AdminArtistController', 'uploadImage']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];

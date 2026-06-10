@@ -43,7 +43,7 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                 <h4 class="mt-4 mb-3">Line-up</h4>
                 <div class="lineup-grid">
                     <?php foreach ($event->artists as $artist): ?>
-                        <div class="lineup-card">
+                        <a class="lineup-card text-decoration-none text-reset" href="/artist/<?= $artist->id ?>" title="View <?= htmlspecialchars($artist->name) ?>">
                             <?php if (!empty($artist->image)): ?>
                                 <img src="<?= htmlspecialchars($artist->image) ?>" alt="<?= htmlspecialchars($artist->name) ?>">
                             <?php endif; ?>
@@ -51,7 +51,7 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                             <?php if (!empty($artist->genre)): ?>
                                 <div class="lineup-genre"><?= htmlspecialchars($artist->genre) ?></div>
                             <?php endif; ?>
-                        </div>
+                        </a>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>

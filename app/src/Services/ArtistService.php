@@ -26,6 +26,28 @@ class ArtistService implements IArtistService
         return $this->repo->getById($id);
     }
 
+    /** @return array<int,array{id:int,title:string,type_name:string,starts_at:string,ends_at:?string,venue_name:?string}> */
+    public function getSchedule(int $artistId): array
+    {
+        return $this->repo->getSchedule($artistId);
+    }
+
+    /** @return array<int,array{id:int,path:string}> */
+    public function getGallery(int $artistId): array
+    {
+        return $this->repo->getGallery($artistId);
+    }
+
+    public function addImage(int $artistId, string $path): void
+    {
+        $this->repo->addImage($artistId, $path);
+    }
+
+    public function deleteImage(int $imageId): void
+    {
+        $this->repo->deleteImage($imageId);
+    }
+
     public function create(ArtistModel $artist): int
     {
         return $this->repo->create($artist);
