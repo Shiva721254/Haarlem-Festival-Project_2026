@@ -76,14 +76,14 @@ class UserService implements IUserService
      * Update a user's own profile (name + email), enforcing email uniqueness.
      * Sends a confirmation email after a successful change.
      */
-    public function updateProfile(int $userId, string $firstName, string $lastName, string $email): void
+    public function updateProfile(int $userId, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void
     {
         $existing = $this->userRepository->getByEmail($email);
         if ($existing && $existing->UserId !== $userId) {
             throw new DuplicateEntryException("This email is already in use by another account.");
         }
 
-        $this->userRepository->updateProfile($userId, $firstName, $lastName, $email);
+        $this->userRepository->updateProfile($userId, $firstName, $lastName, $email, $phone, $address);
 
         $message = "
             <h2>Your account was updated</h2>
