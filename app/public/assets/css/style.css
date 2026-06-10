@@ -139,6 +139,124 @@ html {
     color: var(--color-text-muted);
     margin-top: 4px;
 }
+
+.admin-dashboard-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding: 26px;
+    background: #ffffff;
+    border: var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: var(--shadow-soft);
+}
+
+.admin-dashboard-kicker {
+    display: inline-block;
+    margin-bottom: 8px;
+    color: var(--color-text-purple);
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.admin-dashboard-hero h1 {
+    margin: 0 0 8px;
+    color: var(--color-text-main);
+    font-size: 30px;
+    font-weight: 800;
+}
+
+.admin-dashboard-hero p {
+    max-width: 680px;
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 16px;
+}
+
+.admin-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.admin-dashboard-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+    padding: 22px;
+    color: inherit;
+    text-decoration: none;
+    background: #ffffff;
+    border: var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.admin-dashboard-card:hover {
+    color: inherit;
+    border-color: rgba(92, 35, 121, 0.28);
+    box-shadow: 0 18px 34px rgba(24, 33, 47, 0.12);
+    transform: translateY(-2px);
+}
+
+.admin-dashboard-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 18px;
+    color: var(--color-text-purple);
+    background: rgba(92, 35, 121, 0.1);
+    border-radius: 8px;
+    font-size: 23px;
+}
+
+.admin-dashboard-title-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 9px;
+}
+
+.admin-dashboard-title {
+    color: var(--color-text-main);
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.admin-dashboard-count {
+    min-width: 34px;
+    padding: 4px 8px;
+    color: #ffffff;
+    background: var(--color-bg-dark);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.admin-dashboard-description {
+    color: var(--color-text-muted);
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.admin-dashboard-action {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: auto;
+    color: var(--color-text-purple);
+    font-size: 14px;
+    font-weight: 800;
+}
 /* ========================== /Admin panel ============================ */
 
 body {
@@ -466,6 +584,192 @@ a:hover {
     font-size: 13px;
 }
 
+.lineup-section {
+    max-width: 1180px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: var(--shadow-soft);
+    padding: 28px;
+}
+
+.lineup-section-header {
+    max-width: 680px;
+    margin: 0 auto 24px;
+    text-align: center;
+}
+
+.lineup-section-header h2 {
+    color: var(--color-text-main);
+    font-size: 30px;
+    font-weight: 800;
+    margin: 0 0 8px;
+}
+
+.lineup-section-header p {
+    color: var(--color-text-muted);
+    font-size: 16px;
+    text-align: center;
+    margin: 0;
+}
+
+.event-lineup-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.event-lineup-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    overflow: hidden;
+    background: #ffffff;
+    border: var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 7px 18px rgba(24, 33, 47, 0.09);
+}
+
+.event-lineup-image {
+    position: relative;
+    display: block;
+    aspect-ratio: 1.35 / 1;
+    overflow: hidden;
+    color: #ffffff;
+}
+
+.event-lineup-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.25s ease;
+}
+
+.event-lineup-card:hover .event-lineup-image img {
+    transform: scale(1.04);
+}
+
+.event-date-badge {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 8px;
+    background: rgba(135, 45, 204, 0.95);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+.event-date-badge span {
+    grid-column: 1;
+    padding: 6px 8px 0;
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 800;
+}
+
+.event-date-badge strong {
+    grid-column: 1;
+    padding: 0 8px 6px;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.event-date-badge em {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    height: 100%;
+    padding: 0 10px;
+    border-left: 1px solid rgba(255, 255, 255, 0.32);
+    font-style: normal;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.event-status {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 1;
+    border-radius: 8px;
+    padding: 6px 9px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.event-status.sold {
+    background: rgba(24, 33, 47, 0.9);
+    color: #ffffff;
+}
+
+.event-status.low {
+    background: #f7c948;
+    color: #18212f;
+}
+
+.event-lineup-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 18px;
+}
+
+.event-location {
+    color: var(--color-text-muted);
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.event-location i {
+    color: #c8a869;
+}
+
+.event-lineup-body h3 {
+    font-size: 23px;
+    font-weight: 850;
+    line-height: 1.05;
+    margin: 0 0 10px;
+}
+
+.event-lineup-body h3 a {
+    color: var(--color-text-main);
+    text-decoration: none;
+}
+
+.event-lineup-body h3 a:hover {
+    color: var(--color-text-purple);
+}
+
+.event-lineup-body p {
+    color: var(--color-text-muted);
+    font-size: 14px;
+    line-height: 1.35;
+    margin: 0 0 16px;
+}
+
+.event-reserve-button {
+    margin-top: auto;
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    background: #c8a869;
+    color: #ffffff;
+    font-weight: 800;
+    padding: 10px 14px;
+}
+
+.event-reserve-button:hover {
+    background: #b79655;
+    color: #ffffff;
+}
+
 /* Event overview grid: centred, wraps nicely with few or many cards */
 .events-grid {
     display: flex;
@@ -615,6 +919,14 @@ a:hover {
         display: inline-block;
         margin-top: 10px;
     }
+
+    .event-lineup-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 768px) {
@@ -625,6 +937,28 @@ a:hover {
 
     p {
         text-align: center;
+    }
+
+    .lineup-section {
+        padding: 18px;
+    }
+
+    .event-lineup-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .event-lineup-body p,
+    .event-location {
+        text-align: left;
+    }
+
+    .admin-dashboard-hero {
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .admin-dashboard-grid {
+        grid-template-columns: 1fr;
     }
 }
 
