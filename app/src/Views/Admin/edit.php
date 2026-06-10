@@ -72,20 +72,4 @@ $labels = [
     </button>
 </form>
 
-<script>
-document.querySelectorAll('.cms-toolbar button').forEach((button) => {
-    button.addEventListener('click', () => {
-        const editor = button.closest('.card-body').querySelector('.cms-rich-editor');
-        editor.focus();
-        document.execCommand(button.dataset.command, false, button.dataset.value || null);
-        editor.dispatchEvent(new Event('input'));
-    });
-});
-
-document.querySelectorAll('.cms-rich-editor').forEach((editor) => {
-    const target = document.getElementById(editor.dataset.target);
-    editor.addEventListener('input', () => {
-        target.value = editor.innerHTML;
-    });
-});
-</script>
+<?php /* Editor sync script is shared in the admin footer. */ ?>
