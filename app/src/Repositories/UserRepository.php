@@ -18,7 +18,7 @@ class UserRepository extends Repository implements IUserRepository
     public function getAll(string $search = '', string $role = '', string $sort = 'LastName', string $dir = 'ASC'): array
     {
         // Whitelist sort column and direction to avoid SQL injection.
-        $sortable = ['FirstName', 'LastName', 'Email', 'Role', 'created_at'];
+        $sortable = ['Username', 'FirstName', 'LastName', 'Email', 'Role', 'created_at'];
         if (!in_array($sort, $sortable, true)) {
             $sort = 'LastName';
         }
@@ -27,7 +27,7 @@ class UserRepository extends Repository implements IUserRepository
         $where = [];
         $params = [];
         if ($search !== '') {
-            $where[] = '(FirstName LIKE :q OR LastName LIKE :q OR Email LIKE :q)';
+            $where[] = '(Username LIKE :q OR FirstName LIKE :q OR LastName LIKE :q OR Email LIKE :q)';
             $params['q'] = '%' . $search . '%';
         }
         if ($role !== '') {
@@ -36,7 +36,7 @@ class UserRepository extends Repository implements IUserRepository
         }
         $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
-        $sql = "SELECT UserId, FirstName, LastName, Email, Role, isVerified, isActive, created_at
+        $sql = "SELECT UserId, Username, FirstName, LastName, Email, Role, isVerified, isActive, created_at
                 FROM users {$whereSql} ORDER BY {$sort} {$dir}";
 
         $rows = $this->fetchAll($sql, $params);
@@ -45,6 +45,7 @@ class UserRepository extends Repository implements IUserRepository
         foreach ($rows as $row) {
             $user = new UserModel();
             $user->UserId = (int) $row['UserId'];
+            $user->Username = $row['Username'];
             $user->FirstName = $row['FirstName'];
             $user->LastName = $row['LastName'];
             $user->Email = $row['Email'];
@@ -61,10 +62,11 @@ class UserRepository extends Repository implements IUserRepository
     public function create(UserModel $user): void
     {
         try{
-            $sql = 'INSERT INTO users (FirstName, LastName, Email, Password, Role, isVerified, isActive)
-                    VALUES (:FirstName, :LastName, :Email, :Password, :Role, :isVerified, :isActive)';
+            $sql = 'INSERT INTO users (Username, FirstName, LastName, Email, Password, Role, isVerified, isActive)
+                    VALUES (:Username, :FirstName, :LastName, :Email, :Password, :Role, :isVerified, :isActive)';
 
             $stmt = $this->getConnection()->prepare($sql);
+            $stmt->bindValue(':Username', $user->Username, PDO::PARAM_STR);
             $stmt->bindValue(':FirstName', $user->FirstName, PDO::PARAM_STR);
             $stmt->bindValue(':LastName', $user->LastName, PDO::PARAM_STR);
             $stmt->bindValue(':Email', $user->Email, PDO::PARAM_STR);
@@ -80,7 +82,7 @@ class UserRepository extends Repository implements IUserRepository
             $stmt->execute();
         } catch (\PDOException $e) {
             if ($e->getCode() == 23000) { // Integrity constraint violation
-                throw new DuplicateEntryException("This email is already registered.");
+                throw new DuplicateEntryException("This email or username is already registered.");
             }
             throw $e; // Rethrow if it's a different DB error
         }
@@ -88,7 +90,7 @@ class UserRepository extends Repository implements IUserRepository
 
     public function getById(int $id): ?UserModel
     {
-        $sql = 'SELECT UserId, FirstName, LastName, Email, Role, isVerified, isActive, profile_image
+        $sql = 'SELECT UserId, Username, FirstName, LastName, Email, Role, isVerified, isActive, profile_image, phone, address, created_at
                 FROM users WHERE UserId = :UserId';
         
         $stmt = $this->getConnection()->prepare($sql);
@@ -114,15 +116,38 @@ class UserRepository extends Repository implements IUserRepository
         return $data ? UserModel::fromDb($data) : null;
     }
 
+    public function getByUsername(string $username): ?UserModel
+    {
+        $sql = 'SELECT * FROM users WHERE Username = :Username';
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bindValue(':Username', $username, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $data ? UserModel::fromDb($data) : null;
+    }
+
+    public function getByLoginIdentifier(string $identifier): ?UserModel
+    {
+        $sql = 'SELECT * FROM users WHERE Email = :identifier OR Username = :identifier';
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bindValue(':identifier', $identifier, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $data ? UserModel::fromDb($data) : null;
+    }
+
     public function update(UserModel $user): void
     {
         $sql = 'UPDATE users 
-                SET FirstName = :FirstName, LastName = :LastName, Email = :Email, 
+                SET Username = :Username, FirstName = :FirstName, LastName = :LastName, Email = :Email, 
                     Role = :Role
                 WHERE UserId = :UserId';
 
         $stmt = $this->getConnection()->prepare($sql);
 
+        $stmt->bindValue(':Username', $user->Username, PDO::PARAM_STR);
         $stmt->bindValue(':FirstName', $user->FirstName, PDO::PARAM_STR);
         $stmt->bindValue(':LastName', $user->LastName, PDO::PARAM_STR);
         $stmt->bindValue(':Email', $user->Email, PDO::PARAM_STR);
@@ -133,12 +158,13 @@ class UserRepository extends Repository implements IUserRepository
         $stmt->execute();
     }
 
-    public function updateProfile(int $userId, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void
+    public function updateProfile(int $userId, string $username, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void
     {
-        $sql = 'UPDATE users SET FirstName = :FirstName, LastName = :LastName, Email = :Email,
+        $sql = 'UPDATE users SET Username = :Username, FirstName = :FirstName, LastName = :LastName, Email = :Email,
                     phone = :phone, address = :address
                 WHERE UserId = :UserId';
         $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bindValue(':Username', $username, PDO::PARAM_STR);
         $stmt->bindValue(':FirstName', $firstName, PDO::PARAM_STR);
         $stmt->bindValue(':LastName', $lastName, PDO::PARAM_STR);
         $stmt->bindValue(':Email', $email, PDO::PARAM_STR);
@@ -176,6 +202,7 @@ class UserRepository extends Repository implements IUserRepository
     {
         $sql = "UPDATE users SET
                     FirstName = 'Deleted', LastName = 'User',
+                    Username = CONCAT('deleted', UserId),
                     Email = CONCAT('deleted+', UserId, '@removed.invalid'),
                     Password = '', profile_image = NULL,
                     verification_token = NULL, verification_token_expires_at = NULL,

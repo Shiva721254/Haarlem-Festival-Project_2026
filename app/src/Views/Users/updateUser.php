@@ -24,6 +24,11 @@ $user = $vm->user;
                                    value="<?= htmlspecialchars($user->LastName) ?>" required>
                         </div>
                         <div class="col-12">
+                            <label for="Username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="Username" name="Username"
+                                   value="<?= htmlspecialchars($user->Username) ?>" pattern="[A-Za-z0-9._-]{3,30}" required>
+                        </div>
+                        <div class="col-12">
                             <label for="Email" class="form-label">Email Address</label>
                             <input type="email" class="form-control" id="Email" name="Email" 
                                    value="<?= htmlspecialchars($user->Email) ?>" required>

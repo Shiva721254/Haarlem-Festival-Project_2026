@@ -38,6 +38,13 @@
                     </div>
 
                     <div class="row mb-3">
+                        <div class="col-sm-4 font-weight-bold text-muted">Username</div>
+                        <div class="col-sm-8">
+                            <?= htmlspecialchars($user->Username) ?>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
                         <div class="col-sm-4 font-weight-bold text-muted">Email Address</div>
                         <div class="col-sm-8">
                             <?= htmlspecialchars($user->Email) ?>
