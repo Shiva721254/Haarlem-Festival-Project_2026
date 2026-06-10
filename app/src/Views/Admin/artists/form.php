@@ -38,8 +38,27 @@ $val = static fn($v) => htmlspecialchars((string)($v ?? ''));
 
     <div class="mb-3">
         <label class="form-label">Bio</label>
-        <textarea name="bio" class="form-control" rows="6"><?= $val($artist->bio ?? '') ?></textarea>
+        <textarea name="bio" class="form-control" rows="3"><?= $val($artist->bio ?? '') ?></textarea>
     </div>
+
+    <div class="mb-3">
+        <label class="form-label">Career highlights</label>
+        <textarea name="career_highlights" class="form-control" rows="5"><?= $val($artist->career_highlights ?? '') ?></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Important tracks</label>
+        <input type="text" name="tracks" class="form-control" value="<?= $val($artist->tracks ?? '') ?>"
+               placeholder="Separate with semicolons, e.g. Track One; Track Two">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Audio sample URL (simulated listen)</label>
+        <input type="text" name="audio_url" class="form-control" value="<?= $val($artist->audio_url ?? '') ?>"
+               placeholder="https://… .mp3">
+    </div>
+
+    <p class="text-muted small">Gallery images can be managed in the database (artist_images) for now.</p>
 
     <button type="submit" class="btn btn-purple"><?= $isEdit ? 'Save changes' : 'Create artist' ?></button>
 </form>

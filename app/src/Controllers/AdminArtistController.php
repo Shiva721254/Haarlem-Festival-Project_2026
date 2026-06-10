@@ -98,6 +98,9 @@ class AdminArtistController
         $artist->genre = trim($_POST['genre'] ?? '') ?: null;
         $artist->bio = trim($_POST['bio'] ?? '') ?: null;
         $artist->image = trim($_POST['image'] ?? '') ?: null;
+        $artist->career_highlights = trim($_POST['career_highlights'] ?? '') ?: null;
+        $artist->tracks = trim($_POST['tracks'] ?? '') ?: null;
+        $artist->audio_url = trim($_POST['audio_url'] ?? '') ?: null;
         return $artist;
     }
 
