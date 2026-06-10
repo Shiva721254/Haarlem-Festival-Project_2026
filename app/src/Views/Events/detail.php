@@ -79,7 +79,7 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                 <?php if ($event->restaurant !== null): ?>
                     <p class="mb-3">
                         <strong>Restaurant</strong><br>
-                        <?= htmlspecialchars($event->restaurant->name) ?>
+                        <a href="/restaurant/<?= (int)$event->restaurant->id ?>"><?= htmlspecialchars($event->restaurant->name) ?></a>
                         <?php if ($event->restaurant->cuisine): ?><br><span class="text-muted"><?= htmlspecialchars($event->restaurant->cuisine) ?></span><?php endif; ?>
                     </p>
                 <?php endif; ?>

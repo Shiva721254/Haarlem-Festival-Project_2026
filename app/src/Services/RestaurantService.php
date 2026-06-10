@@ -26,6 +26,12 @@ class RestaurantService implements IRestaurantService
         return $this->repo->getById($id);
     }
 
+    /** @return array<int,array{id:int,title:string,starts_at:string,ends_at:?string}> */
+    public function getSessions(int $restaurantId): array
+    {
+        return $this->repo->getSessions($restaurantId);
+    }
+
     public function create(RestaurantModel $restaurant): int
     {
         return $this->repo->create($restaurant);

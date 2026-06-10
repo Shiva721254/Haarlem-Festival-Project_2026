@@ -20,6 +20,22 @@ class RestaurantRepository extends Repository implements IRestaurantRepository
         return $row ? RestaurantModel::fromDb($row) : null;
     }
 
+    /**
+     * Published reservation sessions for a restaurant (its Yummy events).
+     *
+     * @return array<int,array{id:int,title:string,starts_at:string,ends_at:?string}>
+     */
+    public function getSessions(int $restaurantId): array
+    {
+        return $this->fetchAll(
+            'SELECT id, title, starts_at, ends_at
+             FROM events
+             WHERE restaurant_id = :id AND is_published = 1
+             ORDER BY starts_at',
+            ['id' => $restaurantId]
+        );
+    }
+
     public function create(RestaurantModel $restaurant): int
     {
         $sql = 'INSERT INTO restaurants (name, cuisine, description, address, stars, price_per_seat, image)
