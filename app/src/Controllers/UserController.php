@@ -68,6 +68,8 @@ class UserController
     // GET
     public function createUser($vars = [])
     {
+        AuthMiddleware::requireAdmin();
+
         $user = null;
         $vm = new ManageUserViewModel($user);
         View::renderAdmin('Users/createUser', ['vm' => $vm], 'New user');
@@ -98,6 +100,8 @@ class UserController
     // POST
     public function saveUser($vars = [])
     {
+        AuthMiddleware::requireAdmin();
+
         $user = (new UserModel())->fromPost();
         try {
             if ($user->UserId > 0) {
@@ -118,6 +122,10 @@ class UserController
             $vm = new ManageUserViewModel($user);
             View::renderAdmin('Users/createUser', ['vm' => $vm, 'error' => $error], 'New user');
             exit();
+        } catch (\Throwable $e) {
+            $vm = new ManageUserViewModel($user);
+            View::renderAdmin('Users/createUser', ['vm' => $vm, 'error' => $e->getMessage()], 'New user');
+            exit();
         }
     }
     
@@ -131,9 +139,9 @@ class UserController
     //POST
     public function login()
     {
-        $email = $_POST['Email'] ?? '';
+        $identifier = $_POST['Identifier'] ?? $_POST['Email'] ?? '';
         $password = $_POST['Password'] ?? '';
-        $user = $this->userService->authenticate($email, $password);
+        $user = $this->userService->authenticate($identifier, $password);
         
         if($user){
             // --- SESSION START ---
@@ -146,7 +154,7 @@ class UserController
             header('Location: /');
             exit();
         } else {
-            $vm = new LoginViewModel($email, "Invalid email or password.");
+            $vm = new LoginViewModel($identifier, 'Invalid username/email or password.');
             require __DIR__ . "/../Views/Users/login.php";
         }
     }

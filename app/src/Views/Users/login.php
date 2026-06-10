@@ -13,8 +13,8 @@
             <form action="/login" method="POST">
                 <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken(); ?>">
                 <div class="mb-3">
-                    <label class="form-label">Email</label>
-                    <input type="email" name="Email" class="form-control" value="<?= htmlspecialchars($vm->email) ?>" required>
+                    <label class="form-label">Username or email</label>
+                    <input type="text" name="Identifier" class="form-control" value="<?= htmlspecialchars($vm->email) ?>" required>
                 </div>
                 <div class="mb-3">
                     <label for="password" class="form-label fw-bold">Password</label>

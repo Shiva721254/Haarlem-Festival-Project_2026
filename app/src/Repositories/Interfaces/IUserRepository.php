@@ -9,11 +9,13 @@ interface IUserRepository
     public function create(UserModel $article) : void;
     public function getById(int $id): ?UserModel;
     public function update(UserModel $article) : void;
-    public function updateProfile(int $userId, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void;
+    public function updateProfile(int $userId, string $username, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void;
     public function updateProfileImage(int $userId, string $path): void;
     public function delete(int $id): void;
     public function anonymize(int $userId): void;
     public function getByEmail(string $email): ?UserModel;
+    public function getByUsername(string $username): ?UserModel;
+    public function getByLoginIdentifier(string $identifier): ?UserModel;
 
     // password
     public function updateResetToken(int $userId, ?string $hash, ?string $expiry): void;
