@@ -29,6 +29,27 @@ class EventRepository extends Repository implements IEventRepository
     }
 
     /**
+     * Remaining single-ticket availability per published event of a type,
+     * summed over its active non-pass ticket types. For overview badges.
+     *
+     * @return array<int,int> event_id => tickets available
+     */
+    public function getAvailabilityByType(string $typeSlug): array
+    {
+        $sql = 'SELECT e.id AS event_id, SUM(GREATEST(0, tt.capacity - tt.sold)) AS available
+                FROM events e
+                JOIN ticket_types tt ON tt.event_id = e.id AND tt.is_active = 1
+                JOIN event_types et ON et.id = e.event_type_id
+                WHERE et.slug = :slug AND e.is_published = 1 AND e.is_pass = 0
+                GROUP BY e.id';
+        $map = [];
+        foreach ($this->fetchAll($sql, ['slug' => $typeSlug]) as $row) {
+            $map[(int)$row['event_id']] = (int)$row['available'];
+        }
+        return $map;
+    }
+
+    /**
      * Pass "events" for an event type (the all-access passes on sale).
      *
      * @return EventModel[]
