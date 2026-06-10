@@ -143,6 +143,8 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/admin/artists/edit/{id:\d+}', ['App\Controllers\AdminArtistController', 'edit']);
     $r->addRoute('POST', '/admin/artists/update', ['App\Controllers\AdminArtistController', 'update']);
     $r->addRoute('POST', '/admin/artists/delete', ['App\Controllers\AdminArtistController', 'delete']);
+    $r->addRoute('POST', '/admin/artists/images/delete', ['App\Controllers\AdminArtistController', 'deleteImage']);
+    $r->addRoute('POST', '/admin/artists/{id:\d+}/images', ['App\Controllers\AdminArtistController', 'uploadImage']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
