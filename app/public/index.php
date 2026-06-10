@@ -11,7 +11,10 @@ session_set_cookie_params([
 ]);
 session_start();
 date_default_timezone_set('Europe/Brussels');
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// The Stripe webhook is a server-to-server POST authenticated by its own
+// signature, so it is exempt from the session CSRF check.
+$requestPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestPath !== '/webhook/stripe') {
     if (!App\Middleware\AuthMiddleware::verifyCsrfToken()) {
         http_response_code(403);
         die("CSRF validation failed. Direct access not allowed.");
@@ -92,6 +95,9 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/checkout', ['App\Controllers\CheckoutController', 'start']);
     $r->addRoute('GET', '/checkout/success', ['App\Controllers\CheckoutController', 'success']);
     $r->addRoute('GET', '/checkout/cancel', ['App\Controllers\CheckoutController', 'cancel']);
+
+    // Stripe webhook (server-to-server; signature-verified, CSRF-exempt)
+    $r->addRoute('POST', '/webhook/stripe', ['App\Controllers\WebhookController', 'stripe']);
 
     $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'index']);
 

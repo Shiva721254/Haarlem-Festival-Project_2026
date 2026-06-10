@@ -33,6 +33,7 @@ final class Config
     // Stripe (test/sandbox in development). Keys live in .env, never committed.
     public static function stripePublishableKey(): string { return self::env('STRIPE_PUBLISHABLE_KEY', ''); }
     public static function stripeSecretKey(): string { return self::env('STRIPE_SECRET_KEY', ''); }
+    public static function stripeWebhookSecret(): string { return self::env('STRIPE_WEBHOOK_SECRET', ''); }
 
     /**
      * Base URL used to build absolute return URLs for Stripe redirects.
