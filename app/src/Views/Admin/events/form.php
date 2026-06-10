@@ -111,10 +111,10 @@ if (!empty($event?->artist_ids)) {
         <div class="form-text">Hold Ctrl/Cmd to select multiple artists.</div>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Description</label>
-        <textarea name="description" class="form-control" rows="5"><?= $val($event->description ?? '') ?></textarea>
-    </div>
+    <?php
+        $name = 'description'; $label = 'Description'; $value = $event->description ?? '';
+        require __DIR__ . '/../partials/rich_editor.php';
+    ?>
 
     <div class="form-check mb-3">
         <input type="checkbox" class="form-check-input" id="is_published" name="is_published" value="1"

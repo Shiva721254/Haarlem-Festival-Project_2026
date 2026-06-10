@@ -46,10 +46,10 @@ $val = static fn($v) => htmlspecialchars((string)($v ?? ''));
                placeholder="…or paste an image path / URL">
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Description</label>
-        <textarea name="description" class="form-control" rows="5"><?= $val($venue->description ?? '') ?></textarea>
-    </div>
+    <?php
+        $name = 'description'; $label = 'Description'; $value = $venue->description ?? '';
+        require __DIR__ . '/../partials/rich_editor.php';
+    ?>
 
     <button type="submit" class="btn btn-purple"><?= $isEdit ? 'Save changes' : 'Create venue' ?></button>
 </form>

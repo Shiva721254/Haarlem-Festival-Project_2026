@@ -56,10 +56,10 @@ $val = static fn($v) => htmlspecialchars((string)($v ?? ''));
         </div>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Description</label>
-        <textarea name="description" class="form-control" rows="5"><?= $val($restaurant->description ?? '') ?></textarea>
-    </div>
+    <?php
+        $name = 'description'; $label = 'Description'; $value = $restaurant->description ?? '';
+        require __DIR__ . '/../partials/rich_editor.php';
+    ?>
 
     <button type="submit" class="btn btn-purple"><?= $isEdit ? 'Save changes' : 'Create restaurant' ?></button>
 </form>

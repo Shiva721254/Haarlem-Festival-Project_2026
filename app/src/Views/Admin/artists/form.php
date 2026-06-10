@@ -36,15 +36,12 @@ $val = static fn($v) => htmlspecialchars((string)($v ?? ''));
         </div>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Bio</label>
-        <textarea name="bio" class="form-control" rows="3"><?= $val($artist->bio ?? '') ?></textarea>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Career highlights</label>
-        <textarea name="career_highlights" class="form-control" rows="5"><?= $val($artist->career_highlights ?? '') ?></textarea>
-    </div>
+    <?php
+        $name = 'bio'; $label = 'Bio'; $value = $artist->bio ?? '';
+        require __DIR__ . '/../partials/rich_editor.php';
+        $name = 'career_highlights'; $label = 'Career highlights'; $value = $artist->career_highlights ?? '';
+        require __DIR__ . '/../partials/rich_editor.php';
+    ?>
 
     <div class="mb-3">
         <label class="form-label">Important tracks</label>
