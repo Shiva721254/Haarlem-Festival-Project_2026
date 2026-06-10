@@ -25,6 +25,11 @@ class EventService implements IEventService
         return $this->eventRepository->getPassesByType($typeSlug);
     }
 
+    public function getAvailabilityByType(string $typeSlug): array
+    {
+        return $this->eventRepository->getAvailabilityByType($typeSlug);
+    }
+
     public function getById(int $id): ?EventModel
     {
         return $this->eventRepository->getById($id);

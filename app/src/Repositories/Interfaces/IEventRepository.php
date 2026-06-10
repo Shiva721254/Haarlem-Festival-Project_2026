@@ -19,6 +19,9 @@ interface IEventRepository
      */
     public function getPassesByType(string $typeSlug): array;
 
+    /** @return array<int,int> event_id => tickets available */
+    public function getAvailabilityByType(string $typeSlug): array;
+
     /**
      * A single event with its venue, restaurant and artists loaded.
      */

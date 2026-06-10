@@ -17,6 +17,9 @@ interface IEventService
      */
     public function getPassesByType(string $typeSlug): array;
 
+    /** @return array<int,int> event_id => tickets available */
+    public function getAvailabilityByType(string $typeSlug): array;
+
     public function getById(int $id): ?EventModel;
 
     /**
