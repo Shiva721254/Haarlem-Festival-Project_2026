@@ -12,7 +12,7 @@ use App\ViewModels\UsersViewModel;
 
     <form method="GET" action="/users" class="row g-2 mb-4">
         <div class="col-sm-5">
-            <input type="text" name="q" class="form-control" placeholder="Search name or email"
+            <input type="text" name="q" class="form-control" placeholder="Search username, name or email"
                    value="<?= htmlspecialchars($vm->search) ?>">
         </div>
         <div class="col-sm-3">
@@ -42,6 +42,7 @@ use App\ViewModels\UsersViewModel;
                 <thead class="table-dark">
                     <tr>
                         <th>ID</th>
+                        <th><a class="text-white text-decoration-none" href="<?= $vm->sortLink('Username') ?>">Username<?= $vm->sortIndicator('Username') ?></a></th>
                         <th><a class="text-white text-decoration-none" href="<?= $vm->sortLink('FirstName') ?>">First Name<?= $vm->sortIndicator('FirstName') ?></a></th>
                         <th><a class="text-white text-decoration-none" href="<?= $vm->sortLink('LastName') ?>">Last Name<?= $vm->sortIndicator('LastName') ?></a></th>
                         <th><a class="text-white text-decoration-none" href="<?= $vm->sortLink('Email') ?>">Email<?= $vm->sortIndicator('Email') ?></a></th>
@@ -62,6 +63,7 @@ use App\ViewModels\UsersViewModel;
                     ?>
                         <tr>
                             <td><?= htmlspecialchars($user_id) ?></td>
+                            <td><?= htmlspecialchars($user->Username ?? '') ?></td>
                             <td><?= htmlspecialchars($user->FirstName ?? '') ?></td>
                             <td><?= htmlspecialchars($user->LastName ?? '') ?></td>
                             <td><?= htmlspecialchars($user->Email ?? '') ?></td>

@@ -63,6 +63,7 @@ class AccountController
             'account'     => [
                 'first_name' => $user->FirstName ?? null,
                 'last_name'  => $user->LastName ?? null,
+                'username'   => $user->Username ?? null,
                 'email'      => $user->Email ?? null,
                 'role'       => $user->Role->value ?? null,
                 'created_at' => $user->created_at ?? null,
@@ -100,6 +101,7 @@ class AccountController
 
         $firstName = trim($_POST['FirstName'] ?? '');
         $lastName  = trim($_POST['LastName'] ?? '');
+        $username  = trim($_POST['Username'] ?? '');
         $email     = trim($_POST['Email'] ?? '');
         $phone     = trim($_POST['Phone'] ?? '') ?: null;
         $address   = trim($_POST['Address'] ?? '') ?: null;
@@ -111,7 +113,7 @@ class AccountController
         }
 
         try {
-            $this->userService->updateProfile($userId, $firstName, $lastName, $email, $phone, $address);
+            $this->userService->updateProfile($userId, $username, $firstName, $lastName, $email, $phone, $address);
             $_SESSION['FirstName'] = $firstName;
             Flash::success('Your profile has been updated.');
         } catch (DuplicateEntryException $e) {

@@ -8,14 +8,14 @@ interface IUserService
     public function create(UserModel $article) : void;
     public function getById(int $id): ?UserModel;
     public function update(UserModel $article) : void;
-    public function updateProfile(int $userId, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void;
+    public function updateProfile(int $userId, string $username, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void;
     public function changePassword(int $userId, string $currentPassword, string $newPassword): bool;
     public function updateProfileImage(int $userId, string $path): void;
     public function delete(int $id): void;
     public function deleteOwnAccount(int $userId): void;
 
     //login stuff
-    public function authenticate(string $email, string $password): ?UserModel;
+    public function authenticate(string $identifier, string $password): ?UserModel;
 
     //password stuff
     public function validateResetToken(string $token): ?UserModel;

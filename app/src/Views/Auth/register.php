@@ -1,6 +1,7 @@
 <?php
 /** @var \App\ViewModels\AuthViewModel $vm */
 /** @var array<string,string> $old */
+/** @var array{question:string} $captcha */
 $old = $old ?? [];
 use App\Middleware\AuthMiddleware;
 ?>
@@ -28,6 +29,13 @@ use App\Middleware\AuthMiddleware;
                         <label for="LastName" class="form-label">Last Name</label>
                         <input type="text" class="form-control" id="LastName" name="LastName"
                                value="<?= htmlspecialchars($old['LastName'] ?? '') ?>" required>
+                    </div>
+                    <div class="col-12">
+                        <label for="Username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="Username" name="Username"
+                               value="<?= htmlspecialchars($old['Username'] ?? '') ?>"
+                               pattern="[A-Za-z0-9._-]{3,30}" required>
+                        <div class="form-text">3-30 characters: letters, numbers, dots, underscores, or hyphens.</div>
                     </div>
                     <div class="col-12">
                         <label for="Email" class="form-label">Email Address</label>
@@ -72,6 +80,11 @@ use App\Middleware\AuthMiddleware;
                     <label class="form-check-label" for="consent">
                         I agree to the <a href="/privacy" target="_blank">privacy policy</a> and the processing of my data as described.
                     </label>
+                </div>
+
+                <div class="mt-3">
+                    <label for="captcha_answer" class="form-label">Anti-bot check: what is <?= htmlspecialchars($captcha['question']) ?>?</label>
+                    <input type="number" class="form-control" id="captcha_answer" name="captcha_answer" required>
                 </div>
 
                 <div class="mt-4 d-flex justify-content-between align-items-center">
