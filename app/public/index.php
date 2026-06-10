@@ -75,6 +75,9 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/events/{type:[a-z0-9-]+}', ['App\Controllers\EventController', 'index']);
     $r->addRoute('GET', '/event/{id:\d+}', ['App\Controllers\EventController', 'show']);
 
+    // Participant (artist) detail page
+    $r->addRoute('GET', '/artist/{id:\d+}', ['App\Controllers\ArtistController', 'show']);
+
     // Shopping cart (guests + logged-in users)
     $r->addRoute('GET', '/cart', ['App\Controllers\CartController', 'index']);
     $r->addRoute('POST', '/cart/add', ['App\Controllers\CartController', 'add']);
