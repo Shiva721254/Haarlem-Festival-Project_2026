@@ -2,74 +2,71 @@
 
 namespace App\Controllers;
 
-use App\Services\Interfaces\IUserService;
-use App\Services\Interfaces\IOrderService;
-use App\Services\UserService;
-use App\Services\OrderService;
+use App\Services\AccountService;
+use App\Services\Interfaces\IAccountService;
 use App\Framework\View;
 use App\Framework\Flash;
+use App\Framework\ImageUpload;
 use App\Middleware\AuthMiddleware;
-use App\CustomException\DuplicateEntryException;
 
 /**
- * Self-service account management for the logged-in user: edit name/email,
- * change password, and upload an optional profile picture.
+ * Self-service account management for the logged-in user. The controller only
+ * reads the request, delegates to AccountService, flashes and redirects.
  */
 class AccountController
 {
-    private const AVATAR_DIR = __DIR__ . '/../../public/assets/uploads/avatars/';
-    private const AVATAR_PUBLIC = '/assets/uploads/avatars/';
-    private const ALLOWED_IMAGE = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    private const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB
-
-    private IUserService $userService;
-    private IOrderService $orderService;
+    private IAccountService $accountService;
 
     public function __construct()
     {
-        $this->userService = new UserService();
-        $this->orderService = new OrderService();
+        $this->accountService = new AccountService();
     }
 
     // GET: /account
     public function show(): void
     {
         AuthMiddleware::requireAuth();
-        $user = $this->userService->getById((int) $_SESSION['UserId']);
+        $user = $this->accountService->getById((int) $_SESSION['UserId']);
         View::render('Account/index', ['user' => $user], 'My Account');
     }
 
-    // GET: /account/data — GDPR right of access: download a copy of your data.
-    public function exportData(): void
+    // POST: /account
+    public function update(): void
     {
         AuthMiddleware::requireAuth();
         $userId = (int) $_SESSION['UserId'];
-        $user = $this->userService->getById($userId);
 
-        $orders = [];
-        foreach ($this->orderService->getByUser($userId) as $order) {
-            $orders[] = [
-                'id'             => $order->id,
-                'invoice_number' => $order->invoice_number,
-                'status'         => $order->status,
-                'total'          => $order->total,
-                'created_at'     => $order->created_at,
-                'paid_at'        => $order->paid_at,
-            ];
+        $firstName = trim($_POST['FirstName'] ?? '');
+        $profile = $this->accountService->updateProfile(
+            $userId,
+            trim($_POST['Username'] ?? ''),
+            $firstName,
+            trim($_POST['LastName'] ?? ''),
+            trim($_POST['Email'] ?? ''),
+            trim($_POST['Phone'] ?? '') ?: null,
+            trim($_POST['Address'] ?? '') ?: null
+        );
+
+        if (!$profile['ok']) {
+            Flash::error($profile['message']);
+            header('Location: /account');
+            exit();
         }
+        $_SESSION['FirstName'] = $firstName;
+        Flash::success($profile['message']);
 
-        $payload = [
-            'exported_at' => date('c'),
-            'account'     => [
-                'first_name' => $user->FirstName ?? null,
-                'last_name'  => $user->LastName ?? null,
-                'username'   => $user->Username ?? null,
-                'email'      => $user->Email ?? null,
-                'role'       => $user->Role->value ?? null,
-                'created_at' => $user->created_at ?? null,
-            ],
-            'orders'      => $orders,
-        ];
+        $this->flashPasswordChange($userId);
+        $this->flashAvatarUpload($userId);
+
+        header('Location: /account');
+        exit();
+    }
+
+    // GET: /account/data — GDPR right of access.
+    public function exportData(): void
+    {
+        AuthMiddleware::requireAuth();
+        $payload = $this->accountService->buildDataExport((int) $_SESSION['UserId']);
 
         header('Content-Type: application/json; charset=utf-8');
         header('Content-Disposition: attachment; filename="my-haarlem-festival-data.json"');
@@ -77,11 +74,11 @@ class AccountController
         exit();
     }
 
-    // POST: /account/delete — GDPR right to erasure of your own account.
+    // POST: /account/delete — GDPR right to erasure.
     public function deleteAccount(): void
     {
         AuthMiddleware::requireAuth();
-        $this->userService->deleteOwnAccount((int) $_SESSION['UserId']);
+        $this->accountService->deleteAccount((int) $_SESSION['UserId']);
 
         // Log out: drop the auth identity and rotate the session id, but keep
         // the session so the confirmation message survives the redirect.
@@ -93,111 +90,27 @@ class AccountController
         exit();
     }
 
-    // POST: /account
-    public function update(): void
+    private function flashPasswordChange(int $userId): void
     {
-        AuthMiddleware::requireAuth();
-        $userId = (int) $_SESSION['UserId'];
-
-        $firstName = trim($_POST['FirstName'] ?? '');
-        $lastName  = trim($_POST['LastName'] ?? '');
-        $username  = trim($_POST['Username'] ?? '');
-        $email     = trim($_POST['Email'] ?? '');
-        $phone     = trim($_POST['Phone'] ?? '') ?: null;
-        $address   = trim($_POST['Address'] ?? '') ?: null;
-
-        if ($firstName === '' || $lastName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            Flash::error('Please provide a valid name and email address.');
-            header('Location: /account');
-            exit();
-        }
-
-        try {
-            $this->userService->updateProfile($userId, $username, $firstName, $lastName, $email, $phone, $address);
-            $_SESSION['FirstName'] = $firstName;
-            Flash::success('Your profile has been updated.');
-        } catch (DuplicateEntryException $e) {
-            Flash::error($e->getMessage());
-            header('Location: /account');
-            exit();
-        }
-
-        $this->handlePasswordChange($userId);
-        $this->handleAvatarUpload($userId);
-
-        header('Location: /account');
-        exit();
-    }
-
-    /**
-     * Optional password change. Only acts when the user filled the fields.
-     */
-    private function handlePasswordChange(int $userId): void
-    {
-        $current = $_POST['CurrentPassword'] ?? '';
-        $new     = $_POST['NewPassword'] ?? '';
-        $confirm = $_POST['NewPasswordConfirm'] ?? '';
-
-        if ($current === '' && $new === '' && $confirm === '') {
-            return; // user did not want to change their password
-        }
-
-        if ($new !== $confirm) {
-            Flash::error('New passwords do not match; password was not changed.');
-            return;
-        }
-        if (strlen($new) < 8
-            || !preg_match('/[A-Z]/', $new)
-            || !preg_match('/[0-9]/', $new)
-            || !preg_match('/[^A-Za-z0-9]/', $new)) {
-            Flash::error('New password does not meet the requirements; password was not changed.');
-            return;
-        }
-
-        if ($this->userService->changePassword($userId, $current, $new)) {
-            Flash::success('Your password has been changed.');
-        } else {
-            Flash::error('Current password is incorrect; password was not changed.');
+        $result = $this->accountService->changePassword(
+            $userId,
+            $_POST['CurrentPassword'] ?? '',
+            $_POST['NewPassword'] ?? '',
+            $_POST['NewPasswordConfirm'] ?? ''
+        );
+        if ($result !== null) {
+            $result['ok'] ? Flash::success($result['message']) : Flash::error($result['message']);
         }
     }
 
-    /**
-     * Optional profile picture upload with type and size validation.
-     */
-    private function handleAvatarUpload(int $userId): void
+    private function flashAvatarUpload(int $userId): void
     {
-        if (!isset($_FILES['ProfileImage']) || $_FILES['ProfileImage']['error'] === UPLOAD_ERR_NO_FILE) {
-            return;
+        $result = ImageUpload::handle('ProfileImage', 'avatars');
+        if (!$result['ok']) {
+            Flash::error($result['message']);
+        } elseif (isset($result['path'])) {
+            $this->accountService->updateProfileImage($userId, $result['path']);
+            Flash::success('Your profile picture has been updated.');
         }
-
-        $file = $_FILES['ProfileImage'];
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            Flash::error('Image upload failed; please try again.');
-            return;
-        }
-        if ($file['size'] > self::MAX_IMAGE_BYTES) {
-            Flash::error('Image is too large (max 2 MB).');
-            return;
-        }
-
-        // Trust the real MIME type, not the client-supplied name/extension.
-        $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-        if (!isset(self::ALLOWED_IMAGE[$mime])) {
-            Flash::error('Only JPG, PNG, or WEBP images are allowed.');
-            return;
-        }
-
-        if (!is_dir(self::AVATAR_DIR)) {
-            mkdir(self::AVATAR_DIR, 0775, true);
-        }
-
-        $filename = 'u' . $userId . '_' . bin2hex(random_bytes(8)) . '.' . self::ALLOWED_IMAGE[$mime];
-        if (!move_uploaded_file($file['tmp_name'], self::AVATAR_DIR . $filename)) {
-            Flash::error('Could not save the uploaded image.');
-            return;
-        }
-
-        $this->userService->updateProfileImage($userId, self::AVATAR_PUBLIC . $filename);
-        Flash::success('Your profile picture has been updated.');
     }
 }

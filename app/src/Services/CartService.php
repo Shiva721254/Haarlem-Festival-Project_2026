@@ -72,18 +72,11 @@ class CartService implements ICartService
             return ['ok' => false, 'message' => 'That ticket is not available.'];
         }
 
-        // Effective price: a chosen donation amount, the HaarlemPas reduction on
-        // Stories, or null (use the ticket's own price). Never trust a client
-        // price for a fixed ticket — the discount is computed server-side.
-        $customPrice = null;
-        if ($ticket->is_donation) {
-            if ($amount === null || $amount < self::MIN_DONATION) {
-                return ['ok' => false, 'message' => 'Please enter an amount of at least 1.00 euro.'];
-            }
-            $customPrice = round($amount, 2);
-        } elseif ($haarlemPas && $ticket->event_type_slug === 'stories') {
-            $customPrice = round($ticket->price * (1 - self::HAARLEMPAS_RATE), 2);
+        $priced = $this->resolvePrice($ticket, $amount, $haarlemPas);
+        if (!$priced['ok']) {
+            return ['ok' => false, 'message' => $priced['message']];
         }
+        $customPrice = $priced['price'];
 
         $cartId = $this->cartId();
         $current = $this->cartRepo->findItemQuantity($cartId, $ticketTypeId);
@@ -100,6 +93,27 @@ class CartService implements ICartService
         $this->cartRepo->setQuantity($cartId, $ticketTypeId, $desired, $notes !== '' ? $notes : null);
         $this->cartRepo->setCustomPrice($cartId, $ticketTypeId, $customPrice);
         return ['ok' => true, 'message' => 'Added to cart.'];
+    }
+
+    /**
+     * Resolve the effective line price: a chosen donation amount, the HaarlemPas
+     * reduction on Stories, or null (use the ticket's own price). A client price
+     * is never trusted for a fixed ticket — the discount is computed here.
+     *
+     * @return array{ok:bool,price?:?float,message?:string}
+     */
+    private function resolvePrice(\App\Models\TicketTypeModel $ticket, ?float $amount, bool $haarlemPas): array
+    {
+        if ($ticket->is_donation) {
+            if ($amount === null || $amount < self::MIN_DONATION) {
+                return ['ok' => false, 'message' => 'Please enter an amount of at least 1.00 euro.'];
+            }
+            return ['ok' => true, 'price' => round($amount, 2)];
+        }
+        if ($haarlemPas && $ticket->event_type_slug === 'stories') {
+            return ['ok' => true, 'price' => round($ticket->price * (1 - self::HAARLEMPAS_RATE), 2)];
+        }
+        return ['ok' => true, 'price' => null];
     }
 
     /**

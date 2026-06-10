@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\Framework\Flash;
 use App\Framework\View;
+use App\Framework\ImageUpload;
 use App\Middleware\AuthMiddleware;
 use App\Models\ArtistModel;
 use App\Services\ArtistService;
@@ -10,11 +11,6 @@ use App\Services\Interfaces\IArtistService;
 
 class AdminArtistController
 {
-    private const GALLERY_DIR = __DIR__ . '/../../public/assets/uploads/artists/';
-    private const GALLERY_PUBLIC = '/assets/uploads/artists/';
-    private const ALLOWED_IMAGE = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    private const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4 MB
-
     private IArtistService $artistService;
 
     public function __construct()
@@ -81,43 +77,15 @@ class AdminArtistController
             exit();
         }
 
-        if (!isset($_FILES['gallery_image']) || $_FILES['gallery_image']['error'] === UPLOAD_ERR_NO_FILE) {
+        $result = ImageUpload::handle('gallery_image', 'artists');
+        if (!$result['ok']) {
+            Flash::error($result['message']);
+        } elseif (!isset($result['path'])) {
             Flash::error('Please choose an image to upload.');
-            header('Location: ' . $back);
-            exit();
+        } else {
+            $this->artistService->addImage($artistId, $result['path']);
+            Flash::success('Gallery image added.');
         }
-
-        $file = $_FILES['gallery_image'];
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            Flash::error('Image upload failed; please try again.');
-            header('Location: ' . $back);
-            exit();
-        }
-        if ($file['size'] > self::MAX_IMAGE_BYTES) {
-            Flash::error('Image is too large (max 4 MB).');
-            header('Location: ' . $back);
-            exit();
-        }
-        // Trust the real MIME type, not the client filename.
-        $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-        if (!isset(self::ALLOWED_IMAGE[$mime])) {
-            Flash::error('Only JPG, PNG or WEBP images are allowed.');
-            header('Location: ' . $back);
-            exit();
-        }
-
-        if (!is_dir(self::GALLERY_DIR)) {
-            mkdir(self::GALLERY_DIR, 0775, true);
-        }
-        $filename = 'a' . $artistId . '_' . bin2hex(random_bytes(8)) . '.' . self::ALLOWED_IMAGE[$mime];
-        if (!move_uploaded_file($file['tmp_name'], self::GALLERY_DIR . $filename)) {
-            Flash::error('Could not save the uploaded image.');
-            header('Location: ' . $back);
-            exit();
-        }
-
-        $this->artistService->addImage($artistId, self::GALLERY_PUBLIC . $filename);
-        Flash::success('Gallery image added.');
         header('Location: ' . $back);
         exit();
     }
