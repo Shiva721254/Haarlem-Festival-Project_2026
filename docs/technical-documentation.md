@@ -86,6 +86,7 @@ erDiagram
     events ||--o{ ticket_types : offers
     events ||--o{ event_artist : "lines up"
     artists ||--o{ event_artist : performs
+    artists ||--o{ artist_images : has
     ticket_types ||--o{ cart_items : "added as"
     ticket_types ||--o{ order_items : "sold as"
     carts ||--o{ cart_items : contains
@@ -125,6 +126,16 @@ erDiagram
         int id PK
         varchar name
         varchar genre
+        text career_highlights
+        text tracks
+        varchar audio_url
+        varchar image
+    }
+    artist_images {
+        int id PK
+        int artist_id FK
+        varchar path
+        int sort_order
     }
     events {
         int id PK
@@ -260,6 +271,12 @@ classDiagram
         +int id
         +string name
         +string genre
+        +string bio
+        +string career_highlights
+        +string tracks
+        +string audio_url
+        +string[] images
+        +trackList() string[]
     }
     class CartItemModel {
         +int ticket_type_id

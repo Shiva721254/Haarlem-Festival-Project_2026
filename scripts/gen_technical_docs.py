@@ -29,6 +29,7 @@ ERD = """erDiagram
     events ||--o{ ticket_types : offers
     events ||--o{ event_artist : "lines up"
     artists ||--o{ event_artist : performs
+    artists ||--o{ artist_images : has
     ticket_types ||--o{ cart_items : "added as"
     ticket_types ||--o{ order_items : "sold as"
     carts ||--o{ cart_items : contains
@@ -68,6 +69,16 @@ ERD = """erDiagram
         int id PK
         varchar name
         varchar genre
+        text career_highlights
+        text tracks
+        varchar audio_url
+        varchar image
+    }
+    artist_images {
+        int id PK
+        int artist_id FK
+        varchar path
+        int sort_order
     }
     events {
         int id PK
@@ -196,6 +207,12 @@ DOMAIN = """classDiagram
         +int id
         +string name
         +string genre
+        +string bio
+        +string career_highlights
+        +string tracks
+        +string audio_url
+        +string[] images
+        +trackList() string[]
     }
     class CartItemModel {
         +int ticket_type_id
@@ -449,7 +466,8 @@ def _entity_table(doc):
         ("event_types", "The six festival events (Jazz, DANCE!, Yummy, History, Magic, Stories)."),
         ("events", "A session/performance under a type, at a venue or restaurant; may be a pass."),
         ("ticket_types", "What can be bought for an event: price, VAT, capacity, donation flag."),
-        ("venues / restaurants / artists", "Catalogue entities; artists link to events many-to-many."),
+        ("venues / restaurants / artists", "Catalogue entities; artists link to events many-to-many and have detail content."),
+        ("artist_images", "Gallery images for an artist's detail page."),
         ("carts / cart_items", "A guest or user cart; lines hold quantity, requests and custom price."),
         ("orders / order_items", "A placed order and its priced lines; status drives pay-later."),
         ("tickets", "Issued per order-item with a unique QR code; scanned at the entrance."),
