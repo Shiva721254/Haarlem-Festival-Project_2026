@@ -101,6 +101,12 @@ class AdminRestaurantController
         $restaurant->stars = ($_POST['stars'] ?? '') !== '' ? (int)$_POST['stars'] : null;
         $restaurant->price_per_seat = ($_POST['price_per_seat'] ?? '') !== '' ? (float)$_POST['price_per_seat'] : null;
         $restaurant->image = trim($_POST['image'] ?? '') ?: null;
+        $upload = \App\Framework\ImageUpload::handle('image_file', 'restaurants');
+        if (!empty($upload['path'])) {
+            $restaurant->image = $upload['path'];
+        } elseif (!$upload['ok']) {
+            \App\Framework\Flash::error($upload['message']);
+        }
         return $restaurant;
     }
 

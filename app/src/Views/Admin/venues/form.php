@@ -14,7 +14,7 @@ $val = static fn($v) => htmlspecialchars((string)($v ?? ''));
     <a href="/admin/venues" class="btn btn-outline-secondary btn-sm">Back</a>
 </div>
 
-<form method="POST" action="<?= $action ?>" class="card card-body" style="max-width: 720px;">
+<form method="POST" action="<?= $action ?>" enctype="multipart/form-data" class="card card-body" style="max-width: 720px;">
     <input type="hidden" name="csrf_token" value="<?= AuthMiddleware::generateCsrfToken() ?>">
     <?php if ($isEdit): ?>
         <input type="hidden" name="id" value="<?= (int)$venue->id ?>">
@@ -37,8 +37,13 @@ $val = static fn($v) => htmlspecialchars((string)($v ?? ''));
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Image path</label>
-        <input type="text" name="image" class="form-control" value="<?= $val($venue->image ?? '') ?>">
+        <label class="form-label">Image</label>
+        <?php if (!empty($venue->image)): ?>
+            <div class="mb-2"><img src="<?= $val($venue->image) ?>" alt="" style="max-height:90px" class="rounded border"></div>
+        <?php endif; ?>
+        <input type="file" name="image_file" class="form-control mb-2" accept="image/jpeg,image/png,image/webp">
+        <input type="text" name="image" class="form-control" value="<?= $val($venue->image ?? '') ?>"
+               placeholder="…or paste an image path / URL">
     </div>
 
     <div class="mb-3">

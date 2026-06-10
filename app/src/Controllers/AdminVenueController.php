@@ -97,6 +97,12 @@ class AdminVenueController
         $venue->capacity = ($_POST['capacity'] ?? '') !== '' ? (int)$_POST['capacity'] : null;
         $venue->description = trim($_POST['description'] ?? '') ?: null;
         $venue->image = trim($_POST['image'] ?? '') ?: null;
+        $upload = \App\Framework\ImageUpload::handle('image_file', 'venues');
+        if (!empty($upload['path'])) {
+            $venue->image = $upload['path'];
+        } elseif (!$upload['ok']) {
+            \App\Framework\Flash::error($upload['message']);
+        }
         return $venue;
     }
 

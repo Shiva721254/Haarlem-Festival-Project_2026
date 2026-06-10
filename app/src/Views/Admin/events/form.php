@@ -29,7 +29,7 @@ if (!empty($event?->artist_ids)) {
     <a href="/admin/events" class="btn btn-outline-secondary btn-sm">Back to list</a>
 </div>
 
-<form method="POST" action="<?= $action ?>" class="card card-body" style="max-width: 760px;">
+<form method="POST" action="<?= $action ?>" enctype="multipart/form-data" class="card card-body" style="max-width: 760px;">
     <input type="hidden" name="csrf_token" value="<?= AuthMiddleware::generateCsrfToken() ?>">
     <?php if ($isEdit): ?>
         <input type="hidden" name="id" value="<?= (int)$event->id ?>">
@@ -90,8 +90,13 @@ if (!empty($event?->artist_ids)) {
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Image path <span class="text-muted">(e.g. /assets/images/gumbo.jpg — upload coming later)</span></label>
-        <input type="text" name="image" class="form-control" value="<?= $val($event->image ?? '') ?>">
+        <label class="form-label">Image</label>
+        <?php if (!empty($event->image)): ?>
+            <div class="mb-2"><img src="<?= $val($event->image) ?>" alt="" style="max-height:90px" class="rounded border"></div>
+        <?php endif; ?>
+        <input type="file" name="image_file" class="form-control mb-2" accept="image/jpeg,image/png,image/webp">
+        <input type="text" name="image" class="form-control" value="<?= $val($event->image ?? '') ?>"
+               placeholder="…or paste an image path / URL">
     </div>
 
     <div class="mb-3">

@@ -131,6 +131,12 @@ class AdminEventController
         $event->title         = trim($_POST['title'] ?? '');
         $event->description   = trim($_POST['description'] ?? '') ?: null;
         $event->image         = trim($_POST['image'] ?? '') ?: null;
+        $upload = \App\Framework\ImageUpload::handle('image_file', 'events');
+        if (!empty($upload['path'])) {
+            $event->image = $upload['path'];
+        } elseif (!$upload['ok']) {
+            \App\Framework\Flash::error($upload['message']);
+        }
         $event->starts_at     = trim($_POST['starts_at'] ?? '');
         $event->ends_at       = trim($_POST['ends_at'] ?? '') ?: null;
         $event->is_published  = !empty($_POST['is_published']);
