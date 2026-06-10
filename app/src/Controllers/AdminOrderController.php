@@ -73,13 +73,28 @@ class AdminOrderController
         $status = $this->statusFilter();
         $columns = $this->selectedColumns();
         $rows = $this->orderService->getExportRows($status);
+        $format = ($_GET['format'] ?? 'csv') === 'xlsx' ? 'xlsx' : 'csv';
 
-        $filename = 'orders-' . date('Ymd-His') . '.csv';
+        $headers = array_map(static fn(string $key) => self::EXPORT_COLUMNS[$key], $columns);
+        $base = 'orders-' . date('Ymd-His');
+
+        if ($format === 'xlsx') {
+            $data = array_map(
+                static fn(array $row) => array_map(static fn(string $key) => $row[$key] ?? '', $columns),
+                $rows
+            );
+            $bytes = \App\Framework\XlsxWriter::build($headers, $data, 'Orders');
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment; filename="' . $base . '.xlsx"');
+            header('Content-Length: ' . strlen($bytes));
+            echo $bytes;
+            exit();
+        }
+
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-
+        header('Content-Disposition: attachment; filename="' . $base . '.csv"');
         $out = fopen('php://output', 'w');
-        fputcsv($out, array_map(static fn(string $key) => self::EXPORT_COLUMNS[$key], $columns), ',', '"', '');
+        fputcsv($out, $headers, ',', '"', '');
         foreach ($rows as $row) {
             fputcsv($out, array_map(static fn(string $key) => $row[$key] ?? '', $columns), ',', '"', '');
         }

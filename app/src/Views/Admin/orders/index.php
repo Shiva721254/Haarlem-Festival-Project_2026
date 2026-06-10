@@ -37,9 +37,14 @@
     <?php endif; ?>
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
         <strong>Export orders</strong>
-        <button type="submit" class="btn btn-purple btn-sm">
-            <i class="bi bi-download"></i> Export CSV
-        </button>
+        <div class="d-flex gap-2">
+            <button type="submit" name="format" value="csv" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-filetype-csv"></i> Export CSV
+            </button>
+            <button type="submit" name="format" value="xlsx" class="btn btn-purple btn-sm">
+                <i class="bi bi-file-earmark-excel"></i> Export Excel
+            </button>
+        </div>
     </div>
     <div class="row g-2">
         <?php foreach ($exportColumns as $key => $label): ?>
