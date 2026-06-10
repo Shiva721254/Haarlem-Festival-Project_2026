@@ -48,9 +48,10 @@ class EventController
         }
 
         View::render('Events/index', [
-            'eventType' => $eventType,   // ['slug'=>, 'name'=>, 'description'=>]
-            'events'    => $events,
-            'passes'    => $passes,
+            'eventType'    => $eventType,   // ['slug'=>, 'name'=>, 'description'=>]
+            'events'       => $events,
+            'passes'       => $passes,
+            'availability' => $this->eventService->getAvailabilityByType($typeSlug),
         ], $eventType['name']);
     }
 

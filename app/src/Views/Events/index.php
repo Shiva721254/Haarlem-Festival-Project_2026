@@ -55,8 +55,15 @@ use App\Middleware\AuthMiddleware;
         <p class="text-center text-muted">No events to show yet.</p>
     <?php else: ?>
         <div class="events-grid">
+            <?php $availability = $availability ?? []; ?>
             <?php foreach ($events as $event): ?>
-                <a class="artist-card" href="/event/<?= $event->id ?>">
+                <?php $avail = $availability[$event->id] ?? null; ?>
+                <a class="artist-card position-relative" href="/event/<?= $event->id ?>">
+                    <?php if ($avail === 0): ?>
+                        <span class="badge text-bg-dark position-absolute top-0 end-0 m-2">Sold out</span>
+                    <?php elseif ($avail !== null && $avail <= 20): ?>
+                        <span class="badge text-bg-warning position-absolute top-0 end-0 m-2">Only <?= (int)$avail ?> left</span>
+                    <?php endif; ?>
                     <img src="<?= htmlspecialchars($event->image ?? '/assets/images/grote-markt.png') ?>"
                          alt="<?= htmlspecialchars($event->title) ?>">
                     <div class="artist-name"><?= htmlspecialchars($event->title) ?></div>

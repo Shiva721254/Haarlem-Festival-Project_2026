@@ -105,6 +105,11 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                             A &euro;10 per-person reservation fee is paid now; the rest of the bill is settled at the restaurant.
                         </p>
                     <?php endif; ?>
+                    <?php if (($event->event_type_slug ?? null) === 'dance'): ?>
+                        <p class="text-muted small">
+                            <i class="bi bi-info-circle"></i> Single tickets are capped at 90% of capacity; the remaining 10% is reserved for pass holders and walk-ins.
+                        </p>
+                    <?php endif; ?>
                     <?php foreach ($ticketTypes as $ticket): ?>
                         <div class="ticket-option mb-3">
                             <div class="d-flex justify-content-between">
@@ -114,6 +119,10 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                             <?php if ($ticket->isSoldOut()): ?>
                                 <span class="badge text-bg-secondary mt-1">Sold out</span>
                             <?php else: ?>
+                                <?php $left = $ticket->available(); ?>
+                                <?php if (!$ticket->is_donation && $left <= 20): ?>
+                                    <span class="badge text-bg-warning mt-1 mb-1">Only <?= (int)$left ?> left</span>
+                                <?php endif; ?>
                                 <form method="POST" action="/cart/add" class="mt-1">
                                     <input type="hidden" name="csrf_token" value="<?= \App\Middleware\AuthMiddleware::generateCsrfToken() ?>">
                                     <input type="hidden" name="ticket_type_id" value="<?= $ticket->id ?>">
