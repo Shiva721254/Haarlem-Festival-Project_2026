@@ -54,21 +54,56 @@ use App\Middleware\AuthMiddleware;
     <?php if (empty($events)): ?>
         <p class="text-center text-muted">No events to show yet.</p>
     <?php else: ?>
-        <div class="events-grid">
-            <?php $availability = $availability ?? []; ?>
-            <?php foreach ($events as $event): ?>
-                <?php $avail = $availability[$event->id] ?? null; ?>
-                <a class="artist-card position-relative" href="/event/<?= $event->id ?>">
-                    <?php if ($avail === 0): ?>
-                        <span class="badge text-bg-dark position-absolute top-0 end-0 m-2">Sold out</span>
-                    <?php elseif ($avail !== null && $avail <= 20): ?>
-                        <span class="badge text-bg-warning position-absolute top-0 end-0 m-2">Only <?= (int)$avail ?> left</span>
-                    <?php endif; ?>
-                    <img src="<?= htmlspecialchars($event->image ?? '/assets/images/grote-markt.png') ?>"
-                         alt="<?= htmlspecialchars($event->title) ?>">
-                    <div class="artist-name"><?= htmlspecialchars($event->title) ?></div>
-                </a>
-            <?php endforeach; ?>
+        <div class="lineup-section">
+            <div class="lineup-section-header">
+                <h2>Festival Lineup</h2>
+                <p>Reserve your place for the Haarlem Festival <?= htmlspecialchars(strtolower($eventType['name'])) ?> sessions.</p>
+            </div>
+
+            <div class="event-lineup-grid">
+                <?php $availability = $availability ?? []; ?>
+                <?php foreach ($events as $event): ?>
+                    <?php
+                        $avail = $availability[$event->id] ?? null;
+                        $starts = strtotime($event->starts_at);
+                        $day = strtoupper(date('M', $starts));
+                        $date = date('d', $starts);
+                        $time = date('H:i', $starts);
+                    ?>
+                    <article class="event-lineup-card">
+                        <a class="event-lineup-image" href="/event/<?= $event->id ?>">
+                            <?php if ($avail === 0): ?>
+                                <span class="event-status sold">Sold out</span>
+                            <?php elseif ($avail !== null && $avail <= 20): ?>
+                                <span class="event-status low">Only <?= (int)$avail ?> left</span>
+                            <?php endif; ?>
+                            <img src="<?= htmlspecialchars($event->image ?? '/assets/images/grote-markt.png') ?>"
+                                 alt="<?= htmlspecialchars($event->title) ?>">
+                            <div class="event-date-badge">
+                                <span><?= htmlspecialchars($day) ?></span>
+                                <strong><?= htmlspecialchars($date) ?></strong>
+                                <em><i class="bi bi-clock"></i> <?= htmlspecialchars($time) ?></em>
+                            </div>
+                        </a>
+
+                        <div class="event-lineup-body">
+                            <div class="event-location">
+                                <i class="bi bi-geo-alt"></i>
+                                <?= htmlspecialchars($event->venue->name ?? 'Haarlem Festival venue') ?>
+                            </div>
+                            <h3>
+                                <a href="/event/<?= $event->id ?>"><?= htmlspecialchars($event->title) ?></a>
+                            </h3>
+                            <?php if (!empty($event->description)): ?>
+                                <p><?= htmlspecialchars(mb_strimwidth(strip_tags($event->description), 0, 145, '...')) ?></p>
+                            <?php endif; ?>
+                            <a href="/event/<?= $event->id ?>" class="btn event-reserve-button">
+                                <?= $avail === 0 ? 'View details' : 'Reserve Ticket' ?>
+                            </a>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
         </div>
     <?php endif; ?>
 </section>
