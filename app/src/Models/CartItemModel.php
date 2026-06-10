@@ -20,6 +20,7 @@ class CartItemModel
     public string $event_title;
     public int $available;     // remaining stock for this ticket type
     public ?string $special_requests = null;
+    public ?float $custom_price = null;   // donation amount or discounted price
 
     public static function fromDb(array $data): self
     {
@@ -36,11 +37,18 @@ class CartItemModel
         $i->event_title = $data['event_title'] ?? '';
         $i->available = (int)($data['available'] ?? 0);
         $i->special_requests = $data['special_requests'] ?? null;
+        $i->custom_price = isset($data['custom_price']) ? (float)$data['custom_price'] : null;
         return $i;
+    }
+
+    /** The price actually charged for this line (custom price overrides the base). */
+    public function effectivePrice(): float
+    {
+        return $this->custom_price ?? $this->price;
     }
 
     public function lineSubtotal(): float
     {
-        return $this->price * $this->quantity;
+        return $this->effectivePrice() * $this->quantity;
     }
 }

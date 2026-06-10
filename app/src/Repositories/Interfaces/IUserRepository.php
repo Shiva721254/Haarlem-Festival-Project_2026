@@ -9,9 +9,10 @@ interface IUserRepository
     public function create(UserModel $article) : void;
     public function getById(int $id): ?UserModel;
     public function update(UserModel $article) : void;
-    public function updateProfile(int $userId, string $firstName, string $lastName, string $email): void;
+    public function updateProfile(int $userId, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void;
     public function updateProfileImage(int $userId, string $path): void;
     public function delete(int $id): void;
+    public function anonymize(int $userId): void;
     public function getByEmail(string $email): ?UserModel;
 
     // password

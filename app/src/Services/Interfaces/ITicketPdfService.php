@@ -15,5 +15,5 @@ interface ITicketPdfService
     /**
      * Render an invoice for the order as a PDF.
      */
-    public function renderInvoice(OrderModel $order, string $customerName, string $customerEmail): string;
+    public function renderInvoice(OrderModel $order, string $customerName, string $customerEmail, ?string $customerPhone = null, ?string $customerAddress = null): string;
 }

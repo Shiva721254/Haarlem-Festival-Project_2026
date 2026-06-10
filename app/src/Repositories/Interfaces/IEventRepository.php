@@ -19,6 +19,9 @@ interface IEventRepository
      */
     public function getPassesByType(string $typeSlug): array;
 
+    /** @return array<int,int> event_id => tickets available */
+    public function getAvailabilityByType(string $typeSlug): array;
+
     /**
      * A single event with its venue, restaurant and artists loaded.
      */
@@ -30,6 +33,15 @@ interface IEventRepository
      * @return array<int,array{slug:string,name:string}>
      */
     public function getActiveTypes(): array;
+
+    /** @return array<int,array{slug:string,name:string,description:?string,from_price:?string}> */
+    public function getHomeSummaries(): array;
+
+    /** @return array<int,array{type_name:string,slug:string,option_name:string,price:string}> */
+    public function getPassSummaries(): array;
+
+    /** @return array<int,array{day:string,type_name:string,slug:string,sessions:int,first_t:string,last_t:string}> */
+    public function getScheduleSummary(): array;
 
     /**
      * A single active event type by slug, for the overview hero/header.

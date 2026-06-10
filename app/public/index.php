@@ -1,8 +1,20 @@
 <?php
 require __DIR__ . '/../vendor/autoload.php';
+// Harden the session cookie: not readable from JS (XSS), sent same-site only
+// (CSRF defence in depth), and Secure when served over HTTPS.
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path'     => '/',
+    'httponly' => true,
+    'samesite' => 'Lax',
+    'secure'   => (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off'),
+]);
 session_start();
 date_default_timezone_set('Europe/Brussels');
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// The Stripe webhook is a server-to-server POST authenticated by its own
+// signature, so it is exempt from the session CSRF check.
+$requestPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestPath !== '/webhook/stripe') {
     if (!App\Middleware\AuthMiddleware::verifyCsrfToken()) {
         http_response_code(403);
         die("CSRF validation failed. Direct access not allowed.");
@@ -34,6 +46,12 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     // Self-service account management
     $r->addRoute('GET', '/account', ['App\Controllers\AccountController', 'show']);
     $r->addRoute('POST', '/account', ['App\Controllers\AccountController', 'update']);
+    // GDPR rights: data access (export) and erasure (delete account)
+    $r->addRoute('GET', '/account/data', ['App\Controllers\AccountController', 'exportData']);
+    $r->addRoute('POST', '/account/delete', ['App\Controllers\AccountController', 'deleteAccount']);
+
+    // Privacy policy
+    $r->addRoute('GET', '/privacy', ['App\Controllers\HomeController', 'privacy']);
 
     // Personal program (a customer's purchased events)
     $r->addRoute('GET', '/program', ['App\Controllers\ProgramController', 'index']);
@@ -60,6 +78,9 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/events/{type:[a-z0-9-]+}', ['App\Controllers\EventController', 'index']);
     $r->addRoute('GET', '/event/{id:\d+}', ['App\Controllers\EventController', 'show']);
 
+    // Participant (artist) detail page
+    $r->addRoute('GET', '/artist/{id:\d+}', ['App\Controllers\ArtistController', 'show']);
+
     // Shopping cart (guests + logged-in users)
     $r->addRoute('GET', '/cart', ['App\Controllers\CartController', 'index']);
     $r->addRoute('POST', '/cart/add', ['App\Controllers\CartController', 'add']);
@@ -74,6 +95,9 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/checkout', ['App\Controllers\CheckoutController', 'start']);
     $r->addRoute('GET', '/checkout/success', ['App\Controllers\CheckoutController', 'success']);
     $r->addRoute('GET', '/checkout/cancel', ['App\Controllers\CheckoutController', 'cancel']);
+
+    // Stripe webhook (server-to-server; signature-verified, CSRF-exempt)
+    $r->addRoute('POST', '/webhook/stripe', ['App\Controllers\WebhookController', 'stripe']);
 
     $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'index']);
 
@@ -125,6 +149,8 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/admin/artists/edit/{id:\d+}', ['App\Controllers\AdminArtistController', 'edit']);
     $r->addRoute('POST', '/admin/artists/update', ['App\Controllers\AdminArtistController', 'update']);
     $r->addRoute('POST', '/admin/artists/delete', ['App\Controllers\AdminArtistController', 'delete']);
+    $r->addRoute('POST', '/admin/artists/images/delete', ['App\Controllers\AdminArtistController', 'deleteImage']);
+    $r->addRoute('POST', '/admin/artists/{id:\d+}/images', ['App\Controllers\AdminArtistController', 'uploadImage']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];

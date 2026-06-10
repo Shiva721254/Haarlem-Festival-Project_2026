@@ -25,6 +25,11 @@ class EventService implements IEventService
         return $this->eventRepository->getPassesByType($typeSlug);
     }
 
+    public function getAvailabilityByType(string $typeSlug): array
+    {
+        return $this->eventRepository->getAvailabilityByType($typeSlug);
+    }
+
     public function getById(int $id): ?EventModel
     {
         return $this->eventRepository->getById($id);
@@ -33,6 +38,21 @@ class EventService implements IEventService
     public function getActiveTypes(): array
     {
         return $this->eventRepository->getActiveTypes();
+    }
+
+    public function getHomeSummaries(): array
+    {
+        return $this->eventRepository->getHomeSummaries();
+    }
+
+    public function getPassSummaries(): array
+    {
+        return $this->eventRepository->getPassSummaries();
+    }
+
+    public function getScheduleSummary(): array
+    {
+        return $this->eventRepository->getScheduleSummary();
     }
 
     public function getTypeBySlug(string $slug): ?array

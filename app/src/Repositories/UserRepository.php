@@ -133,14 +133,17 @@ class UserRepository extends Repository implements IUserRepository
         $stmt->execute();
     }
 
-    public function updateProfile(int $userId, string $firstName, string $lastName, string $email): void
+    public function updateProfile(int $userId, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void
     {
-        $sql = 'UPDATE users SET FirstName = :FirstName, LastName = :LastName, Email = :Email
+        $sql = 'UPDATE users SET FirstName = :FirstName, LastName = :LastName, Email = :Email,
+                    phone = :phone, address = :address
                 WHERE UserId = :UserId';
         $stmt = $this->getConnection()->prepare($sql);
         $stmt->bindValue(':FirstName', $firstName, PDO::PARAM_STR);
         $stmt->bindValue(':LastName', $lastName, PDO::PARAM_STR);
         $stmt->bindValue(':Email', $email, PDO::PARAM_STR);
+        $stmt->bindValue(':phone', $phone, $phone === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        $stmt->bindValue(':address', $address, $address === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindValue(':UserId', $userId, PDO::PARAM_INT);
         $stmt->execute();
     }
@@ -161,6 +164,26 @@ class UserRepository extends Repository implements IUserRepository
         $stmt = $this->getConnection()->prepare($sql);
         $stmt->bindValue(':UserId', $id, PDO::PARAM_INT);
 
+        $stmt->execute();
+    }
+
+    /**
+     * GDPR erasure: strip personal data but keep the row so linked transaction
+     * records (orders, invoices) stay intact. The account is deactivated and
+     * the email freed with a non-routable placeholder.
+     */
+    public function anonymize(int $userId): void
+    {
+        $sql = "UPDATE users SET
+                    FirstName = 'Deleted', LastName = 'User',
+                    Email = CONCAT('deleted+', UserId, '@removed.invalid'),
+                    Password = '', profile_image = NULL,
+                    verification_token = NULL, verification_token_expires_at = NULL,
+                    reset_token_hash = NULL, reset_token_expires_at = NULL,
+                    isActive = 0, isVerified = 0
+                WHERE UserId = :id";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bindValue(':id', $userId, PDO::PARAM_INT);
         $stmt->execute();
     }
 

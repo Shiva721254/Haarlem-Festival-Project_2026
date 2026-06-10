@@ -30,14 +30,10 @@ final class Config
     public static function mailFromEmail(): string { return self::env('MAIL_FROM_EMAIL', 'noreply@haarlemfestival.com'); }
     public static function mailFromName(): string { return self::env('MAIL_FROM_NAME', 'Haarlem Festival Support'); }
 
-    // reCAPTCHA. When the keys are empty (e.g. local dev) captcha is treated as
-    // disabled; set both in .env to enforce it in production.
-    public static function recaptchaSiteKey(): string { return self::env('RECAPTCHA_SITE_KEY', ''); }
-    public static function recaptchaSecretKey(): string { return self::env('RECAPTCHA_SECRET_KEY', ''); }
-
     // Stripe (test/sandbox in development). Keys live in .env, never committed.
     public static function stripePublishableKey(): string { return self::env('STRIPE_PUBLISHABLE_KEY', ''); }
     public static function stripeSecretKey(): string { return self::env('STRIPE_SECRET_KEY', ''); }
+    public static function stripeWebhookSecret(): string { return self::env('STRIPE_WEBHOOK_SECRET', ''); }
 
     /**
      * Base URL used to build absolute return URLs for Stripe redirects.

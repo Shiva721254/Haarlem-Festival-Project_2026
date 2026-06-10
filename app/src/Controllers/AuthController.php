@@ -3,7 +3,6 @@
 namespace App\Controllers;
 use App\Services\Interfaces\IUserService;
 use App\Services\UserService;
-use App\Services\RecaptchaService;
 use App\Repositories\Interfaces\IUserRepository;
 use App\Repositories\UserRepository;
 use App\ViewModels\AuthViewModel;
@@ -17,13 +16,11 @@ class AuthController
 {
     private IUserService $userService;
     private IUserRepository $userRepository;
-    private RecaptchaService $recaptchaService;
 
     public function __construct()
     {
         $this->userService = new UserService();
         $this->userRepository = new UserRepository();
-        $this->recaptchaService = new RecaptchaService();
     }
 
     // GET: /register
@@ -51,11 +48,9 @@ class AuthController
         // Server-side validation, independent of any front end checks.
         $error = $this->validateRegistration($old, $password, $confirm);
 
-        if ($error === null) {
-            $token = $_POST['g-recaptcha-response'] ?? null;
-            if (!$this->recaptchaService->verify($token)) {
-                $error = 'Captcha verification failed. Please try again.';
-            }
+        // GDPR: an account requires explicit agreement to the privacy policy.
+        if ($error === null && empty($_POST['consent'])) {
+            $error = 'Please agree to the privacy policy to create an account.';
         }
 
         if ($error === null) {

@@ -51,8 +51,11 @@ class CartController
         if (mb_strlen($notes) > 500) {
             $notes = mb_substr($notes, 0, 500);
         }
+        // Pay-what-you-like amount and the HaarlemPas (25% off Stories) toggle.
+        $amount = isset($_POST['amount']) && $_POST['amount'] !== '' ? (float)$_POST['amount'] : null;
+        $haarlemPas = !empty($_POST['haarlempas']);
 
-        $result = $this->cartService->add($ticketTypeId, $quantity, $notes);
+        $result = $this->cartService->add($ticketTypeId, $quantity, $notes, $amount, $haarlemPas);
         $result['ok'] ? Flash::success($result['message']) : Flash::error($result['message']);
 
         // Return to where the user came from (the event page), or the cart.
