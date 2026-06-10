@@ -10,8 +10,12 @@ use Endroid\QrCode\Writer\PngWriter;
 
 class TicketPdfService implements ITicketPdfService
 {
-    public function renderTickets(OrderModel $order, array $tickets): string
+    public function renderTickets(OrderModel $order, array $tickets, string $customerName = ''): string
     {
+        $holder = $customerName !== ''
+            ? '<div class="holder">Ticket holder: ' . htmlspecialchars($customerName) . '</div>'
+            : '';
+
         $blocks = '';
         foreach ($tickets as $t) {
             $qr = $this->qrDataUri((string) $t['qr_code']);
@@ -23,6 +27,7 @@ class TicketPdfService implements ITicketPdfService
                     <div class="ticket-info">
                         <div class="event">' . htmlspecialchars($t['event_title'] ?? '') . '</div>
                         <div class="type">' . htmlspecialchars($t['ticket_type_name'] ?? '') . '</div>
+                        ' . $holder . '
                         <div class="meta">' . htmlspecialchars($when) . ($venue ? ' &middot; ' . $venue : '') . '</div>
                         <div class="code">' . htmlspecialchars($t['qr_code']) . '</div>
                     </div>
@@ -40,6 +45,7 @@ class TicketPdfService implements ITicketPdfService
             .ticket-qr img { width:170px; height:170px; }
             .event { font-size:18px; font-weight:bold; }
             .type { color:#5c2379; font-weight:bold; margin-top:4px; }
+            .holder { margin-top:6px; font-size:13px; }
             .meta { color:#555; margin-top:6px; font-size:12px; }
             .code { color:#888; margin-top:10px; font-size:10px; }
         </style></head><body>

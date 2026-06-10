@@ -10,7 +10,7 @@ interface ITicketPdfService
      *
      * @param array<int,array<string,mixed>> $tickets
      */
-    public function renderTickets(OrderModel $order, array $tickets): string;
+    public function renderTickets(OrderModel $order, array $tickets, string $customerName = ''): string;
 
     /**
      * Render an invoice for the order as a PDF.
