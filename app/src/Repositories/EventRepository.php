@@ -13,19 +13,10 @@ class EventRepository extends Repository implements IEventRepository
     public function getPublishedByType(string $typeSlug): array
     {
         // Passes are excluded here; they are shown in their own section.
-        $sql = 'SELECT e.*, et.name AS event_type_name, et.slug AS event_type_slug
-                FROM events e
-                JOIN event_types et ON et.id = e.event_type_id
+        $sql = $this->eventSelect() . '
                 WHERE et.slug = :slug AND e.is_published = 1 AND e.is_pass = 0
                 ORDER BY e.starts_at ASC';
-
-        $rows = $this->fetchAll($sql, ['slug' => $typeSlug]);
-
-        $events = [];
-        foreach ($rows as $row) {
-            $events[] = EventModel::fromDb($row);
-        }
-        return $events;
+        return $this->mapEvents($this->fetchAll($sql, ['slug' => $typeSlug]));
     }
 
     /**
@@ -56,24 +47,15 @@ class EventRepository extends Repository implements IEventRepository
      */
     public function getPassesByType(string $typeSlug): array
     {
-        $sql = 'SELECT e.*, et.name AS event_type_name, et.slug AS event_type_slug
-                FROM events e
-                JOIN event_types et ON et.id = e.event_type_id
+        $sql = $this->eventSelect() . '
                 WHERE et.slug = :slug AND e.is_published = 1 AND e.is_pass = 1
                 ORDER BY e.id';
-
-        return array_map(
-            static fn(array $r) => EventModel::fromDb($r),
-            $this->fetchAll($sql, ['slug' => $typeSlug])
-        );
+        return $this->mapEvents($this->fetchAll($sql, ['slug' => $typeSlug]));
     }
 
     public function getById(int $id): ?EventModel
     {
-        $sql = 'SELECT e.*, et.name AS event_type_name, et.slug AS event_type_slug
-                FROM events e
-                JOIN event_types et ON et.id = e.event_type_id
-                WHERE e.id = :id';
+        $sql = $this->eventSelect() . ' WHERE e.id = :id';
 
         $row = $this->fetchOne($sql, ['id' => $id]);
         if ($row === null) {
@@ -81,10 +63,7 @@ class EventRepository extends Repository implements IEventRepository
         }
 
         $event = EventModel::fromDb($row);
-        $event->venue = $this->loadVenue($event->venue_id);
-        $event->restaurant = $this->loadRestaurant($event->restaurant_id);
-        $event->artists = $this->loadArtists($event->id);
-        return $event;
+        return $this->withRelations($event);
     }
 
     public function getActiveTypes(): array
@@ -163,16 +142,20 @@ class EventRepository extends Repository implements IEventRepository
      */
     public function getAllForAdmin(): array
     {
-        $sql = 'SELECT e.*, et.name AS event_type_name, et.slug AS event_type_slug
-                FROM events e
-                JOIN event_types et ON et.id = e.event_type_id
+        $sql = $this->eventSelect() . '
                 ORDER BY e.starts_at DESC';
+        return $this->mapEvents($this->fetchAll($sql));
+    }
 
-        $events = [];
-        foreach ($this->fetchAll($sql) as $row) {
-            $events[] = EventModel::fromDb($row);
-        }
-        return $events;
+    private function eventSelect(): string
+    {
+        return 'SELECT e.*, et.name AS event_type_name, et.slug AS event_type_slug
+                FROM events e JOIN event_types et ON et.id = e.event_type_id';
+    }
+
+    private function mapEvents(array $rows): array
+    {
+        return array_map(static fn(array $row) => EventModel::fromDb($row), $rows);
     }
 
     public function create(EventModel $event): int
@@ -190,21 +173,7 @@ class EventRepository extends Repository implements IEventRepository
 
     public function update(EventModel $event): void
     {
-        $sql = 'UPDATE events SET
-                    event_type_id = :event_type_id,
-                    venue_id = :venue_id,
-                    restaurant_id = :restaurant_id,
-                    title = :title,
-                    description = :description,
-                    image = :image,
-                    starts_at = :starts_at,
-                    ends_at = :ends_at,
-                    is_published = :is_published
-                WHERE id = :id';
-
-        $params = $this->toParams($event);
-        $params['id'] = $event->id;
-        $this->execute($sql, $params);
+        $this->execute($this->updateSql(), $this->toParams($event) + ['id' => $event->id]);
         $this->syncArtists($event->id, $event->artist_ids);
     }
 
@@ -254,17 +223,27 @@ class EventRepository extends Repository implements IEventRepository
      */
     private function toParams(EventModel $event): array
     {
-        return [
-            'event_type_id' => $event->event_type_id,
-            'venue_id'      => $event->venue_id,
-            'restaurant_id' => $event->restaurant_id,
-            'title'         => $event->title,
-            'description'   => $event->description,
-            'image'         => $event->image,
-            'starts_at'     => $event->starts_at,
-            'ends_at'       => $event->ends_at !== '' ? $event->ends_at : null,
-            'is_published'  => $event->is_published ? 1 : 0,
-        ];
+        $params = ['event_type_id' => $event->event_type_id, 'venue_id' => $event->venue_id];
+        $params += ['restaurant_id' => $event->restaurant_id, 'title' => $event->title];
+        $params += ['description' => $event->description, 'image' => $event->image];
+        $params += ['starts_at' => $event->starts_at, 'ends_at' => $event->ends_at !== '' ? $event->ends_at : null];
+        return $params + ['is_published' => $event->is_published ? 1 : 0];
+    }
+
+    private function withRelations(EventModel $event): EventModel
+    {
+        $event->venue = $this->loadVenue($event->venue_id);
+        $event->restaurant = $this->loadRestaurant($event->restaurant_id);
+        $event->artists = $this->loadArtists($event->id);
+        return $event;
+    }
+
+    private function updateSql(): string
+    {
+        return 'UPDATE events SET event_type_id = :event_type_id, venue_id = :venue_id,
+                    restaurant_id = :restaurant_id, title = :title, description = :description,
+                    image = :image, starts_at = :starts_at, ends_at = :ends_at,
+                    is_published = :is_published WHERE id = :id';
     }
 
     private function loadVenue(?int $venueId): ?VenueModel

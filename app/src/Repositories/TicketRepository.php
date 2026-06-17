@@ -8,25 +8,19 @@ class TicketRepository extends Repository implements ITicketRepository
 {
     public function findScanInfoByCode(string $code): ?array
     {
-        $sql = 'SELECT t.id, t.qr_code, t.status, t.scanned_at,
-                       tt.name AS ticket_type_name,
-                       e.title AS event_title,
-                       e.starts_at,
-                       v.name AS venue_name,
-                       o.id AS order_id,
-                       o.status AS order_status,
-                       CONCAT(u.FirstName, " ", u.LastName) AS customer_name,
-                       u.Email AS customer_email
-                FROM tickets t
-                JOIN order_items oi ON oi.id = t.order_item_id
-                JOIN orders o ON o.id = oi.order_id
-                JOIN users u ON u.UserId = o.user_id
-                JOIN ticket_types tt ON tt.id = oi.ticket_type_id
-                JOIN events e ON e.id = tt.event_id
-                LEFT JOIN venues v ON v.id = e.venue_id
-                WHERE t.qr_code = :code';
+        return $this->fetchOne($this->scanInfoSql(), ['code' => $code]);
+    }
 
-        return $this->fetchOne($sql, ['code' => $code]);
+    private function scanInfoSql(): string
+    {
+        return 'SELECT t.id, t.qr_code, t.status, t.scanned_at, tt.name AS ticket_type_name,
+                       e.title AS event_title, e.starts_at, v.name AS venue_name, o.id AS order_id,
+                       o.status AS order_status, CONCAT(u.FirstName, " ", u.LastName) AS customer_name,
+                       u.Email AS customer_email FROM tickets t
+                JOIN order_items oi ON oi.id = t.order_item_id JOIN orders o ON o.id = oi.order_id
+                JOIN users u ON u.UserId = o.user_id JOIN ticket_types tt ON tt.id = oi.ticket_type_id
+                JOIN events e ON e.id = tt.event_id LEFT JOIN venues v ON v.id = e.venue_id
+                WHERE t.qr_code = :code';
     }
 
     public function markScanned(int $ticketId): void

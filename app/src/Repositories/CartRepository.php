@@ -13,20 +13,11 @@ class CartRepository extends Repository implements ICartRepository
      */
     public function getOrCreateCartId(?int $userId, string $sessionId): int
     {
-        if ($userId !== null) {
-            $row = $this->fetchOne('SELECT id FROM carts WHERE user_id = :uid', ['uid' => $userId]);
-            if ($row) {
-                return (int)$row['id'];
-            }
-            $this->execute('INSERT INTO carts (user_id) VALUES (:uid)', ['uid' => $userId]);
-            return $this->lastInsertId();
-        }
-
-        $row = $this->fetchOne('SELECT id FROM carts WHERE session_id = :sid AND user_id IS NULL', ['sid' => $sessionId]);
+        $row = $this->cartIdRow($userId, $sessionId);
         if ($row) {
             return (int)$row['id'];
         }
-        $this->execute('INSERT INTO carts (session_id) VALUES (:sid)', ['sid' => $sessionId]);
+        $this->createCart($userId, $sessionId);
         return $this->lastInsertId();
     }
 
@@ -50,21 +41,9 @@ class CartRepository extends Repository implements ICartRepository
      */
     public function getItems(int $cartId): array
     {
-        $sql = 'SELECT ci.*,
-                       tt.name  AS ticket_type_name,
-                       tt.price AS price,
-                       tt.vat_rate AS vat_rate,
-                       GREATEST(0, tt.capacity - tt.sold) AS available,
-                       e.id    AS event_id,
-                       e.title AS event_title
-                FROM cart_items ci
-                JOIN ticket_types tt ON tt.id = ci.ticket_type_id
-                JOIN events e ON e.id = tt.event_id
-                WHERE ci.cart_id = :cid
-                ORDER BY ci.id';
         return array_map(
             static fn(array $r) => CartItemModel::fromDb($r),
-            $this->fetchAll($sql, ['cid' => $cartId])
+            $this->fetchAll($this->cartItemsSql(), ['cid' => $cartId])
         );
     }
 
@@ -87,21 +66,45 @@ class CartRepository extends Repository implements ICartRepository
             $this->removeItem($cartId, $ticketTypeId);
             return;
         }
+        $this->execute($this->setQuantitySql($notes), $this->quantityParams($cartId, $ticketTypeId, $quantity, $notes));
+    }
 
-        // When notes are given (a reservation) store them; otherwise (a plain
-        // quantity change) leave any existing special requests untouched.
-        if ($notes !== null) {
-            $sql = 'INSERT INTO cart_items (cart_id, ticket_type_id, quantity, special_requests)
-                    VALUES (:cid, :tid, :qty, :notes)
-                    ON DUPLICATE KEY UPDATE quantity = :qty, special_requests = :notes';
-            $this->execute($sql, ['cid' => $cartId, 'tid' => $ticketTypeId, 'qty' => $quantity, 'notes' => $notes]);
-            return;
+    private function cartIdRow(?int $userId, string $sessionId): ?array
+    {
+        if ($userId !== null) {
+            return $this->fetchOne('SELECT id FROM carts WHERE user_id = :uid', ['uid' => $userId]);
         }
+        return $this->fetchOne('SELECT id FROM carts WHERE session_id = :sid AND user_id IS NULL', ['sid' => $sessionId]);
+    }
 
-        $sql = 'INSERT INTO cart_items (cart_id, ticket_type_id, quantity)
-                VALUES (:cid, :tid, :qty)
-                ON DUPLICATE KEY UPDATE quantity = :qty';
-        $this->execute($sql, ['cid' => $cartId, 'tid' => $ticketTypeId, 'qty' => $quantity]);
+    private function createCart(?int $userId, string $sessionId): void
+    {
+        $sql = $userId !== null ? 'INSERT INTO carts (user_id) VALUES (:uid)' : 'INSERT INTO carts (session_id) VALUES (:sid)';
+        $this->execute($sql, $userId !== null ? ['uid' => $userId] : ['sid' => $sessionId]);
+    }
+
+    private function cartItemsSql(): string
+    {
+        return 'SELECT ci.*, tt.name AS ticket_type_name, tt.price AS price, tt.vat_rate AS vat_rate,
+                       GREATEST(0, tt.capacity - tt.sold) AS available, e.id AS event_id, e.title AS event_title
+                FROM cart_items ci JOIN ticket_types tt ON tt.id = ci.ticket_type_id
+                JOIN events e ON e.id = tt.event_id WHERE ci.cart_id = :cid ORDER BY ci.id';
+    }
+
+    private function setQuantitySql(?string $notes): string
+    {
+        if ($notes !== null) {
+            return 'INSERT INTO cart_items (cart_id, ticket_type_id, quantity, special_requests)
+                    VALUES (:cid, :tid, :qty, :notes) ON DUPLICATE KEY UPDATE quantity = :qty, special_requests = :notes';
+        }
+        return 'INSERT INTO cart_items (cart_id, ticket_type_id, quantity)
+                VALUES (:cid, :tid, :qty) ON DUPLICATE KEY UPDATE quantity = :qty';
+    }
+
+    private function quantityParams(int $cartId, int $ticketTypeId, int $quantity, ?string $notes): array
+    {
+        $params = ['cid' => $cartId, 'tid' => $ticketTypeId, 'qty' => $quantity];
+        return $notes === null ? $params : $params + ['notes' => $notes];
     }
 
     /** Set the effective unit price for a line (donation amount or discount). */

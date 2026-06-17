@@ -18,6 +18,12 @@ class TicketTypeRepository extends Repository implements ITicketTypeRepository
         return $this->mapAll($this->fetchAll($sql, ['eid' => $eventId]));
     }
 
+    public function countAll(): int
+    {
+        $row = $this->fetchOne('SELECT COUNT(*) AS n FROM ticket_types');
+        return (int) ($row['n'] ?? 0);
+    }
+
     /**
      * All ticket types for an event (admin view).
      *
@@ -48,14 +54,7 @@ class TicketTypeRepository extends Repository implements ITicketTypeRepository
     {
         $sql = 'INSERT INTO ticket_types (event_id, name, price, vat_rate, capacity, sold, is_active)
                 VALUES (:event_id, :name, :price, :vat_rate, :capacity, 0, :is_active)';
-        $this->execute($sql, [
-            'event_id'  => $t->event_id,
-            'name'      => $t->name,
-            'price'     => $t->price,
-            'vat_rate'  => $t->vat_rate,
-            'capacity'  => $t->capacity,
-            'is_active' => $t->is_active ? 1 : 0,
-        ]);
+        $this->execute($sql, $this->params($t, true));
         return $this->lastInsertId();
     }
 
@@ -65,14 +64,16 @@ class TicketTypeRepository extends Repository implements ITicketTypeRepository
                 SET name = :name, price = :price, vat_rate = :vat_rate,
                     capacity = :capacity, is_active = :is_active
                 WHERE id = :id';
-        $this->execute($sql, [
-            'name'      => $t->name,
-            'price'     => $t->price,
-            'vat_rate'  => $t->vat_rate,
-            'capacity'  => $t->capacity,
-            'is_active' => $t->is_active ? 1 : 0,
-            'id'        => $t->id,
-        ]);
+        $this->execute($sql, $this->params($t, false) + ['id' => $t->id]);
+    }
+
+    private function params(TicketTypeModel $t, bool $includeEvent): array
+    {
+        $params = [
+            'name' => $t->name, 'price' => $t->price,
+            'vat_rate' => $t->vat_rate, 'capacity' => $t->capacity, 'is_active' => $t->is_active ? 1 : 0,
+        ];
+        return $includeEvent ? ['event_id' => $t->event_id] + $params : $params;
     }
 
     public function delete(int $id): void

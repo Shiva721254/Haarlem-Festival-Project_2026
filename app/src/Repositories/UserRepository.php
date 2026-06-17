@@ -6,7 +6,6 @@ use App\Repositories\Interfaces\IUserRepository;
 use App\Models\UserModel;
 use App\Enums\UserRole;
 use App\CustomException\DuplicateEntryException;
-use \PDO;
 
 class UserRepository extends Repository implements IUserRepository
 {
@@ -17,46 +16,11 @@ class UserRepository extends Repository implements IUserRepository
      */
     public function getAll(string $search = '', string $role = '', string $sort = 'LastName', string $dir = 'ASC'): array
     {
-        // Whitelist sort column and direction to avoid SQL injection.
-        $sortable = ['Username', 'FirstName', 'LastName', 'Email', 'Role', 'created_at'];
-        if (!in_array($sort, $sortable, true)) {
-            $sort = 'LastName';
-        }
-        $dir = strtoupper($dir) === 'DESC' ? 'DESC' : 'ASC';
-
-        $where = [];
-        $params = [];
-        if ($search !== '') {
-            $where[] = '(Username LIKE :q OR FirstName LIKE :q OR LastName LIKE :q OR Email LIKE :q)';
-            $params['q'] = '%' . $search . '%';
-        }
-        if ($role !== '') {
-            $where[] = 'Role = :role';
-            $params['role'] = $role;
-        }
-        $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
-
+        [$sort, $dir] = $this->normalizeSort($sort, $dir);
+        [$whereSql, $params] = $this->userFilters($search, $role);
         $sql = "SELECT UserId, Username, FirstName, LastName, Email, Role, isVerified, isActive, created_at
                 FROM users {$whereSql} ORDER BY {$sort} {$dir}";
-
-        $rows = $this->fetchAll($sql, $params);
-
-        $users = [];
-        foreach ($rows as $row) {
-            $user = new UserModel();
-            $user->UserId = (int) $row['UserId'];
-            $user->Username = $row['Username'];
-            $user->FirstName = $row['FirstName'];
-            $user->LastName = $row['LastName'];
-            $user->Email = $row['Email'];
-            $user->Role = \App\Enums\UserRole::tryFrom($row['Role']);
-            $user->isVerified = (bool) $row['isVerified'];
-            $user->isActive = (bool) $row['isActive'];
-            $user->created_at = $row['created_at'] ?? null;
-            $users[] = $user;
-        }
-
-        return $users;
+        return $this->mapUsers($this->fetchAll($sql, $params));
     }
     // --- CRUD OPERATIONS ---
     public function create(UserModel $user): void
@@ -64,22 +28,7 @@ class UserRepository extends Repository implements IUserRepository
         try{
             $sql = 'INSERT INTO users (Username, FirstName, LastName, Email, Password, Role, isVerified, isActive)
                     VALUES (:Username, :FirstName, :LastName, :Email, :Password, :Role, :isVerified, :isActive)';
-
-            $stmt = $this->getConnection()->prepare($sql);
-            $stmt->bindValue(':Username', $user->Username, PDO::PARAM_STR);
-            $stmt->bindValue(':FirstName', $user->FirstName, PDO::PARAM_STR);
-            $stmt->bindValue(':LastName', $user->LastName, PDO::PARAM_STR);
-            $stmt->bindValue(':Email', $user->Email, PDO::PARAM_STR);
-            $stmt->bindValue(':Password', $user->Password, PDO::PARAM_STR);
-            
-            // Access the scalar value (string or int) of the Enum BY USING ->value
-            $roleValue = isset($user->Role) ? $user->Role->value : UserRole::Customer->value;
-            $stmt->bindValue(':Role', $roleValue, PDO::PARAM_STR);
-
-            $stmt->bindValue(':isVerified', $user->isVerified, PDO::PARAM_BOOL);
-            $stmt->bindValue(':isActive', $user->isActive, PDO::PARAM_BOOL);
-
-            $stmt->execute();
+            $this->execute($sql, $this->userParams($user, false));
         } catch (\PDOException $e) {
             if ($e->getCode() == 23000) { // Integrity constraint violation
                 throw new DuplicateEntryException("This email or username is already registered.");
@@ -92,50 +41,23 @@ class UserRepository extends Repository implements IUserRepository
     {
         $sql = 'SELECT UserId, Username, FirstName, LastName, Email, Role, isVerified, isActive, profile_image, phone, address, created_at
                 FROM users WHERE UserId = :UserId';
-        
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bindValue(':UserId', $id, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
-
-        return $data ? UserModel::fromDb($data) : null;
+        return $this->fetchUser($sql, ['UserId' => $id]);
     }
 
     public function getByEmail(string $email): ?UserModel
     {
-        $sql = 'SELECT * FROM users WHERE Email = :Email';
-
-        $stmt = $this->getConnection()->prepare($sql);
-        
-        $stmt->bindValue(':Email', $email, PDO::PARAM_STR); 
-        
-        $stmt->execute();
-
-        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
-        return $data ? UserModel::fromDb($data) : null;
+        return $this->fetchUser('SELECT * FROM users WHERE Email = :Email', ['Email' => $email]);
     }
 
     public function getByUsername(string $username): ?UserModel
     {
-        $sql = 'SELECT * FROM users WHERE Username = :Username';
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bindValue(':Username', $username, PDO::PARAM_STR);
-        $stmt->execute();
-
-        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
-        return $data ? UserModel::fromDb($data) : null;
+        return $this->fetchUser('SELECT * FROM users WHERE Username = :Username', ['Username' => $username]);
     }
 
     public function getByLoginIdentifier(string $identifier): ?UserModel
     {
         $sql = 'SELECT * FROM users WHERE Email = :identifier OR Username = :identifier';
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bindValue(':identifier', $identifier, PDO::PARAM_STR);
-        $stmt->execute();
-
-        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
-        return $data ? UserModel::fromDb($data) : null;
+        return $this->fetchUser($sql, ['identifier' => $identifier]);
     }
 
     public function update(UserModel $user): void
@@ -144,18 +66,7 @@ class UserRepository extends Repository implements IUserRepository
                 SET Username = :Username, FirstName = :FirstName, LastName = :LastName, Email = :Email, 
                     Role = :Role
                 WHERE UserId = :UserId';
-
-        $stmt = $this->getConnection()->prepare($sql);
-
-        $stmt->bindValue(':Username', $user->Username, PDO::PARAM_STR);
-        $stmt->bindValue(':FirstName', $user->FirstName, PDO::PARAM_STR);
-        $stmt->bindValue(':LastName', $user->LastName, PDO::PARAM_STR);
-        $stmt->bindValue(':Email', $user->Email, PDO::PARAM_STR);
-
-        $stmt->bindValue(':Role', $user->Role->value, PDO::PARAM_STR);
-        $stmt->bindValue(':UserId', $user->UserId, PDO::PARAM_INT);
-
-        $stmt->execute();
+        $this->execute($sql, $this->userParams($user, true));
     }
 
     public function updateProfile(int $userId, string $username, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void
@@ -163,34 +74,21 @@ class UserRepository extends Repository implements IUserRepository
         $sql = 'UPDATE users SET Username = :Username, FirstName = :FirstName, LastName = :LastName, Email = :Email,
                     phone = :phone, address = :address
                 WHERE UserId = :UserId';
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bindValue(':Username', $username, PDO::PARAM_STR);
-        $stmt->bindValue(':FirstName', $firstName, PDO::PARAM_STR);
-        $stmt->bindValue(':LastName', $lastName, PDO::PARAM_STR);
-        $stmt->bindValue(':Email', $email, PDO::PARAM_STR);
-        $stmt->bindValue(':phone', $phone, $phone === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
-        $stmt->bindValue(':address', $address, $address === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
-        $stmt->bindValue(':UserId', $userId, PDO::PARAM_INT);
-        $stmt->execute();
+        $this->execute($sql, [
+            'Username' => $username, 'FirstName' => $firstName, 'LastName' => $lastName,
+            'Email' => $email, 'phone' => $phone, 'address' => $address, 'UserId' => $userId,
+        ]);
     }
 
     public function updateProfileImage(int $userId, string $path): void
     {
         $sql = 'UPDATE users SET profile_image = :path WHERE UserId = :id';
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bindValue(':path', $path, PDO::PARAM_STR);
-        $stmt->bindValue(':id', $userId, PDO::PARAM_INT);
-        $stmt->execute();
+        $this->execute($sql, ['path' => $path, 'id' => $userId]);
     }
 
     public function delete(int $id): void
     {
-        $sql = 'DELETE FROM users WHERE UserId = :UserId';
-
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bindValue(':UserId', $id, PDO::PARAM_INT);
-
-        $stmt->execute();
+        $this->execute('DELETE FROM users WHERE UserId = :UserId', ['UserId' => $id]);
     }
 
     /**
@@ -200,18 +98,57 @@ class UserRepository extends Repository implements IUserRepository
      */
     public function anonymize(int $userId): void
     {
-        $sql = "UPDATE users SET
-                    FirstName = 'Deleted', LastName = 'User',
-                    Username = CONCAT('deleted', UserId),
-                    Email = CONCAT('deleted+', UserId, '@removed.invalid'),
-                    Password = '', profile_image = NULL,
-                    verification_token = NULL, verification_token_expires_at = NULL,
-                    reset_token_hash = NULL, reset_token_expires_at = NULL,
-                    isActive = 0, isVerified = 0
-                WHERE UserId = :id";
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bindValue(':id', $userId, PDO::PARAM_INT);
-        $stmt->execute();
+        $this->execute($this->anonymizeSql(), ['id' => $userId]);
+    }
+
+    private function normalizeSort(string $sort, string $dir): array
+    {
+        $sortable = ['Username', 'FirstName', 'LastName', 'Email', 'Role', 'created_at'];
+        $sort = in_array($sort, $sortable, true) ? $sort : 'LastName';
+        return [$sort, strtoupper($dir) === 'DESC' ? 'DESC' : 'ASC'];
+    }
+
+    private function userFilters(string $search, string $role): array
+    {
+        $where = $params = [];
+        if ($search !== '') {
+            $where[] = '(Username LIKE :q OR FirstName LIKE :q OR LastName LIKE :q OR Email LIKE :q)';
+            $params['q'] = '%' . $search . '%';
+        }
+        if ($role !== '') {
+            $where[] = 'Role = :role';
+            $params['role'] = $role;
+        }
+        return [$where ? ('WHERE ' . implode(' AND ', $where)) : '', $params];
+    }
+
+    private function userParams(UserModel $user, bool $includeId): array
+    {
+        $params = ['Username' => $user->Username, 'FirstName' => $user->FirstName, 'LastName' => $user->LastName];
+        $params += ['Email' => $user->Email, 'Role' => ($user->Role ?? UserRole::Customer)->value];
+        if (!$includeId) {
+            return $params + ['Password' => $user->Password, 'isVerified' => (int)$user->isVerified, 'isActive' => (int)$user->isActive];
+        }
+        return $params + ['UserId' => $user->UserId];
+    }
+
+    private function mapUsers(array $rows): array
+    {
+        return array_map(fn(array $row) => UserModel::fromDb($row), $rows);
+    }
+
+    private function fetchUser(string $sql, array $params): ?UserModel
+    {
+        $data = $this->fetchOne($sql, $params);
+        return $data ? UserModel::fromDb($data) : null;
+    }
+
+    private function anonymizeSql(): string
+    {
+        return "UPDATE users SET FirstName = 'Deleted', LastName = 'User', Username = CONCAT('deleted', UserId),
+                Email = CONCAT('deleted+', UserId, '@removed.invalid'), Password = '', profile_image = NULL,
+                verification_token = NULL, verification_token_expires_at = NULL, reset_token_hash = NULL,
+                reset_token_expires_at = NULL, isActive = 0, isVerified = 0 WHERE UserId = :id";
     }
 
     // --- RESET PASSWORD OPERATIONS ---
@@ -219,28 +156,19 @@ class UserRepository extends Repository implements IUserRepository
     {
         $sql = "UPDATE users SET reset_token_hash = :hash, reset_token_expires_at = :expiry
                 WHERE UserId = :id";
-        
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->execute(['hash' => $hash, 'expiry' => $expiry, 'id' => $userId]);
+        $this->execute($sql, ['hash' => $hash, 'expiry' => $expiry, 'id' => $userId]);
     }
 
     public function findByResetToken(string $hash): ?UserModel
     {
-        $sql = "SELECT * FROM users WHERE reset_token_hash = :hash";
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->execute(['hash' => $hash]);
-        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
-        return $data ? UserModel::fromDb($data) : null;  
+        return $this->fetchUser('SELECT * FROM users WHERE reset_token_hash = :hash', ['hash' => $hash]);
     }
     
     public function updatePassword(int $userId, string $passwordHash): void
     {
         $sql = 'UPDATE users SET Password = :password WHERE UserId = :id';
 
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bindValue(':password', $passwordHash, \PDO::PARAM_STR);
-        $stmt->bindValue(':id', $userId, \PDO::PARAM_INT);
-        $stmt->execute();
+        $this->execute($sql, ['password' => $passwordHash, 'id' => $userId]);
     }
 
     // --- VERIFY ACCOUNT OPERATIONS ---
@@ -248,26 +176,16 @@ class UserRepository extends Repository implements IUserRepository
     {
         $sql = 'UPDATE users SET verification_token = :hash, verification_token_expires_at = :expiry 
                 WHERE UserId = :id';
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->execute(['hash' => $hash, 'expiry' => $expiry, 'id' => $userId]);
+        $this->execute($sql, ['hash' => $hash, 'expiry' => $expiry, 'id' => $userId]);
     }
 
     public function findByVerifyToken(string $hash): ?UserModel
     {
-        $sql = 'SELECT * FROM users WHERE verification_token = :hash';
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->execute(['hash' => $hash]);
-        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
-        return $data ? UserModel::fromDb($data) : null;  
+        return $this->fetchUser('SELECT * FROM users WHERE verification_token = :hash', ['hash' => $hash]);
     }
 
     public function verifyAccount(int $userId): bool
     {
-        $sql = 'UPDATE users SET isVerified = 1 WHERE UserId = :id';
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bindValue(':id', $userId, \PDO::PARAM_INT);
-        $stmt->execute();
-
-        return $stmt->rowCount() > 0;
+        return $this->execute('UPDATE users SET isVerified = 1 WHERE UserId = :id', ['id' => $userId]) > 0;
     }
 }
