@@ -14,6 +14,18 @@ class AuthMiddleware {
         }
     }
     
+    /** Require a logged-in user and return their id. */
+    public static function userId(): int {
+        self::requireAuth();
+        return (int) $_SESSION['UserId'];
+    }
+
+    /** Drop the auth identity and rotate the session id, keeping the session itself. */
+    public static function logout(): void {
+        unset($_SESSION['UserId'], $_SESSION['Role'], $_SESSION['FirstName']);
+        session_regenerate_id(true);
+    }
+
     public static function requireAdmin() {
         self::requireAuth();
         if (self::currentRole() !== 'admin') {

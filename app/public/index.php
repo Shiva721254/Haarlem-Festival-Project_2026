@@ -24,6 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestPath !== '/webhook/stripe')
 use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;
 
+/** @var App\Framework\Container $container */
+$container = require __DIR__ . '/../src/Framework/bootstrap.php';
+
 $dispatcher = simpleDispatcher(function (RouteCollector $r) {
 
     // login stuff
@@ -175,7 +178,7 @@ switch ($routeInfo[0]) {
     case FastRoute\Dispatcher::FOUND:
         $class = $routeInfo[1][0];
         $method = $routeInfo[1][1];
-        $controller = new $class();
+        $controller = $container->make($class);
         $vars = $routeInfo[2];
         $controller->$method($vars);
         break;

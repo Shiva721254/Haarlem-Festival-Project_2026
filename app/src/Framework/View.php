@@ -21,6 +21,7 @@ class View
     public static function render(string $view, array $data = [], string $title = 'Visit Haarlem'): void
     {
         $data['title'] = $title;
+        $data += self::sharedLayoutData();
         extract($data, EXTR_OVERWRITE);
 
         require self::VIEWS . 'Partials/header.php';
@@ -42,5 +43,21 @@ class View
         require self::VIEWS . 'Admin/partials/header.php';
         require self::VIEWS . rtrim($view, '/') . '.php';
         require self::VIEWS . 'Admin/partials/footer.php';
+    }
+
+    private static function sharedLayoutData(): array
+    {
+        $container = Container::getInstance();
+        return [
+            'currentPath' => strtok($_SERVER['REQUEST_URI'] ?? '/', '?'),
+            'navTypes' => $container->get(\App\Services\Interfaces\IEventService::class)->getActiveTypes(),
+            'cartCount' => self::cartCount($container),
+        ];
+    }
+
+    private static function cartCount(Container $container): int
+    {
+        return $container->get(\App\Services\Interfaces\ICartService::class)
+            ->itemCount(isset($_SESSION['UserId']) ? (int) $_SESSION['UserId'] : null, session_id());
     }
 }

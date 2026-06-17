@@ -26,6 +26,18 @@ class Flash
     }
 
     /**
+     * Queue a list of service result messages, mapping ok => success / fail => error.
+     *
+     * @param array<int,array{ok:bool,message:string}> $messages
+     */
+    public static function results(array $messages): void
+    {
+        foreach ($messages as $m) {
+            $m['ok'] ? self::success($m['message']) : self::error($m['message']);
+        }
+    }
+
+    /**
      * Return and clear all queued messages.
      *
      * @return array<int,array{type:string,message:string}>
