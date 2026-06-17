@@ -32,10 +32,11 @@ interface IOrderRepository
      */
     public function markPaid(int $orderId, string $invoiceNumber): void;
 
-    /**
-     * Issue one ticket (with a unique QR code) per unit across the order's items.
-     */
-    public function issueTickets(int $orderId): void;
+    /** @return array<int,int> order_item_id => quantity */
+    public function getItemQuantities(int $orderId): array;
+
+    /** @param array<int,string[]> $codesByItemId */
+    public function issueTickets(array $codesByItemId): void;
 
     /**
      * Issued tickets for an order, joined with event/venue detail for the PDF.
@@ -44,10 +45,4 @@ interface IOrderRepository
      */
     public function getIssuedTickets(int $orderId): array;
 
-    /**
-     * A user's personal program — events they hold paid tickets for.
-     *
-     * @return \App\Models\ProgramItemModel[]
-     */
-    public function getProgramEvents(int $userId): array;
 }
