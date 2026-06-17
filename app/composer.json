@@ -19,5 +19,8 @@
     }
   },
   "minimum-stability": "stable",
-  "prefer-stable": true
+  "prefer-stable": true,
+  "require-dev": {
+    "phpoffice/phpword": "^1.1"
+  }
 }
