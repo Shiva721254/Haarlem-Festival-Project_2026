@@ -2,8 +2,7 @@
 namespace App\Services;
 
 use App\Models\CartItemModel;
-use App\Repositories\CartRepository;
-use App\Repositories\TicketTypeRepository;
+use App\Models\TicketTypeModel;
 use App\Repositories\Interfaces\ICartRepository;
 use App\Repositories\Interfaces\ITicketTypeRepository;
 use App\Services\Interfaces\ICartService;
@@ -16,43 +15,34 @@ class CartService implements ICartService
     private ICartRepository $cartRepo;
     private ITicketTypeRepository $ticketRepo;
 
-    public function __construct()
+    public function __construct(ICartRepository $cartRepo, ITicketTypeRepository $ticketRepo)
     {
-        $this->cartRepo = new CartRepository();
-        $this->ticketRepo = new TicketTypeRepository();
+        $this->cartRepo = $cartRepo;
+        $this->ticketRepo = $ticketRepo;
     }
 
-    private function userId(): ?int
+    /** Cart id for mutations â€” creates a cart if none exists yet. */
+    private function cartId(?int $userId, string $sessionId): int
     {
-        return isset($_SESSION['UserId']) ? (int)$_SESSION['UserId'] : null;
+        return $this->cartRepo->getOrCreateCartId($userId, $sessionId);
     }
 
-    /**
-     * Cart id for mutations — creates a cart if none exists yet.
-     */
-    private function cartId(): int
+    /** Cart id for reads â€” null if the visitor has no cart yet (no row created). */
+    private function existingCartId(?int $userId, string $sessionId): ?int
     {
-        return $this->cartRepo->getOrCreateCartId($this->userId(), session_id());
-    }
-
-    /**
-     * Cart id for reads — null if the visitor has no cart yet (no row created).
-     */
-    private function existingCartId(): ?int
-    {
-        return $this->cartRepo->findCartId($this->userId(), session_id());
+        return $this->cartRepo->findCartId($userId, $sessionId);
     }
 
     /** @return CartItemModel[] */
-    public function getItems(): array
+    public function getItems(?int $userId, string $sessionId): array
     {
-        $id = $this->existingCartId();
+        $id = $this->existingCartId($userId, $sessionId);
         return $id === null ? [] : $this->cartRepo->getItems($id);
     }
 
-    public function itemCount(): int
+    public function itemCount(?int $userId, string $sessionId): int
     {
-        $id = $this->existingCartId();
+        $id = $this->existingCartId($userId, $sessionId);
         return $id === null ? 0 : $this->cartRepo->itemCount($id);
     }
 
@@ -61,54 +51,75 @@ class CartService implements ICartService
      *
      * @return array{ok:bool,message:string}
      */
-    public function add(int $ticketTypeId, int $quantity, string $notes = '', ?float $amount = null, bool $haarlemPas = false): array
+    public function add(?int $userId, string $sessionId, int $ticketTypeId, int $quantity, string $notes = '', ?float $amount = null, bool $haarlemPas = false): array
     {
-        if ($quantity < 1) {
-            return ['ok' => false, 'message' => 'Quantity must be at least 1.'];
-        }
-
         $ticket = $this->ticketRepo->getById($ticketTypeId);
-        if ($ticket === null || !$ticket->is_active) {
-            return ['ok' => false, 'message' => 'That ticket is not available.'];
+        $error = $this->addError($quantity, $ticket);
+        if ($error !== null) {
+            return ['ok' => false, 'message' => $error];
         }
-
         $priced = $this->resolvePrice($ticket, $amount, $haarlemPas);
         if (!$priced['ok']) {
-            return ['ok' => false, 'message' => $priced['message']];
+            return $priced;
         }
-        $customPrice = $priced['price'];
+        return $this->storeLine($userId, $sessionId, $ticket, $ticketTypeId, $quantity, $notes, $priced['price']);
+    }
 
-        $cartId = $this->cartId();
-        $current = $this->cartRepo->findItemQuantity($cartId, $ticketTypeId);
-        $desired = $current + $quantity;
+    private function addError(int $quantity, ?TicketTypeModel $ticket): ?string
+    {
+        if ($quantity < 1) {
+            return 'Quantity must be at least 1.';
+        }
+        if ($ticket === null || !$ticket->is_active) {
+            return 'That ticket is not available.';
+        }
+        return null;
+    }
 
+    /** Persist (or top up) a cart line, capped by availability. */
+    private function storeLine(?int $userId, string $sessionId, TicketTypeModel $ticket, int $ticketTypeId, int $quantity, string $notes, ?float $customPrice): array
+    {
+        $cartId = $this->cartId($userId, $sessionId);
+        $desired = $this->cartRepo->findItemQuantity($cartId, $ticketTypeId) + $quantity;
         if ($desired > $ticket->available()) {
-            return [
-                'ok' => false,
-                'message' => "Only {$ticket->available()} ticket(s) available for {$ticket->name}.",
-            ];
+            return ['ok' => false, 'message' => "Only {$ticket->available()} ticket(s) available for {$ticket->name}."];
         }
-
         // Empty notes are stored as null so a plain ticket keeps no requests.
         $this->cartRepo->setQuantity($cartId, $ticketTypeId, $desired, $notes !== '' ? $notes : null);
         $this->cartRepo->setCustomPrice($cartId, $ticketTypeId, $customPrice);
         return ['ok' => true, 'message' => 'Added to cart.'];
     }
 
+    public function addFromRequest(array $post, ?int $userId, string $sessionId): array
+    {
+        return $this->add(
+            $userId,
+            $sessionId,
+            (int)($post['ticket_type_id'] ?? 0),
+            (int)($post['quantity'] ?? 1),
+            $this->cappedNotes((string)($post['special_requests'] ?? '')),
+            isset($post['amount']) && $post['amount'] !== '' ? (float)$post['amount'] : null,
+            !empty($post['haarlempas'])
+        );
+    }
+
+    private function cappedNotes(string $raw): string
+    {
+        $notes = trim($raw);
+        return mb_strlen($notes) > 500 ? mb_substr($notes, 0, 500) : $notes;
+    }
+
     /**
      * Resolve the effective line price: a chosen donation amount, the HaarlemPas
      * reduction on Stories, or null (use the ticket's own price). A client price
-     * is never trusted for a fixed ticket — the discount is computed here.
+     * is never trusted for a fixed ticket â€” the discount is computed here.
      *
      * @return array{ok:bool,price?:?float,message?:string}
      */
-    private function resolvePrice(\App\Models\TicketTypeModel $ticket, ?float $amount, bool $haarlemPas): array
+    private function resolvePrice(TicketTypeModel $ticket, ?float $amount, bool $haarlemPas): array
     {
         if ($ticket->is_donation) {
-            if ($amount === null || $amount < self::MIN_DONATION) {
-                return ['ok' => false, 'message' => 'Please enter an amount of at least 1.00 euro.'];
-            }
-            return ['ok' => true, 'price' => round($amount, 2)];
+            return $this->donationPrice($amount);
         }
         if ($haarlemPas && $ticket->event_type_slug === 'stories') {
             return ['ok' => true, 'price' => round($ticket->price * (1 - self::HAARLEMPAS_RATE), 2)];
@@ -116,65 +127,100 @@ class CartService implements ICartService
         return ['ok' => true, 'price' => null];
     }
 
+    private function donationPrice(?float $amount): array
+    {
+        if ($amount === null || $amount < self::MIN_DONATION) {
+            return ['ok' => false, 'message' => 'Please enter an amount of at least 1.00 euro.'];
+        }
+        return ['ok' => true, 'price' => round($amount, 2)];
+    }
+
     /**
      * Set an absolute quantity for a line (used by the cart page).
      *
      * @return array{ok:bool,message:string}
      */
-    public function updateQuantity(int $ticketTypeId, int $quantity): array
+    public function updateQuantity(?int $userId, string $sessionId, int $ticketTypeId, int $quantity): array
     {
         if ($quantity <= 0) {
-            $this->cartRepo->removeItem($this->cartId(), $ticketTypeId);
-            return ['ok' => true, 'message' => 'Item removed.'];
+            return $this->removeLine($userId, $sessionId, $ticketTypeId);
         }
-
         $ticket = $this->ticketRepo->getById($ticketTypeId);
-        if ($ticket === null || !$ticket->is_active) {
-            return ['ok' => false, 'message' => 'That ticket is not available.'];
+        $error = $this->quantityError($ticket, $quantity);
+        if ($error !== null) {
+            return ['ok' => false, 'message' => $error];
         }
-        if ($quantity > $ticket->available()) {
-            return ['ok' => false, 'message' => "Only {$ticket->available()} available for {$ticket->name}."];
-        }
-
-        $this->cartRepo->setQuantity($this->cartId(), $ticketTypeId, $quantity);
+        $this->cartRepo->setQuantity($this->cartId($userId, $sessionId), $ticketTypeId, $quantity);
         return ['ok' => true, 'message' => 'Cart updated.'];
     }
 
-    public function remove(int $ticketTypeId): void
+    private function removeLine(?int $userId, string $sessionId, int $ticketTypeId): array
     {
-        $this->cartRepo->removeItem($this->cartId(), $ticketTypeId);
+        $this->cartRepo->removeItem($this->cartId($userId, $sessionId), $ticketTypeId);
+        return ['ok' => true, 'message' => 'Item removed.'];
     }
 
-    /**
-     * Empty the current cart (e.g. after a successful order).
-     */
-    public function clear(): void
+    private function quantityError(?TicketTypeModel $ticket, int $quantity): ?string
     {
-        $id = $this->existingCartId();
+        if ($ticket === null || !$ticket->is_active) {
+            return 'That ticket is not available.';
+        }
+        if ($quantity > $ticket->available()) {
+            return "Only {$ticket->available()} available for {$ticket->name}.";
+        }
+        return null;
+    }
+
+    public function updateQuantityFromRequest(array $post, ?int $userId, string $sessionId): array
+    {
+        return $this->updateQuantity(
+            $userId,
+            $sessionId,
+            (int)($post['ticket_type_id'] ?? 0),
+            (int)($post['quantity'] ?? 0)
+        );
+    }
+
+    public function remove(?int $userId, string $sessionId, int $ticketTypeId): void
+    {
+        $this->cartRepo->removeItem($this->cartId($userId, $sessionId), $ticketTypeId);
+    }
+
+    public function removeFromRequest(array $post, ?int $userId, string $sessionId): void
+    {
+        $this->remove($userId, $sessionId, (int)($post['ticket_type_id'] ?? 0));
+    }
+
+    /** Empty the current cart (e.g. after a successful order). */
+    public function clear(?int $userId, string $sessionId): void
+    {
+        $id = $this->existingCartId($userId, $sessionId);
         if ($id !== null) {
             $this->cartRepo->clearCart($id);
         }
     }
 
     /**
-     * Money totals for the current cart.
+     * Money totals for the current cart. Prices are VAT-inclusive; the VAT
+     * portion of each line is derived from its rate.
      *
      * @return array{subtotal:float,vat:float,total:float}
      */
-    public function totals(): array
+    public function totals(?int $userId, string $sessionId): array
     {
-        $total = 0.0; // VAT-inclusive grand total (what the customer pays)
-        $vat = 0.0;   // VAT portion contained within the total
-        foreach ($this->getItems() as $item) {
+        $total = 0.0;
+        $vat = 0.0;
+        foreach ($this->getItems($userId, $sessionId) as $item) {
             $line = $item->lineSubtotal();
             $total += $line;
-            // Prices are VAT-inclusive; derive the VAT portion of each line.
             $vat += $line - ($line / (1 + $item->vat_rate / 100));
         }
-        return [
-            'subtotal' => round($total - $vat, 2), // net, excl. VAT
-            'vat'      => round($vat, 2),
-            'total'    => round($total, 2),         // subtotal + vat
-        ];
+        return ['subtotal' => round($total - $vat, 2), 'vat' => round($vat, 2), 'total' => round($total, 2)];
+    }
+
+    public function safeRedirectTarget(string $target): string
+    {
+        return (str_starts_with($target, '/') && !str_starts_with($target, '//')) ? $target : '/cart';
     }
 }
+

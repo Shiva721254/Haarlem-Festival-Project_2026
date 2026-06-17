@@ -3,6 +3,7 @@ namespace App\Services;
 
 use App\Models\OrderModel;
 use App\Models\OrderItemModel;
+use App\Models\UserModel;
 use App\Repositories\OrderRepository;
 use App\Repositories\TicketTypeRepository;
 use App\Repositories\UserRepository;
@@ -12,46 +13,92 @@ use App\Repositories\Interfaces\IUserRepository;
 use App\Services\Interfaces\IOrderService;
 use App\Services\Interfaces\ICartService;
 use App\Services\Interfaces\ITicketPdfService;
+use App\Services\Interfaces\IMailService;
 
 class OrderService implements IOrderService
 {
+    private const ADMIN_STATUSES = ['pending', 'paid', 'failed', 'cancelled'];
+    private const EXPORT_COLUMNS = [
+        'id' => 'Order ID',
+        'invoice_number' => 'Invoice number',
+        'status' => 'Status',
+        'customer_name' => 'Customer name',
+        'customer_email' => 'Customer email',
+        'item_count' => 'Items',
+        'subtotal' => 'Subtotal',
+        'vat_total' => 'VAT',
+        'total' => 'Total',
+        'created_at' => 'Created at',
+        'paid_at' => 'Paid at',
+        'payment_intent_id' => 'Payment reference',
+    ];
+
     private IOrderRepository $orderRepo;
     private ITicketTypeRepository $ticketRepo;
     private IUserRepository $userRepo;
     private ICartService $cartService;
     private ITicketPdfService $pdfService;
-    private MailService $mailService;
+    private IMailService $mailService;
 
-    public function __construct()
-    {
-        $this->orderRepo = new OrderRepository();
-        $this->ticketRepo = new TicketTypeRepository();
-        $this->userRepo = new UserRepository();
-        $this->cartService = new CartService();
-        $this->pdfService = new TicketPdfService();
-        $this->mailService = new MailService();
+    public function __construct(
+        IOrderRepository $orderRepo,
+        ITicketTypeRepository $ticketRepo,
+        IUserRepository $userRepo,
+        ICartService $cartService,
+        ITicketPdfService $pdfService,
+        IMailService $mailService
+    ) {
+        $this->orderRepo = $orderRepo;
+        $this->ticketRepo = $ticketRepo;
+        $this->userRepo = $userRepo;
+        $this->cartService = $cartService;
+        $this->pdfService = $pdfService;
+        $this->mailService = $mailService;
     }
 
-    public function createFromCart(int $userId): array
+    public function createFromCart(int $userId, string $sessionId): array
     {
-        $items = $this->cartService->getItems();
-        if (empty($items)) {
-            return ['ok' => false, 'order' => null, 'message' => 'Your cart is empty.'];
+        $items = $this->cartService->getItems($userId, $sessionId);
+        $error = $this->orderBlocker($items);
+        if ($error !== null) {
+            return ['ok' => false, 'order' => null, 'message' => $error];
         }
+        $order = $this->buildOrderFromCart($userId, $items, $this->cartService->totals($userId, $sessionId));
+        $order->id = $this->orderRepo->create($order);
+        return ['ok' => true, 'order' => $order, 'message' => 'Order created.'];
+    }
 
-        // Re-check availability at order time (stock may have changed).
+    /** Reason the cart cannot be ordered (empty or out of stock), or null. */
+    private function orderBlocker(array $items): ?string
+    {
+        if (empty($items)) {
+            return 'Your cart is empty.';
+        }
+        return $this->unavailableMessage($items);
+    }
+
+    /**
+     * Re-check availability (stock may have changed). Returns the first problem
+     * message, or null when every line is still purchasable. Shared by ordering
+     * and pay-later validation.
+     */
+    private function unavailableMessage(array $items): ?string
+    {
         foreach ($items as $item) {
             $ticket = $this->ticketRepo->getById($item->ticket_type_id);
             if ($ticket === null || !$ticket->is_active) {
-                return ['ok' => false, 'order' => null, 'message' => "\"{$item->ticket_type_name}\" is no longer available."];
+                return "\"{$item->ticket_type_name}\" is no longer available.";
             }
             if ($item->quantity > $ticket->available()) {
-                return ['ok' => false, 'order' => null, 'message' => "Only {$ticket->available()} left for \"{$ticket->name}\"."];
+                return "Only {$ticket->available()} left for \"{$ticket->name}\".";
             }
         }
+        return null;
+    }
 
-        $totals = $this->cartService->totals();
-
+    /** Build a pending order (with its priced lines) from the current cart. */
+    private function buildOrderFromCart(int $userId, array $items, array $totals): OrderModel
+    {
         $order = new OrderModel();
         $order->user_id = $userId;
         $order->status = 'pending';
@@ -59,19 +106,19 @@ class OrderService implements IOrderService
         $order->vat_total = $totals['vat'];
         $order->total = $totals['total'];
         $order->pay_later_until = date('Y-m-d H:i:s', time() + 24 * 60 * 60);
+        $order->items = array_map(fn($item) => $this->toOrderItem($item), $items);
+        return $order;
+    }
 
-        foreach ($items as $item) {
-            $line = new OrderItemModel();
-            $line->ticket_type_id = $item->ticket_type_id;
-            $line->quantity = $item->quantity;
-            $line->unit_price = $item->effectivePrice();
-            $line->vat_rate = $item->vat_rate;
-            $line->special_requests = $item->special_requests;
-            $order->items[] = $line;
-        }
-
-        $order->id = $this->orderRepo->create($order);
-        return ['ok' => true, 'order' => $order, 'message' => 'Order created.'];
+    private function toOrderItem(object $item): OrderItemModel
+    {
+        $line = new OrderItemModel();
+        $line->ticket_type_id = $item->ticket_type_id;
+        $line->quantity = $item->quantity;
+        $line->unit_price = $item->effectivePrice();
+        $line->vat_rate = $item->vat_rate;
+        $line->special_requests = $item->special_requests;
+        return $line;
     }
 
     public function getById(int $id): ?OrderModel
@@ -82,6 +129,11 @@ class OrderService implements IOrderService
     public function getByUser(int $userId): array
     {
         return $this->orderRepo->getByUser($userId);
+    }
+
+    public function getPendingPayLaterForUser(int $userId): array
+    {
+        return array_filter($this->getByUser($userId), static fn($order) => $order->canPayLater());
     }
 
     public function getByIdForUser(int $orderId, int $userId): ?OrderModel
@@ -99,17 +151,10 @@ class OrderService implements IOrderService
         if (!$order->canPayLater()) {
             return ['ok' => false, 'message' => 'This order can no longer be paid. Please create a new order.'];
         }
-
-        foreach ($order->items as $item) {
-            $ticket = $this->ticketRepo->getById($item->ticket_type_id);
-            if ($ticket === null || !$ticket->is_active) {
-                return ['ok' => false, 'message' => "\"{$item->ticket_type_name}\" is no longer available."];
-            }
-            if ($item->quantity > $ticket->available()) {
-                return ['ok' => false, 'message' => "Only {$ticket->available()} left for \"{$ticket->name}\"."];
-            }
+        $error = $this->unavailableMessage($order->items);
+        if ($error !== null) {
+            return ['ok' => false, 'message' => $error];
         }
-
         return ['ok' => true, 'message' => 'Order can be paid.'];
     }
 
@@ -123,27 +168,140 @@ class OrderService implements IOrderService
         return $this->orderRepo->getExportRows($status);
     }
 
+    public function adminStatuses(): array
+    {
+        return self::ADMIN_STATUSES;
+    }
+
+    public function exportColumns(): array
+    {
+        return self::EXPORT_COLUMNS;
+    }
+
+    public function normalizeAdminStatus(?string $status): ?string
+    {
+        return in_array($status, self::ADMIN_STATUSES, true) ? $status : null;
+    }
+
+    public function resolveExportColumns(array $selected): array
+    {
+        $columns = array_values(array_filter($selected, static fn($key) => isset(self::EXPORT_COLUMNS[$key])));
+        return empty($columns) ? array_keys(self::EXPORT_COLUMNS) : $columns;
+    }
+
+    public function buildExport(?string $status, array $columns, string $format): array
+    {
+        $columns = $this->resolveExportColumns($columns);
+        $headers = array_map(static fn(string $key) => self::EXPORT_COLUMNS[$key], $columns);
+        $rows = $this->getExportRows($status);
+        $base = 'orders-' . date('Ymd-His');
+        return $format === 'xlsx'
+            ? $this->xlsxExport($headers, $rows, $columns, $base)
+            : $this->csvExport($headers, $rows, $columns, $base);
+    }
+
+    private function xlsxExport(array $headers, array $rows, array $columns, string $base): array
+    {
+        $data = array_map(
+            static fn(array $row) => array_map(static fn(string $key) => $row[$key] ?? '', $columns),
+            $rows
+        );
+        return [
+            'filename' => $base . '.xlsx',
+            'contentType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'body' => \App\Framework\XlsxWriter::build($headers, $data, 'Orders'),
+        ];
+    }
+
+    private function csvExport(array $headers, array $rows, array $columns, string $base): array
+    {
+        $out = fopen('php://temp', 'r+');
+        fputcsv($out, $headers, ',', '"', '');
+        foreach ($rows as $row) {
+            fputcsv($out, array_map(static fn(string $key) => $row[$key] ?? '', $columns), ',', '"', '');
+        }
+        rewind($out);
+        $body = stream_get_contents($out) ?: '';
+        fclose($out);
+        return ['filename' => $base . '.csv', 'contentType' => 'text/csv; charset=utf-8', 'body' => $body];
+    }
+
     public function setPaymentIntent(int $orderId, string $paymentIntentId): void
     {
         $this->orderRepo->setPaymentIntent($orderId, $paymentIntentId);
     }
 
-    public function fulfill(OrderModel $order): void
+    public function fulfill(OrderModel $order, ?string $sessionId = null): void
     {
-        // Guard against double-fulfilment (e.g. refresh of the success page).
         if ($order->isPaid()) {
+            return; // guard against double-fulfilment (e.g. refresh of success page)
+        }
+        $this->orderRepo->markPaid($order->id, $this->invoiceNumber($order->id));
+        $this->orderRepo->issueTickets($this->ticketCodesFor($order->id));
+        $this->incrementSold($order);
+        $this->clearCartForReturn($order, $sessionId);
+        $this->sendConfirmation($order->id);
+    }
+
+    private function ticketCodesFor(int $orderId): array
+    {
+        $codes = [];
+        foreach ($this->orderRepo->getItemQuantities($orderId) as $itemId => $quantity) {
+            $codes[$itemId] = $this->randomTicketCodes($quantity);
+        }
+        return $codes;
+    }
+
+    private function randomTicketCodes(int $quantity): array
+    {
+        return array_map(fn() => bin2hex(random_bytes(16)), range(1, $quantity));
+    }
+
+    private function clearCartForReturn(OrderModel $order, ?string $sessionId): void
+    {
+        if ($sessionId !== null) {
+            $this->cartService->clear($order->user_id, $sessionId);
+        }
+    }
+
+    public function cancelMessage(?OrderModel $order): string
+    {
+        if ($order !== null && $order->canPayLater()) {
+            return 'Payment cancelled. You can still pay this order until ' . $this->deadline($order) . '.';
+        }
+        return 'Payment cancelled.';
+    }
+
+    private function deadline(OrderModel $order): string
+    {
+        return date('j M Y, H:i', strtotime($order->pay_later_until));
+    }
+
+    public function fulfillPaidCheckout(array $info): void
+    {
+        if (!$info['paid'] || empty($info['order_id'])) {
             return;
         }
+        $order = $this->getById((int)$info['order_id']);
+        if ($order === null) {
+            return;
+        }
+        $this->recordPaymentIntent($order, $info['payment_intent']);
+        $this->fulfill($order);
+    }
 
-        $this->orderRepo->markPaid($order->id, $this->invoiceNumber($order->id));
-        $this->orderRepo->issueTickets($order->id);
+    private function recordPaymentIntent(OrderModel $order, ?string $paymentIntent): void
+    {
+        if ($paymentIntent !== null) {
+            $this->setPaymentIntent($order->id, $paymentIntent);
+        }
+    }
 
+    private function incrementSold(OrderModel $order): void
+    {
         foreach ($order->items as $item) {
             $this->ticketRepo->incrementSold($item->ticket_type_id, $item->quantity);
         }
-
-        $this->cartService->clear();
-        $this->sendConfirmation($order->id);
     }
 
     private function invoiceNumber(int $orderId): string
@@ -159,31 +317,41 @@ class OrderService implements IOrderService
     {
         try {
             $order = $this->orderRepo->getById($orderId); // reloaded: paid, with invoice + items
-            if ($order === null) {
+            $user = $order ? $this->userRepo->getById($order->user_id) : null;
+            if ($order === null || $user === null) {
                 return;
             }
-            $user = $this->userRepo->getById($order->user_id);
-            if ($user === null) {
-                return;
-            }
-
-            $tickets = $this->orderRepo->getIssuedTickets($orderId);
-            $name = trim($user->FirstName . ' ' . $user->LastName);
-
-            $ticketsPdf = $this->pdfService->renderTickets($order, $tickets, $name);
-            $invoicePdf = $this->pdfService->renderInvoice($order, $name, $user->Email, $user->phone ?? null, $user->address ?? null);
-
-            $body = '<h2>Thank you for your order!</h2>'
-                . '<p>Your tickets and invoice are attached (invoice '
-                . htmlspecialchars($order->invoice_number ?? '') . ').</p>'
-                . '<p>Present the QR code on each ticket at the entrance.</p>';
-
-            $this->mailService->sendWithAttachments($user->Email, 'Your Haarlem Festival tickets', $body, [
-                ['name' => 'tickets.pdf', 'content' => $ticketsPdf, 'type' => 'application/pdf'],
-                ['name' => 'invoice-' . ($order->invoice_number ?? $orderId) . '.pdf', 'content' => $invoicePdf, 'type' => 'application/pdf'],
-            ]);
+            $this->mailConfirmation($order, $user);
         } catch (\Throwable $e) {
             // swallow — order is already fulfilled; email is best-effort
         }
+    }
+
+    private function mailConfirmation(OrderModel $order, UserModel $user): void
+    {
+        $name = trim($user->FirstName . ' ' . $user->LastName);
+        $attachments = $this->confirmationAttachments($order, $user, $name);
+        $subject = 'Your Haarlem Festival tickets';
+        $this->mailService->sendWithAttachments($user->Email, $subject, $this->confirmationBody($order), $attachments);
+    }
+
+    /** @return array<int,array{name:string,content:string,type:string}> */
+    private function confirmationAttachments(OrderModel $order, UserModel $user, string $name): array
+    {
+        $tickets = $this->orderRepo->getIssuedTickets($order->id);
+        $ticketsPdf = $this->pdfService->renderTickets($order, $tickets, $name);
+        $invoicePdf = $this->pdfService->renderInvoice($order, $name, $user->Email, $user->phone ?? null, $user->address ?? null);
+        return [
+            ['name' => 'tickets.pdf', 'content' => $ticketsPdf, 'type' => 'application/pdf'],
+            ['name' => 'invoice-' . ($order->invoice_number ?? $order->id) . '.pdf', 'content' => $invoicePdf, 'type' => 'application/pdf'],
+        ];
+    }
+
+    private function confirmationBody(OrderModel $order): string
+    {
+        return '<h2>Thank you for your order!</h2>'
+            . '<p>Your tickets and invoice are attached (invoice '
+            . htmlspecialchars($order->invoice_number ?? '') . ').</p>'
+            . '<p>Present the QR code on each ticket at the entrance.</p>';
     }
 }

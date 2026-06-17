@@ -9,38 +9,50 @@ class TicketScanService implements ITicketScanService
 {
     private ITicketRepository $ticketRepo;
 
-    public function __construct()
+    public function __construct(ITicketRepository $ticketRepo)
     {
-        $this->ticketRepo = new TicketRepository();
+        $this->ticketRepo = $ticketRepo;
     }
 
     public function scan(string $code): array
     {
         $code = trim($code);
+        $ticket = $this->lookup($code);
+        if (is_string($ticket)) {
+            return $this->result(false, 'danger', $ticket, null);
+        }
+        return $this->rejection($ticket) ?? $this->accept($code, $ticket);
+    }
+
+    /** Find the ticket for a code, or return an error message string. */
+    private function lookup(string $code): array|string
+    {
         if ($code === '') {
-            return $this->result(false, 'danger', 'Enter or scan a ticket code.', null);
+            return 'Enter or scan a ticket code.';
         }
+        return $this->ticketRepo->findScanInfoByCode($code) ?? 'Ticket not found.';
+    }
 
-        $ticket = $this->ticketRepo->findScanInfoByCode($code);
-        if ($ticket === null) {
-            return $this->result(false, 'danger', 'Ticket not found.', null);
-        }
-
+    /** A rejection result if the ticket cannot be admitted, otherwise null. */
+    private function rejection(array $ticket): ?array
+    {
         if (($ticket['order_status'] ?? '') !== 'paid') {
             return $this->result(false, 'danger', 'Order is not paid. Do not admit this visitor.', $ticket);
         }
-
         if (($ticket['status'] ?? '') === 'scanned') {
             return $this->result(false, 'warning', 'Ticket was already scanned.', $ticket);
         }
-
         if (($ticket['status'] ?? '') !== 'valid') {
             return $this->result(false, 'danger', 'Ticket is not valid.', $ticket);
         }
+        return null;
+    }
 
+    /** Mark the ticket scanned and return the acceptance result. */
+    private function accept(string $code, array $ticket): array
+    {
         $this->ticketRepo->markScanned((int)$ticket['id']);
         $ticket = $this->ticketRepo->findScanInfoByCode($code) ?? $ticket;
-
         return $this->result(true, 'success', 'Ticket accepted.', $ticket);
     }
 

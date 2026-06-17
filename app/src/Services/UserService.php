@@ -2,20 +2,21 @@
 namespace App\Services;
 
 use App\Models\UserModel;
-use App\Repositories\UserRepository;
+use App\Enums\UserRole;
 use App\Repositories\Interfaces\IUserRepository;
 use App\Services\Interfaces\IUserService;
+use App\Services\Interfaces\IMailService;
 use App\CustomException\DuplicateEntryException;
 
 class UserService implements IUserService
 {
     private IUserRepository $userRepository;
-    private MailService $mailService;
+    private IMailService $mailService;
 
-    public function __construct()
+    public function __construct(IUserRepository $userRepository, IMailService $mailService)
     {
-        $this->userRepository = new UserRepository();
-        $this->mailService = new MailService();
+        $this->userRepository = $userRepository;
+        $this->mailService = $mailService;
     }
 
     public function getAll(string $search = '', string $role = '', string $sort = 'LastName', string $dir = 'ASC'): array
@@ -29,23 +30,151 @@ class UserService implements IUserService
         if (empty($user->Password)) {
             throw new \Exception('Password is required for new users.');
         }
+        $this->assertValidUsername($user->Username);
+        $this->assertUnique($user->Username, $user->Email, (int)($user->UserId ?? 0));
+        $user->Password = password_hash($user->Password, PASSWORD_DEFAULT);
+        $this->userRepository->create($user);
+    }
 
-        $confirm = $_POST['PasswordConfirm'] ?? $_POST['password_confirm'] ?? '';
+    public function createWithPasswordConfirmation(UserModel $user, string $confirm): void
+    {
         if ($user->Password !== $confirm) {
             throw new \Exception('Passwords do not match.');
         }
-        if (!$this->isValidUsername($user->Username)) {
-            throw new \Exception('Username must be 3-30 characters and only contain letters, numbers, dots, underscores, or hyphens.');
-        }
-        if ($this->userRepository->getByUsername($user->Username)) {
-            throw new DuplicateEntryException('Warning: Username already exists.');
-        }
-        if ($this->userRepository->getByEmail($user->Email)) {
-            throw new DuplicateEntryException('Warning: Email already exists.');
-        }
+        $this->create($user);
+    }
 
-        $user->Password = password_hash($user->Password, PASSWORD_DEFAULT);
-        $this->userRepository->create($user);
+    public function saveAdminUser(array $post): array
+    {
+        $user = $this->adminUserFromPost($post);
+        try {
+            $this->persistAdminUser($user, $post['PasswordConfirm'] ?? '');
+            return ['ok' => true, 'user' => $user, 'error' => null];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'user' => $user, 'error' => $e->getMessage()];
+        }
+    }
+
+    private function adminUserFromPost(array $post): UserModel
+    {
+        $user = new UserModel();
+        $user->UserId = isset($post['UserId']) ? (int)$post['UserId'] : 0;
+        $user->Username = trim($post['Username'] ?? '');
+        $user->FirstName = $post['FirstName'];
+        $user->LastName = $post['LastName'];
+        $user->Email = $post['Email'];
+        $user->Password = $post['Password'] ?? $post['password'] ?? '';
+        $user->Role = isset($post['Role']) ? UserRole::from($post['Role']) : UserRole::Customer;
+        return $user;
+    }
+
+    private function createAdminUser(UserModel $user, string $confirm): void
+    {
+        $user->isActive = true;
+        $user->isVerified = true;
+        $this->createWithPasswordConfirmation($user, $confirm);
+    }
+
+    private function persistAdminUser(UserModel $user, string $confirm): void
+    {
+        if ($user->UserId > 0) {
+            $this->update($user);
+            return;
+        }
+        $this->createAdminUser($user, $confirm);
+    }
+
+    public function registrationCaptchaChallenge(): array
+    {
+        $a = random_int(2, 9);
+        $b = random_int(2, 9);
+        return ['question' => "$a + $b", 'answer' => $a + $b];
+    }
+
+    public function verifyRegistrationCaptcha(string $answer, ?int $expected): bool
+    {
+        return $expected !== null && (int)$answer === (int)$expected;
+    }
+
+    /**
+     * Public sign-up: validate the fields, create a customer account and send
+     * the verification email. Returns the outcome for the controller.
+     *
+     * @param array<string,string> $fields FirstName, LastName, Username, Email
+     * @return array{ok:bool,error?:string}
+     */
+    public function registerCustomer(array $fields, string $password, string $confirm): array
+    {
+        $error = $this->validateRegistration($fields, $password, $confirm);
+        if ($error !== null) {
+            return ['ok' => false, 'error' => $error];
+        }
+        return $this->createCustomer($this->newCustomer($fields, $password));
+    }
+
+    private function newCustomer(array $fields, string $password): UserModel
+    {
+        $user = new UserModel();
+        $user->Username   = $fields['Username'];
+        $user->FirstName  = $fields['FirstName'];
+        $user->LastName   = $fields['LastName'];
+        $user->Email      = $fields['Email'];
+        $user->Password   = $password;
+        $user->Role       = UserRole::Customer; // public sign-ups are always customers
+        $user->isVerified = false;
+        $user->isActive   = true;
+        return $user;
+    }
+
+    private function createCustomer(UserModel $user): array
+    {
+        try {
+            $this->create($user);
+            $this->sendVerificationEmail($user->Email);
+            return ['ok' => true];
+        } catch (DuplicateEntryException $e) {
+            return ['ok' => false, 'error' => 'An account with this username or email already exists.'];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'error' => 'Something went wrong creating your account. Please try again.'];
+        }
+    }
+
+    /**
+     * Validate sign-up input. Returns an error message, or null if valid.
+     *
+     * @param array<string,string> $fields
+     */
+    private function validateRegistration(array $fields, string $password, string $confirm): ?string
+    {
+        if (($fields['FirstName'] ?? '') === '' || ($fields['LastName'] ?? '') === '') {
+            return 'Please provide your first and last name.';
+        }
+        if (!preg_match('/^[a-zA-Z0-9._-]{3,30}$/', $fields['Username'] ?? '')) {
+            return 'Username must be 3-30 characters and only contain letters, numbers, dots, underscores, or hyphens.';
+        }
+        if (!filter_var($fields['Email'] ?? '', FILTER_VALIDATE_EMAIL)) {
+            return 'Please provide a valid email address.';
+        }
+        return $this->passwordError($password, $confirm);
+    }
+
+    private function passwordError(string $password, string $confirm): ?string
+    {
+        if ($password !== $confirm) {
+            return 'Passwords do not match.';
+        }
+        if (!$this->isStrongPassword($password)) {
+            return 'Password must be at least 8 characters and include a capital letter, a number, and a symbol.';
+        }
+        return null;
+    }
+
+    private function isStrongPassword(string $password): bool
+    {
+        return strlen($password) >= 8
+            && preg_match('/[A-Z]/', $password)
+            && preg_match('/[0-9]/', $password)
+            && preg_match('/[^A-Za-z0-9]/', $password);
     }
 
     public function getById(int $id): ?UserModel
@@ -56,18 +185,8 @@ class UserService implements IUserService
     public function update(UserModel $user): void
     {
         $user->Username = $this->normalizeUsername($user->Username);
-        if (!$this->isValidUsername($user->Username)) {
-            throw new \Exception('Username must be 3-30 characters and only contain letters, numbers, dots, underscores, or hyphens.');
-        }
-        $existingUsername = $this->userRepository->getByUsername($user->Username);
-        if ($existingUsername && $existingUsername->UserId !== $user->UserId) {
-            throw new DuplicateEntryException('This username is already in use by another account.');
-        }
-        $existingEmail = $this->userRepository->getByEmail($user->Email);
-        if ($existingEmail && $existingEmail->UserId !== $user->UserId) {
-            throw new DuplicateEntryException('This email is already in use by another account.');
-        }
-
+        $this->assertValidUsername($user->Username);
+        $this->assertUnique($user->Username, $user->Email, $user->UserId);
         $this->userRepository->update($user);
     }
 
@@ -81,50 +200,41 @@ class UserService implements IUserService
         $this->userRepository->anonymize($userId);
     }
 
-    public function sendConfirmEmail(): void
-    {
-    }
-
     public function updateProfile(int $userId, string $username, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void
     {
         $username = $this->normalizeUsername($username);
-        if (!$this->isValidUsername($username)) {
-            throw new DuplicateEntryException('Username must be 3-30 characters and only contain letters, numbers, dots, underscores, or hyphens.');
-        }
-        $existingUsername = $this->userRepository->getByUsername($username);
-        if ($existingUsername && $existingUsername->UserId !== $userId) {
-            throw new DuplicateEntryException('This username is already in use by another account.');
-        }
-        $existing = $this->userRepository->getByEmail($email);
-        if ($existing && $existing->UserId !== $userId) {
-            throw new DuplicateEntryException('This email is already in use by another account.');
-        }
-
+        $this->assertValidUsername($username);
+        $this->assertUnique($username, $email, $userId);
         $this->userRepository->updateProfile($userId, $username, $firstName, $lastName, $email, $phone, $address);
+        $this->mailService->send($email, 'Your Haarlem Festival account was updated', $this->accountUpdatedBody($firstName));
+    }
 
-        $message = "
+    private function accountUpdatedBody(string $firstName): string
+    {
+        return "
             <h2>Your account was updated</h2>
             <p>Hi {$firstName}, your Haarlem Festival account details were just changed.</p>
             <p>If this wasn't you, please reset your password immediately.</p>
         ";
-        $this->mailService->send($email, 'Your Haarlem Festival account was updated', $message);
     }
 
     public function changePassword(int $userId, string $currentPassword, string $newPassword): bool
+    {
+        if (!$this->currentPasswordMatches($userId, $currentPassword)) {
+            return false;
+        }
+        $this->userRepository->updatePassword($userId, password_hash($newPassword, PASSWORD_DEFAULT));
+        return true;
+    }
+
+    private function currentPasswordMatches(int $userId, string $currentPassword): bool
     {
         $user = $this->userRepository->getById($userId);
         if (!$user) {
             return false;
         }
-
         $full = $this->userRepository->getByEmail($user->Email);
-        if (!$full || !password_verify($currentPassword, $full->Password)) {
-            return false;
-        }
-
-        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
-        $this->userRepository->updatePassword($userId, $hash);
-        return true;
+        return $full && password_verify($currentPassword, $full->Password);
     }
 
     public function updateProfileImage(int $userId, string $path): void
@@ -138,42 +248,78 @@ class UserService implements IUserService
         if (!$user) {
             return null;
         }
-
         return password_verify($password, $user->Password) ? $user : null;
     }
 
     public function sendPasswordReset(string $email): bool
     {
+        return $this->sendTokenEmail($email, 30, 'reset');
+    }
+
+    public function sendVerificationEmail(string $email): bool
+    {
+        return $this->sendTokenEmail($email, 1440, 'verify');
+    }
+
+    /** Generate a one-time token for the user and email them the matching link. */
+    private function sendTokenEmail(string $email, int $minutes, string $kind): bool
+    {
         $user = $this->userRepository->getByEmail($email);
         if (!$user) {
             return false;
         }
+        $token = $this->issueToken($user->UserId, $minutes, $kind);
+        [$subject, $body] = $this->tokenEmailContent($kind, $token);
+        return $this->mailService->send($email, $subject, $body);
+    }
 
+    /** Store a fresh hashed token (reset or verify) and return the raw token. */
+    private function issueToken(int $userId, int $minutes, string $kind): string
+    {
         $token = bin2hex(random_bytes(16));
-        $tokenHash = hash('sha256', $token);
-        $expiry = date('Y-m-d H:i:s', time() + 60 * 30);
+        $hash = hash('sha256', $token);
+        $expiry = date('Y-m-d H:i:s', time() + 60 * $minutes);
+        $kind === 'reset'
+            ? $this->userRepository->updateResetToken($userId, $hash, $expiry)
+            : $this->userRepository->updateVerifyToken($userId, $hash, $expiry);
+        return $token;
+    }
 
-        $this->userRepository->updateResetToken($user->UserId, $tokenHash, $expiry);
+    /** @return array{0:string,1:string} subject and HTML body */
+    private function tokenEmailContent(string $kind, string $token): array
+    {
+        if ($kind === 'reset') {
+            return ['Reset your Haarlem Festival password', $this->resetEmailBody($token)];
+        }
+        return ['Verify your Haarlem Festival account', $this->verifyEmailBody($token)];
+    }
 
-        $resetLink = "http://localhost/resetPassword?token=$token";
-        $message = "
+    private function resetEmailBody(string $token): string
+    {
+        $link = "http://localhost/resetPassword?token=$token";
+        return "
             <h2>Password Reset Request</h2>
             <p>Click the link below to reset your password. This link expires in 30 minutes.</p>
-            <a href='{$resetLink}'>Reset Password</a>
+            <a href='{$link}'>Reset Password</a>
         ";
+    }
 
-        return $this->mailService->send($email, 'Reset your Haarlem Festival password', $message);
+    private function verifyEmailBody(string $token): string
+    {
+        $link = "http://localhost/verifyAccount?token=$token";
+        return "
+            <h2>Verification Account Request</h2>
+            <p>Click the link below to verify your account. This link expires in 24 hours.</p>
+            <a href='{$link}'>Verify Account</a>
+        ";
     }
 
     public function validateResetToken(string $token): ?UserModel
     {
-        $hash = hash('sha256', $token);
-        $user = $this->userRepository->findByResetToken($hash);
-
+        $user = $this->userRepository->findByResetToken(hash('sha256', $token));
         if ($user && strtotime($user->reset_token_expires_at) > time()) {
             return $user;
         }
-
         return null;
     }
 
@@ -190,39 +336,16 @@ class UserService implements IUserService
         if (!$user) {
             return false;
         }
-
         $this->resetUserPassword($user, $password);
         return true;
     }
 
-    public function sendVerificationEmail(string $email): bool
-    {
-        $user = $this->userRepository->getByEmail($email);
-        if (!$user) {
-            return false;
-        }
-        $token = bin2hex(random_bytes(16));
-        $tokenHash = hash('sha256', $token);
-        $expiry = date('Y-m-d H:i:s', time() + 60 * 1440);
-
-        $this->userRepository->updateVerifyToken($user->UserId, $tokenHash, $expiry);
-        $resetLink = "http://localhost/verifyAccount?token=$token";
-        $message = "
-            <h2>Verification Account Request</h2>
-            <p>Click the link below to verify your account. This link expires in 24 hours.</p>
-            <a href='{$resetLink}'>Verify Account</a>
-        ";
-        return $this->mailService->send($email, 'Verify your Haarlem Festival account', $message);
-    }
-
     public function validateVerificationToken(string $token): ?UserModel
     {
-        $hash = hash('sha256', $token);
-        $user = $this->userRepository->findByVerifyToken($hash);
+        $user = $this->userRepository->findByVerifyToken(hash('sha256', $token));
         if ($user && strtotime($user->verification_token_expires_at) > time()) {
             return $user;
         }
-
         return null;
     }
 
@@ -240,6 +363,27 @@ class UserService implements IUserService
         }
         $this->verifyUser($user);
         return true;
+    }
+
+    /** Validate the username format or throw (shared by create/update/profile). */
+    private function assertValidUsername(string $username): void
+    {
+        if (!$this->isValidUsername($username)) {
+            throw new DuplicateEntryException('Username must be 3-30 characters and only contain letters, numbers, dots, underscores, or hyphens.');
+        }
+    }
+
+    /** Ensure the username and email aren't taken by a different account. */
+    private function assertUnique(string $username, string $email, int $exceptUserId): void
+    {
+        $byUsername = $this->userRepository->getByUsername($username);
+        if ($byUsername && $byUsername->UserId !== $exceptUserId) {
+            throw new DuplicateEntryException('This username is already in use by another account.');
+        }
+        $byEmail = $this->userRepository->getByEmail($email);
+        if ($byEmail && $byEmail->UserId !== $exceptUserId) {
+            throw new DuplicateEntryException('This email is already in use by another account.');
+        }
     }
 
     private function normalizeUsername(string $username): string

@@ -1,21 +1,21 @@
 <?php
 namespace App\Services;
 
-use App\Repositories\OrderRepository;
-use App\Repositories\Interfaces\IOrderRepository;
+use App\Repositories\ProgramRepository;
+use App\Repositories\Interfaces\IProgramRepository;
 use App\Services\Interfaces\IProgramService;
 
 class ProgramService implements IProgramService
 {
-    private IOrderRepository $orderRepo;
+    private IProgramRepository $programRepository;
 
-    public function __construct()
+    public function __construct(IProgramRepository $programRepository)
     {
-        $this->orderRepo = new OrderRepository();
+        $this->programRepository = $programRepository;
     }
 
     public function getForUser(int $userId): array
     {
-        return $this->orderRepo->getProgramEvents($userId);
+        return $this->programRepository->getForUser($userId);
     }
 }
