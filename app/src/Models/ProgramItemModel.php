@@ -20,16 +20,26 @@ class ProgramItemModel
     public static function fromDb(array $data): self
     {
         $p = new self();
-        $p->event_id = (int)$data['event_id'];
-        $p->title = $data['title'];
-        $p->starts_at = $data['starts_at'];
-        $p->ends_at = $data['ends_at'] ?? null;
-        $p->image = $data['image'] ?? null;
-        $p->venue_name = $data['venue_name'] ?? null;
-        $p->type_slug = $data['type_slug'] ?? null;
-        $p->type_name = $data['type_name'] ?? null;
-        $p->ticket_types = $data['ticket_types'] ?? '';
-        $p->total_tickets = (int)($data['total_tickets'] ?? 0);
+        $p->fillEvent($data);
+        $p->fillTicketSummary($data);
         return $p;
+    }
+
+    private function fillEvent(array $data): void
+    {
+        $this->event_id = (int)$data['event_id'];
+        $this->title = $data['title'];
+        $this->starts_at = $data['starts_at'];
+        $this->ends_at = $data['ends_at'] ?? null;
+        $this->image = $data['image'] ?? null;
+    }
+
+    private function fillTicketSummary(array $data): void
+    {
+        $this->venue_name = $data['venue_name'] ?? null;
+        $this->type_slug = $data['type_slug'] ?? null;
+        $this->type_name = $data['type_name'] ?? null;
+        $this->ticket_types = $data['ticket_types'] ?? '';
+        $this->total_tickets = (int)($data['total_tickets'] ?? 0);
     }
 }

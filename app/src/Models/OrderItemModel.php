@@ -18,16 +18,26 @@ class OrderItemModel
     public static function fromDb(array $data): self
     {
         $i = new self();
-        $i->id = (int)$data['id'];
-        $i->order_id = (int)$data['order_id'];
-        $i->ticket_type_id = (int)$data['ticket_type_id'];
-        $i->quantity = (int)$data['quantity'];
-        $i->unit_price = (float)$data['unit_price'];
-        $i->vat_rate = (float)$data['vat_rate'];
-        $i->special_requests = $data['special_requests'] ?? null;
-        $i->ticket_type_name = $data['ticket_type_name'] ?? null;
-        $i->event_title = $data['event_title'] ?? null;
+        $i->fillLine($data);
+        $i->fillDisplay($data);
         return $i;
+    }
+
+    private function fillLine(array $data): void
+    {
+        $this->id = (int)$data['id'];
+        $this->order_id = (int)$data['order_id'];
+        $this->ticket_type_id = (int)$data['ticket_type_id'];
+        $this->quantity = (int)$data['quantity'];
+        $this->unit_price = (float)$data['unit_price'];
+        $this->vat_rate = (float)$data['vat_rate'];
+    }
+
+    private function fillDisplay(array $data): void
+    {
+        $this->special_requests = $data['special_requests'] ?? null;
+        $this->ticket_type_name = $data['ticket_type_name'] ?? null;
+        $this->event_title = $data['event_title'] ?? null;
     }
 
     public function lineTotal(): float

@@ -26,21 +26,36 @@ class OrderModel
     public static function fromDb(array $data): self
     {
         $o = new self();
-        $o->id = (int)$data['id'];
-        $o->user_id = (int)$data['user_id'];
-        $o->status = $data['status'];
-        $o->invoice_number = $data['invoice_number'] ?? null;
-        $o->subtotal = (float)$data['subtotal'];
-        $o->vat_total = (float)$data['vat_total'];
-        $o->total = (float)$data['total'];
-        $o->payment_intent_id = $data['payment_intent_id'] ?? null;
-        $o->pay_later_until = $data['pay_later_until'] ?? null;
-        $o->created_at = $data['created_at'] ?? null;
-        $o->paid_at = $data['paid_at'] ?? null;
-        $o->customer_name = $data['customer_name'] ?? null;
-        $o->customer_email = $data['customer_email'] ?? null;
-        $o->item_count = isset($data['item_count']) ? (int)$data['item_count'] : 0;
+        $o->fillOrder($data);
+        $o->fillPayment($data);
+        $o->fillAdminSummary($data);
         return $o;
+    }
+
+    private function fillOrder(array $data): void
+    {
+        $this->id = (int)$data['id'];
+        $this->user_id = (int)$data['user_id'];
+        $this->status = $data['status'];
+        $this->invoice_number = $data['invoice_number'] ?? null;
+        $this->subtotal = (float)$data['subtotal'];
+        $this->vat_total = (float)$data['vat_total'];
+        $this->total = (float)$data['total'];
+    }
+
+    private function fillPayment(array $data): void
+    {
+        $this->payment_intent_id = $data['payment_intent_id'] ?? null;
+        $this->pay_later_until = $data['pay_later_until'] ?? null;
+        $this->created_at = $data['created_at'] ?? null;
+        $this->paid_at = $data['paid_at'] ?? null;
+    }
+
+    private function fillAdminSummary(array $data): void
+    {
+        $this->customer_name = $data['customer_name'] ?? null;
+        $this->customer_email = $data['customer_email'] ?? null;
+        $this->item_count = isset($data['item_count']) ? (int)$data['item_count'] : 0;
     }
 
     public function isPaid(): bool

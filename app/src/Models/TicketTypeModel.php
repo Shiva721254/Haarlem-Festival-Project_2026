@@ -19,17 +19,27 @@ class TicketTypeModel
     public static function fromDb(array $data): self
     {
         $t = new self();
-        $t->id = (int)$data['id'];
-        $t->event_id = (int)$data['event_id'];
-        $t->name = $data['name'];
-        $t->price = (float)$data['price'];
-        $t->vat_rate = (float)$data['vat_rate'];
-        $t->capacity = (int)$data['capacity'];
-        $t->sold = (int)$data['sold'];
-        $t->is_active = (bool)$data['is_active'];
-        $t->is_donation = (bool)($data['is_donation'] ?? false);
-        $t->event_type_slug = $data['event_type_slug'] ?? null;
+        $t->fillIdentity($data);
+        $t->fillSales($data);
         return $t;
+    }
+
+    private function fillIdentity(array $data): void
+    {
+        $this->id = (int)$data['id'];
+        $this->event_id = (int)$data['event_id'];
+        $this->name = $data['name'];
+        $this->event_type_slug = $data['event_type_slug'] ?? null;
+    }
+
+    private function fillSales(array $data): void
+    {
+        $this->price = (float)$data['price'];
+        $this->vat_rate = (float)$data['vat_rate'];
+        $this->capacity = (int)$data['capacity'];
+        $this->sold = (int)$data['sold'];
+        $this->is_active = (bool)$data['is_active'];
+        $this->is_donation = (bool)($data['is_donation'] ?? false);
     }
 
     /**

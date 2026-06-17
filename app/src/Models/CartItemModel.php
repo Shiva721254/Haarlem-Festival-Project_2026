@@ -25,20 +25,29 @@ class CartItemModel
     public static function fromDb(array $data): self
     {
         $i = new self();
-        $i->id = (int)$data['id'];
-        $i->cart_id = (int)$data['cart_id'];
-        $i->ticket_type_id = (int)$data['ticket_type_id'];
-        $i->quantity = (int)$data['quantity'];
-
-        $i->ticket_type_name = $data['ticket_type_name'] ?? '';
-        $i->price = (float)($data['price'] ?? 0);
-        $i->vat_rate = (float)($data['vat_rate'] ?? 0);
-        $i->event_id = (int)($data['event_id'] ?? 0);
-        $i->event_title = $data['event_title'] ?? '';
-        $i->available = (int)($data['available'] ?? 0);
-        $i->special_requests = $data['special_requests'] ?? null;
-        $i->custom_price = isset($data['custom_price']) ? (float)$data['custom_price'] : null;
+        $i->fillCartLine($data);
+        $i->fillTicketData($data);
         return $i;
+    }
+
+    private function fillCartLine(array $data): void
+    {
+        $this->id = (int)$data['id'];
+        $this->cart_id = (int)$data['cart_id'];
+        $this->ticket_type_id = (int)$data['ticket_type_id'];
+        $this->quantity = (int)$data['quantity'];
+        $this->special_requests = $data['special_requests'] ?? null;
+        $this->custom_price = isset($data['custom_price']) ? (float)$data['custom_price'] : null;
+    }
+
+    private function fillTicketData(array $data): void
+    {
+        $this->ticket_type_name = $data['ticket_type_name'] ?? '';
+        $this->price = (float)($data['price'] ?? 0);
+        $this->vat_rate = (float)($data['vat_rate'] ?? 0);
+        $this->event_id = (int)($data['event_id'] ?? 0);
+        $this->event_title = $data['event_title'] ?? '';
+        $this->available = (int)($data['available'] ?? 0);
     }
 
     /** The price actually charged for this line (custom price overrides the base). */

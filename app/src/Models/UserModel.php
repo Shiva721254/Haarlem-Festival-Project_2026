@@ -30,53 +30,66 @@ class UserModel
     public static function fromDb(array $data): self
     {
         $user = new self();
-        $user->UserId = (int)$data['UserId'];
-        $user->Username = $data['Username'] ?? '';
-        $user->FirstName = $data['FirstName'];
-        $user->LastName = $data['LastName'];
-        $user->Email = $data['Email'];
-        $user->Password = $data['Password'] ?? '';
-        
-        // Convert strings from DB back to Enums
-        $user->Role = UserRole::from($data['Role']);
-        
-        // Ensure boolean types
-        $user->isVerified = (bool)($data['isVerified'] ?? false);
-        $user->isActive = (bool)($data['isActive'] ?? false);
-
-        $user->verification_token = $data['verification_token'] ?? null;
-        $user->verification_token_expires_at = $data['verification_token_expires_at'] ?? null;
-        $user->verified_at = $data['verified_at'] ?? null;
-
-        // These will be null if the user hasn't requested a reset
-        $user->reset_token_hash = $data['reset_token_hash'] ?? null;
-        $user->reset_token_expires_at = $data['reset_token_expires_at'] ?? null;
-        $user->profile_image = $data['profile_image'] ?? null;
-        $user->phone = $data['phone'] ?? null;
-        $user->address = $data['address'] ?? null;
-        $user->created_at = $data['created_at'] ?? null;
-
+        $user->fillIdentity($data);
+        $user->fillAccountState($data);
+        $user->fillOptionalProfile($data);
         return $user;
+    }
+
+    private function fillIdentity(array $data): void
+    {
+        $this->UserId = (int)$data['UserId'];
+        $this->Username = $data['Username'] ?? '';
+        $this->FirstName = $data['FirstName'];
+        $this->LastName = $data['LastName'];
+        $this->Email = $data['Email'];
+        $this->Password = $data['Password'] ?? '';
+        $this->Role = UserRole::from($data['Role']);
+    }
+
+    private function fillAccountState(array $data): void
+    {
+        $this->isVerified = (bool)($data['isVerified'] ?? false);
+        $this->isActive = (bool)($data['isActive'] ?? false);
+        $this->verification_token = $data['verification_token'] ?? null;
+        $this->verification_token_expires_at = $data['verification_token_expires_at'] ?? null;
+        $this->verified_at = $data['verified_at'] ?? null;
+        $this->reset_token_hash = $data['reset_token_hash'] ?? null;
+        $this->reset_token_expires_at = $data['reset_token_expires_at'] ?? null;
+    }
+
+    private function fillOptionalProfile(array $data): void
+    {
+        $this->profile_image = $data['profile_image'] ?? null;
+        $this->phone = $data['phone'] ?? null;
+        $this->address = $data['address'] ?? null;
+        $this->created_at = $data['created_at'] ?? null;
     }
 
     public function fromPost(): UserModel
     {
         $user = new UserModel();
-        $user->UserId = isset($_POST['UserId']) ? (int)$_POST['UserId'] : 0;
-        $user->Username = trim($_POST['Username'] ?? '');
-        $user->FirstName = $_POST['FirstName'];
-        $user->LastName = $_POST['LastName'];
-        $user->Email = $_POST['Email'];
-
-        // Handle both cases for password field
-        $user->Password = $_POST['Password'] ?? $_POST['password'] ?? '';
-
-        $user->Role = isset($_POST['Role']) 
-            ? UserRole::from($_POST['Role']) 
-            : $this->Role;
-        
-        $user->isVerified = isset($_POST['isVerified']) ? (bool)$_POST['isVerified'] : false;
-        $user->isActive = isset($_POST['isActive']) ? (bool)$_POST['isActive'] : false;
+        $user->fillPostIdentity();
+        $user->fillPostState($this->Role);
         return $user;
+    }
+
+    private function fillPostIdentity(): void
+    {
+        $this->UserId = isset($_POST['UserId']) ? (int)$_POST['UserId'] : 0;
+        $this->Username = trim($_POST['Username'] ?? '');
+        $this->FirstName = $_POST['FirstName'];
+        $this->LastName = $_POST['LastName'];
+        $this->Email = $_POST['Email'];
+        $this->Password = $_POST['Password'] ?? $_POST['password'] ?? '';
+    }
+
+    private function fillPostState(UserRole $fallbackRole): void
+    {
+        $this->Role = isset($_POST['Role']) 
+            ? UserRole::from($_POST['Role']) 
+            : $fallbackRole;
+        $this->isVerified = isset($_POST['isVerified']) ? (bool)$_POST['isVerified'] : false;
+        $this->isActive = isset($_POST['isActive']) ? (bool)$_POST['isActive'] : false;
     }
 }
