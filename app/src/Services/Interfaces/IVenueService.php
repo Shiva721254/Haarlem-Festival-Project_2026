@@ -13,4 +13,10 @@ interface IVenueService
     public function create(VenueModel $venue): int;
     public function update(VenueModel $venue): void;
     public function delete(int $id): void;
+    /**
+     * @param array<string,mixed> $post
+     * @return array{venue:VenueModel,error:?string,uploadError:?string}
+     */
+    public function buildAdminFormModel(array $post): array;
+    public function validateAdminForm(VenueModel $venue): ?string;
 }

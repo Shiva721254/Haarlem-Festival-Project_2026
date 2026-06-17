@@ -6,6 +6,20 @@ interface IUserService
 {
     public function getAll(string $search = '', string $role = '', string $sort = 'LastName', string $dir = 'ASC'): array ;
     public function create(UserModel $article) : void;
+    public function createWithPasswordConfirmation(UserModel $user, string $confirm): void;
+    /**
+     * @param array<string,mixed> $post
+     * @return array{ok:bool,user:UserModel,error:?string}
+     */
+    public function saveAdminUser(array $post): array;
+    /** @return array{question:string,answer:int} */
+    public function registrationCaptchaChallenge(): array;
+    public function verifyRegistrationCaptcha(string $answer, ?int $expected): bool;
+    /**
+     * @param array<string,string> $fields
+     * @return array{ok:bool,error?:string}
+     */
+    public function registerCustomer(array $fields, string $password, string $confirm): array;
     public function getById(int $id): ?UserModel;
     public function update(UserModel $article) : void;
     public function updateProfile(int $userId, string $username, string $firstName, string $lastName, string $email, ?string $phone = null, ?string $address = null): void;

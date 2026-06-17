@@ -17,4 +17,12 @@ interface IArtistService
     public function create(ArtistModel $artist): int;
     public function update(ArtistModel $artist): void;
     public function delete(int $id): void;
+    /**
+     * @param array<string,mixed> $post
+     * @return array{artist:ArtistModel,error:?string}
+     */
+    public function buildAdminFormModel(array $post): array;
+    public function validateAdminForm(ArtistModel $artist): ?string;
+    /** @return array{ok:bool,message:string} */
+    public function uploadGalleryImage(int $artistId): array;
 }

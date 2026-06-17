@@ -13,4 +13,10 @@ interface IRestaurantService
     public function create(RestaurantModel $restaurant): int;
     public function update(RestaurantModel $restaurant): void;
     public function delete(int $id): void;
+    /**
+     * @param array<string,mixed> $post
+     * @return array{restaurant:RestaurantModel,error:?string,uploadError:?string}
+     */
+    public function buildAdminFormModel(array $post): array;
+    public function validateAdminForm(RestaurantModel $restaurant): ?string;
 }

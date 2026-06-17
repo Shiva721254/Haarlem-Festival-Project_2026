@@ -18,4 +18,11 @@ interface ITicketTypeService
     public function update(TicketTypeModel $t): void;
 
     public function delete(int $id): void;
+    public function countAll(): int;
+    /**
+     * @param array<string,mixed> $post
+     * @return array{ticket:TicketTypeModel,error:?string}
+     */
+    public function buildAdminFormModel(array $post): array;
+    public function validateAdminForm(TicketTypeModel $ticket): ?string;
 }
