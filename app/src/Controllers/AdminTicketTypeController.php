@@ -2,13 +2,12 @@
 
 namespace App\Controllers;
 
-use App\Services\TicketTypeService;
-use App\Services\EventService;
 use App\Services\Interfaces\ITicketTypeService;
 use App\Services\Interfaces\IEventService;
-use App\Models\TicketTypeModel;
 use App\Framework\View;
 use App\Framework\Flash;
+use App\Framework\Http;
+use App\Framework\Redirect;
 use App\Middleware\AuthMiddleware;
 
 /**
@@ -19,10 +18,10 @@ class AdminTicketTypeController
     private ITicketTypeService $ticketService;
     private IEventService $eventService;
 
-    public function __construct()
+    public function __construct(ITicketTypeService $ticketService, IEventService $eventService)
     {
-        $this->ticketService = new TicketTypeService();
-        $this->eventService = new EventService();
+        $this->ticketService = $ticketService;
+        $this->eventService = $eventService;
     }
 
     // GET: /admin/events/{eventId}/tickets
@@ -30,7 +29,6 @@ class AdminTicketTypeController
     {
         AuthMiddleware::requireAdmin();
         $event = $this->requireEvent((int)($vars['eventId'] ?? 0));
-
         View::renderAdmin('Admin/tickets/index', [
             'event'   => $event,
             'tickets' => $this->ticketService->getByEvent($event->id),
@@ -42,123 +40,90 @@ class AdminTicketTypeController
     {
         AuthMiddleware::requireAdmin();
         $event = $this->requireEvent((int)($vars['eventId'] ?? 0));
-
-        View::renderAdmin('Admin/tickets/form', [
-            'event'  => $event,
-            'ticket' => null,
-        ], 'New ticket type');
+        $this->renderForm($event, null, null, 'New ticket type');
     }
 
     // POST: /admin/tickets
     public function store(): void
     {
         AuthMiddleware::requireAdmin();
-
-        $ticket = $this->buildFromPost();
+        $form = $this->ticketService->buildAdminFormModel($_POST);
+        $ticket = $form['ticket'];
         $event = $this->requireEvent($ticket->event_id);
-
-        if ($error = $this->validate($ticket)) {
-            Flash::error($error);
-            View::renderAdmin('Admin/tickets/form', ['event' => $event, 'ticket' => $ticket], 'New ticket type');
-            return;
+        if ($error = $form['error']) {
+            $this->renderForm($event, $ticket, $error, 'New ticket type');
         }
-
         $this->ticketService->create($ticket);
-        Flash::success('Ticket type created.');
-        header('Location: /admin/events/' . $event->id . '/tickets');
-        exit();
+        $this->saved($event->id, 'Ticket type created.');
     }
 
     // GET: /admin/tickets/edit/{id}
     public function edit(array $vars = []): void
     {
         AuthMiddleware::requireAdmin();
-
         $ticket = $this->ticketService->getById((int)($vars['id'] ?? 0));
         if ($ticket === null) {
-            http_response_code(404);
-            echo 'Ticket type not found';
-            return;
+            Http::notFound('Ticket type not found');
         }
         $event = $this->requireEvent($ticket->event_id);
-
-        View::renderAdmin('Admin/tickets/form', ['event' => $event, 'ticket' => $ticket], 'Edit ticket type');
+        $this->renderForm($event, $ticket, null, 'Edit ticket type');
     }
 
     // POST: /admin/tickets/update
     public function update(): void
     {
         AuthMiddleware::requireAdmin();
-
-        $ticket = $this->buildFromPost();
-        $ticket->id = (int)($_POST['id'] ?? 0);
+        $form = $this->ticketService->buildAdminFormModel($_POST);
+        $ticket = $form['ticket'];
         $event = $this->requireEvent($ticket->event_id);
-
-        if (($error = $this->validate($ticket)) || $ticket->id <= 0) {
-            Flash::error($error ?? 'Invalid ticket type.');
-            View::renderAdmin('Admin/tickets/form', ['event' => $event, 'ticket' => $ticket], 'Edit ticket type');
-            return;
+        if (($error = $form['error']) || $ticket->id <= 0) {
+            $this->renderForm($event, $ticket, $error ?? 'Invalid ticket type.', 'Edit ticket type');
         }
-
         $this->ticketService->update($ticket);
-        Flash::success('Ticket type updated.');
-        header('Location: /admin/events/' . $event->id . '/tickets');
-        exit();
+        $this->saved($event->id, 'Ticket type updated.');
     }
 
     // POST: /admin/tickets/delete
     public function delete(): void
     {
         AuthMiddleware::requireAdmin();
-
         $id = (int)($_POST['id'] ?? 0);
         $eventId = (int)($_POST['event_id'] ?? 0);
         if ($id > 0) {
             $this->ticketService->delete($id);
             Flash::success('Ticket type deleted.');
         }
-        header('Location: /admin/events/' . $eventId . '/tickets');
-        exit();
+        Redirect::to($this->ticketsUrl($eventId));
     }
 
-    private function buildFromPost(): TicketTypeModel
-    {
-        $t = new TicketTypeModel();
-        $t->event_id  = (int)($_POST['event_id'] ?? 0);
-        $t->name      = trim($_POST['name'] ?? '');
-        $t->price     = (float)($_POST['price'] ?? 0);
-        $t->vat_rate  = (float)($_POST['vat_rate'] ?? 21);
-        $t->capacity  = (int)($_POST['capacity'] ?? 0);
-        $t->sold      = 0;
-        $t->is_active = !empty($_POST['is_active']);
-        return $t;
-    }
-
-    private function validate(TicketTypeModel $t): ?string
-    {
-        if ($t->name === '') {
-            return 'Ticket name is required.';
-        }
-        if ($t->price < 0) {
-            return 'Price cannot be negative.';
-        }
-        if ($t->capacity < 0) {
-            return 'Capacity cannot be negative.';
-        }
-        return null;
-    }
-
-    /**
-     * Load an event or 404. Returns the event model.
-     */
-    private function requireEvent(int $eventId): \App\Models\EventModel
+    /** Load the scoping event or 404. */
+    private function requireEvent(int $eventId): object
     {
         $event = $this->eventService->getById($eventId);
         if ($event === null) {
-            http_response_code(404);
-            echo 'Event not found';
-            exit();
+            Http::notFound('Event not found');
         }
         return $event;
+    }
+
+    /** Render the ticket form (optionally with an error) and stop. */
+    private function renderForm(object $event, ?object $ticket, ?string $error, string $title): never
+    {
+        if ($error !== null) {
+            Flash::error($error);
+        }
+        View::renderAdmin('Admin/tickets/form', ['event' => $event, 'ticket' => $ticket], $title);
+        exit();
+    }
+
+    private function saved(int $eventId, string $message): never
+    {
+        Flash::success($message);
+        Redirect::to($this->ticketsUrl($eventId));
+    }
+
+    private function ticketsUrl(int $eventId): string
+    {
+        return '/admin/events/' . $eventId . '/tickets';
     }
 }

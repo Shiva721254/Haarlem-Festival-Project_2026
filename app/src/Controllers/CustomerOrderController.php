@@ -2,66 +2,66 @@
 
 namespace App\Controllers;
 
-use App\Config;
 use App\Framework\Flash;
+use App\Framework\Redirect;
 use App\Framework\View;
 use App\Middleware\AuthMiddleware;
 use App\Services\Interfaces\IOrderService;
 use App\Services\Interfaces\IPaymentService;
-use App\Services\OrderService;
-use App\Services\PaymentService;
 
 class CustomerOrderController
 {
     private IOrderService $orderService;
     private IPaymentService $paymentService;
 
-    public function __construct()
+    public function __construct(IOrderService $orderService, IPaymentService $paymentService)
     {
-        $this->orderService = new OrderService();
-        $this->paymentService = new PaymentService();
+        $this->orderService = $orderService;
+        $this->paymentService = $paymentService;
     }
 
     public function index(): void
     {
-        AuthMiddleware::requireAuth();
-
-        $orders = $this->orderService->getByUser((int) $_SESSION['UserId']);
+        $userId = AuthMiddleware::userId();
+        $orders = $this->orderService->getByUser($userId);
         View::render('Orders/index', ['orders' => $orders], 'My Orders');
     }
 
     public function pay(): void
     {
-        AuthMiddleware::requireAuth();
-
+        $userId = AuthMiddleware::userId();
         $orderId = (int) ($_POST['order_id'] ?? 0);
-        $order = $this->orderService->getByIdForUser($orderId, (int) $_SESSION['UserId']);
-        if ($order === null) {
-            Flash::error('Order not found.');
-            header('Location: /orders');
-            exit();
-        }
+        $order = $this->requirePayableOrder($orderId, $userId);
+        $this->redirectToStripe($order);
+    }
 
+    /** Load the order for this user and verify it can still be paid, or bail. */
+    private function requirePayableOrder(int $orderId, int $userId): object
+    {
+        $order = $this->orderService->getByIdForUser($orderId, $userId);
+        if ($order === null) {
+            $this->bailToOrders('Order not found.');
+        }
         $check = $this->orderService->canStartPayment($order);
         if (!$check['ok']) {
-            Flash::error($check['message']);
-            header('Location: /orders');
-            exit();
+            $this->bailToOrders($check['message']);
         }
+        return $order;
+    }
 
+    private function redirectToStripe(object $order): never
+    {
         try {
-            $url = $this->paymentService->createCheckoutSession(
-                $order,
-                Config::appUrl() . '/checkout/success?session_id={CHECKOUT_SESSION_ID}',
-                Config::appUrl() . '/checkout/cancel?order=' . $order->id
-            );
+            $url = $this->paymentService->startCheckout($order);
         } catch (\Throwable $e) {
-            Flash::error('Could not start payment. Please try again.');
-            header('Location: /orders');
-            exit();
+            $this->bailToOrders('Could not start payment. Please try again.');
         }
+        Redirect::to($url);
+    }
 
-        header('Location: ' . $url);
-        exit();
+    private function bailToOrders(string $message): never
+    {
+        Flash::error($message);
+        Redirect::to('/orders');
     }
 }

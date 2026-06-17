@@ -1,54 +1,32 @@
 <?php
 namespace App\Controllers;
 
+use App\Framework\Http;
 use App\Framework\View;
 use App\Middleware\AuthMiddleware;
 use App\Services\Interfaces\IOrderService;
 use App\Services\Interfaces\IUserService;
-use App\Services\OrderService;
-use App\Services\UserService;
 
 class AdminOrderController
 {
-    private const STATUSES = ['pending', 'paid', 'failed', 'cancelled'];
-    private const EXPORT_COLUMNS = [
-        'id' => 'Order ID',
-        'invoice_number' => 'Invoice number',
-        'status' => 'Status',
-        'customer_name' => 'Customer name',
-        'customer_email' => 'Customer email',
-        'item_count' => 'Items',
-        'subtotal' => 'Subtotal',
-        'vat_total' => 'VAT',
-        'total' => 'Total',
-        'created_at' => 'Created at',
-        'paid_at' => 'Paid at',
-        'payment_intent_id' => 'Payment reference',
-    ];
-
     private IOrderService $orderService;
     private IUserService $userService;
 
-    public function __construct()
+    public function __construct(IOrderService $orderService, IUserService $userService)
     {
-        $this->orderService = new OrderService();
-        $this->userService = new UserService();
+        $this->orderService = $orderService;
+        $this->userService = $userService;
     }
 
-    // GET: /admin/orders/{id}
     public function show(array $vars = []): void
     {
         AuthMiddleware::requireAdmin();
-
         $order = $this->orderService->getById((int)($vars['id'] ?? 0));
         if ($order === null) {
-            http_response_code(404);
-            echo 'Order not found';
-            return;
+            Http::notFound('Order not found');
         }
-
         View::renderAdmin('Admin/orders/show', [
-            'order'    => $order,
+            'order' => $order,
             'customer' => $this->userService->getById($order->user_id),
         ], 'Order #' . $order->id);
     }
@@ -56,67 +34,32 @@ class AdminOrderController
     public function index(): void
     {
         AuthMiddleware::requireAdmin();
-
-        $status = $this->statusFilter();
+        $status = $this->orderService->normalizeAdminStatus($_GET['status'] ?? null);
         View::renderAdmin('Admin/orders/index', [
             'orders' => $this->orderService->getAllForAdmin($status),
             'status' => $status,
-            'statuses' => self::STATUSES,
-            'exportColumns' => self::EXPORT_COLUMNS,
+            'statuses' => $this->orderService->adminStatuses(),
+            'exportColumns' => $this->orderService->exportColumns(),
         ], 'Orders');
     }
 
     public function export(): void
     {
         AuthMiddleware::requireAdmin();
-
-        $status = $this->statusFilter();
-        $columns = $this->selectedColumns();
-        $rows = $this->orderService->getExportRows($status);
+        $status = $this->orderService->normalizeAdminStatus($_GET['status'] ?? null);
+        $columns = $this->orderService->resolveExportColumns(is_array($_GET['columns'] ?? []) ? $_GET['columns'] : []);
         $format = ($_GET['format'] ?? 'csv') === 'xlsx' ? 'xlsx' : 'csv';
+        $export = $this->orderService->buildExport($status, $columns, $format);
+        $this->sendDownload($export);
+    }
 
-        $headers = array_map(static fn(string $key) => self::EXPORT_COLUMNS[$key], $columns);
-        $base = 'orders-' . date('Ymd-His');
-
-        if ($format === 'xlsx') {
-            $data = array_map(
-                static fn(array $row) => array_map(static fn(string $key) => $row[$key] ?? '', $columns),
-                $rows
-            );
-            $bytes = \App\Framework\XlsxWriter::build($headers, $data, 'Orders');
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment; filename="' . $base . '.xlsx"');
-            header('Content-Length: ' . strlen($bytes));
-            echo $bytes;
-            exit();
-        }
-
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $base . '.csv"');
-        $out = fopen('php://output', 'w');
-        fputcsv($out, $headers, ',', '"', '');
-        foreach ($rows as $row) {
-            fputcsv($out, array_map(static fn(string $key) => $row[$key] ?? '', $columns), ',', '"', '');
-        }
-        fclose($out);
+    /** Stream a generated export (CSV/XLSX) as a file download. */
+    private function sendDownload(array $export): never
+    {
+        header('Content-Type: ' . $export['contentType']);
+        header('Content-Disposition: attachment; filename="' . $export['filename'] . '"');
+        header('Content-Length: ' . strlen($export['body']));
+        echo $export['body'];
         exit();
-    }
-
-    private function statusFilter(): ?string
-    {
-        $status = $_GET['status'] ?? null;
-        return in_array($status, self::STATUSES, true) ? $status : null;
-    }
-
-    /** @return string[] */
-    private function selectedColumns(): array
-    {
-        $selected = $_GET['columns'] ?? [];
-        if (!is_array($selected)) {
-            return array_keys(self::EXPORT_COLUMNS);
-        }
-
-        $columns = array_values(array_filter($selected, static fn($key) => isset(self::EXPORT_COLUMNS[$key])));
-        return empty($columns) ? array_keys(self::EXPORT_COLUMNS) : $columns;
     }
 }

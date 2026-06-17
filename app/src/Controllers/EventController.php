@@ -2,9 +2,7 @@
 namespace App\Controllers;
 
 use App\Services\Interfaces\IEventService;
-use App\Services\Interfaces\ITicketTypeService;
-use App\Services\EventService;
-use App\Services\TicketTypeService;
+use App\Framework\Http;
 use App\Framework\View;
 
 /**
@@ -16,62 +14,44 @@ use App\Framework\View;
 class EventController
 {
     private IEventService $eventService;
-    private ITicketTypeService $ticketTypeService;
 
-    public function __construct()
+    public function __construct(IEventService $eventService)
     {
-        $this->eventService = new EventService();
-        $this->ticketTypeService = new TicketTypeService();
+        $this->eventService = $eventService;
     }
 
     // GET: /events/{type}
     public function index(array $vars = []): void
     {
         $typeSlug = (string)($vars['type'] ?? '');
-
         $eventType = $this->eventService->getTypeBySlug($typeSlug);
         if ($eventType === null) {
-            http_response_code(404);
-            echo 'Event type not found';
-            return;
+            Http::notFound('Event type not found');
         }
+        View::render('Events/index', $this->typeViewData($eventType, $typeSlug), $eventType['name']);
+    }
 
-        $events = $this->eventService->getByType($typeSlug);
-
-        // All-access passes for this type, each with its purchasable options.
-        $passes = [];
-        foreach ($this->eventService->getPassesByType($typeSlug) as $passEvent) {
-            $passes[] = [
-                'event'   => $passEvent,
-                'options' => $this->ticketTypeService->getActiveByEvent($passEvent->id),
-            ];
-        }
-
-        View::render('Events/index', [
-            'eventType'    => $eventType,   // ['slug'=>, 'name'=>, 'description'=>]
-            'events'       => $events,
-            'passes'       => $passes,
+    /** @return array<string,mixed> */
+    private function typeViewData(array $eventType, string $typeSlug): array
+    {
+        return [
+            'eventType'    => $eventType,
+            'events'       => $this->eventService->getByType($typeSlug),
+            'passes'       => $this->eventService->getPassesWithOptionsByType($typeSlug),
             'availability' => $this->eventService->getAvailabilityByType($typeSlug),
-        ], $eventType['name']);
+        ];
     }
 
     // GET: /event/{id}
     public function show(array $vars = []): void
     {
-        $id = (int)($vars['id'] ?? 0);
-        $event = $this->eventService->getById($id);
-
+        $event = $this->eventService->getById((int)($vars['id'] ?? 0));
         if ($event === null || !$event->is_published) {
-            http_response_code(404);
-            echo 'Event not found';
-            return;
+            Http::notFound('Event not found');
         }
-
-        $ticketTypes = $this->ticketTypeService->getActiveByEvent($event->id);
-
         View::render('Events/detail', [
             'event'       => $event,
-            'ticketTypes' => $ticketTypes,
+            'ticketTypes' => $this->eventService->getTicketOptionsForEvent($event->id),
         ], $event->title);
     }
 }

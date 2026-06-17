@@ -2,17 +2,17 @@
 
 namespace App\Controllers;
 
+use App\Framework\Http;
 use App\Framework\View;
-use App\Services\ArtistService;
 use App\Services\Interfaces\IArtistService;
 
 class ArtistController
 {
     private IArtistService $artistService;
 
-    public function __construct()
+    public function __construct(IArtistService $artistService)
     {
-        $this->artistService = new ArtistService();
+        $this->artistService = $artistService;
     }
 
     // GET: /artist/{id}
@@ -20,11 +20,8 @@ class ArtistController
     {
         $artist = $this->artistService->getById((int)($vars['id'] ?? 0));
         if ($artist === null) {
-            http_response_code(404);
-            echo 'Artist not found';
-            return;
+            Http::notFound('Artist not found');
         }
-
         View::render('Artists/detail', [
             'artist'   => $artist,
             'schedule' => $this->artistService->getSchedule($artist->id),

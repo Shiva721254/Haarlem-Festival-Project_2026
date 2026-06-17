@@ -2,19 +2,19 @@
 namespace App\Controllers;
 
 use App\Framework\Flash;
+use App\Framework\Http;
+use App\Framework\Redirect;
 use App\Framework\View;
 use App\Middleware\AuthMiddleware;
-use App\Models\RestaurantModel;
 use App\Services\Interfaces\IRestaurantService;
-use App\Services\RestaurantService;
 
 class AdminRestaurantController
 {
     private IRestaurantService $restaurantService;
 
-    public function __construct()
+    public function __construct(IRestaurantService $restaurantService)
     {
-        $this->restaurantService = new RestaurantService();
+        $this->restaurantService = $restaurantService;
     }
 
     public function index(): void
@@ -34,18 +34,12 @@ class AdminRestaurantController
     public function store(): void
     {
         AuthMiddleware::requireAdmin();
-        $restaurant = $this->buildFromPost();
-
-        if ($error = $this->validate($restaurant)) {
-            Flash::error($error);
-            View::renderAdmin('Admin/restaurants/form', ['restaurant' => $restaurant], 'New restaurant');
-            return;
+        $form = $this->restaurantService->buildAdminFormModel($_POST);
+        if ($error = ($form['error'] ?? $form['uploadError'])) {
+            $this->renderForm($form['restaurant'], $error, 'New restaurant');
         }
-
-        $this->restaurantService->create($restaurant);
-        Flash::success('Restaurant created.');
-        header('Location: /admin/restaurants');
-        exit();
+        $this->restaurantService->create($form['restaurant']);
+        $this->saved('Restaurant created.');
     }
 
     public function edit(array $vars = []): void
@@ -53,30 +47,21 @@ class AdminRestaurantController
         AuthMiddleware::requireAdmin();
         $restaurant = $this->restaurantService->getById((int)($vars['id'] ?? 0));
         if ($restaurant === null) {
-            http_response_code(404);
-            echo 'Restaurant not found';
-            return;
+            Http::notFound('Restaurant not found');
         }
-
         View::renderAdmin('Admin/restaurants/form', ['restaurant' => $restaurant], 'Edit restaurant');
     }
 
     public function update(): void
     {
         AuthMiddleware::requireAdmin();
-        $restaurant = $this->buildFromPost();
-        $restaurant->id = (int)($_POST['id'] ?? 0);
-
-        if (($error = $this->validate($restaurant)) || $restaurant->id <= 0) {
-            Flash::error($error ?? 'Invalid restaurant.');
-            View::renderAdmin('Admin/restaurants/form', ['restaurant' => $restaurant], 'Edit restaurant');
-            return;
+        $form = $this->restaurantService->buildAdminFormModel($_POST);
+        $restaurant = $form['restaurant'];
+        if (($error = ($form['error'] ?? $form['uploadError'])) || $restaurant->id <= 0) {
+            $this->renderForm($restaurant, $error ?? 'Invalid restaurant.', 'Edit restaurant');
         }
-
         $this->restaurantService->update($restaurant);
-        Flash::success('Restaurant updated.');
-        header('Location: /admin/restaurants');
-        exit();
+        $this->saved('Restaurant updated.');
     }
 
     public function delete(): void
@@ -87,40 +72,20 @@ class AdminRestaurantController
             $this->restaurantService->delete($id);
             Flash::success('Restaurant deleted.');
         }
-        header('Location: /admin/restaurants');
+        Redirect::to('/admin/restaurants');
+    }
+
+    /** Re-render the form with an error and stop. */
+    private function renderForm(?object $restaurant, string $error, string $title): never
+    {
+        Flash::error($error);
+        View::renderAdmin('Admin/restaurants/form', ['restaurant' => $restaurant], $title);
         exit();
     }
 
-    private function buildFromPost(): RestaurantModel
+    private function saved(string $message): never
     {
-        $restaurant = new RestaurantModel();
-        $restaurant->name = trim($_POST['name'] ?? '');
-        $restaurant->cuisine = trim($_POST['cuisine'] ?? '') ?: null;
-        $restaurant->description = trim($_POST['description'] ?? '') ?: null;
-        $restaurant->address = trim($_POST['address'] ?? '') ?: null;
-        $restaurant->stars = ($_POST['stars'] ?? '') !== '' ? (int)$_POST['stars'] : null;
-        $restaurant->price_per_seat = ($_POST['price_per_seat'] ?? '') !== '' ? (float)$_POST['price_per_seat'] : null;
-        $restaurant->image = trim($_POST['image'] ?? '') ?: null;
-        $upload = \App\Framework\ImageUpload::handle('image_file', 'restaurants');
-        if (!empty($upload['path'])) {
-            $restaurant->image = $upload['path'];
-        } elseif (!$upload['ok']) {
-            \App\Framework\Flash::error($upload['message']);
-        }
-        return $restaurant;
-    }
-
-    private function validate(RestaurantModel $restaurant): ?string
-    {
-        if ($restaurant->name === '') {
-            return 'Restaurant name is required.';
-        }
-        if ($restaurant->stars !== null && ($restaurant->stars < 0 || $restaurant->stars > 5)) {
-            return 'Stars must be between 0 and 5.';
-        }
-        if ($restaurant->price_per_seat !== null && $restaurant->price_per_seat < 0) {
-            return 'Price per seat cannot be negative.';
-        }
-        return null;
+        Flash::success($message);
+        Redirect::to('/admin/restaurants');
     }
 }

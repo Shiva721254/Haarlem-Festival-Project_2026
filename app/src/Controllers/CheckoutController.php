@@ -2,13 +2,11 @@
 
 namespace App\Controllers;
 
-use App\Services\OrderService;
-use App\Services\PaymentService;
 use App\Services\Interfaces\IOrderService;
 use App\Services\Interfaces\IPaymentService;
-use App\Config;
 use App\Framework\View;
 use App\Framework\Flash;
+use App\Framework\Redirect;
 use App\Middleware\AuthMiddleware;
 
 /**
@@ -20,108 +18,90 @@ class CheckoutController
     private IOrderService $orderService;
     private IPaymentService $paymentService;
 
-    public function __construct()
+    public function __construct(IOrderService $orderService, IPaymentService $paymentService)
     {
-        $this->orderService = new OrderService();
-        $this->paymentService = new PaymentService();
+        $this->orderService = $orderService;
+        $this->paymentService = $paymentService;
     }
 
     // POST: /checkout — create the order and redirect to Stripe.
     public function start(): void
     {
-        AuthMiddleware::requireAuth();
-        $userId = (int) $_SESSION['UserId'];
-
-        $result = $this->orderService->createFromCart($userId);
+        $userId = AuthMiddleware::userId();
+        $result = $this->orderService->createFromCart($userId, session_id());
         if (!$result['ok']) {
-            Flash::error($result['message']);
-            header('Location: /cart');
-            exit();
+            $this->bailToCart($result['message']);
         }
+        $order = $this->loadPayableOrder($result['order']->id);
+        $this->redirectToStripe($order);
+    }
 
-        // Reload with enriched items (names) for the Stripe line items.
-        $order = $this->orderService->getById($result['order']->id);
+    /** Reload the order (with enriched item names) and verify it can be paid. */
+    private function loadPayableOrder(int $orderId): object
+    {
+        $order = $this->orderService->getById($orderId);
         if ($order === null) {
-            Flash::error('Could not load your order. Please try again.');
-            header('Location: /cart');
-            exit();
+            $this->bailToCart('Could not load your order. Please try again.');
         }
-
         $check = $this->orderService->canStartPayment($order);
         if (!$check['ok']) {
-            Flash::error($check['message']);
-            header('Location: /cart');
-            exit();
+            $this->bailToCart($check['message']);
         }
+        return $order;
+    }
 
+    private function redirectToStripe(object $order): never
+    {
         try {
-            $url = $this->paymentService->createCheckoutSession(
-                $order,
-                Config::appUrl() . '/checkout/success?session_id={CHECKOUT_SESSION_ID}',
-                Config::appUrl() . '/checkout/cancel?order=' . $order->id
-            );
+            $url = $this->paymentService->startCheckout($order);
         } catch (\Throwable $e) {
-            Flash::error('Could not start payment. Please try again.');
-            header('Location: /cart');
-            exit();
+            $this->bailToCart('Could not start payment. Please try again.');
         }
+        Redirect::to($url);
+    }
 
-        header('Location: ' . $url);
-        exit();
+    /** Flash an error and send the visitor back to the cart. */
+    private function bailToCart(string $message): never
+    {
+        Flash::error($message);
+        Redirect::to('/cart');
     }
 
     // GET: /checkout/success — Stripe redirects back here after payment.
     public function success(): void
     {
         AuthMiddleware::requireAuth();
-
         $sessionId = $_GET['session_id'] ?? '';
         if ($sessionId === '') {
-            header('Location: /cart');
-            exit();
+            Redirect::to('/cart');
         }
-
-        // Verify the payment server-side (never trust the client/redirect alone).
         $info = $this->paymentService->retrieveSession($sessionId);
-        $order = $info['order_id'] ? $this->orderService->getById($info['order_id']) : null;
+        $order = $this->confirmPaidOrder($info);
+        $this->orderService->fulfill($order, session_id()); // idempotent: pending -> paid + tickets
+        View::render('Checkout/success', ['order' => $this->orderService->getById($order->id)], 'Order confirmed');
+    }
 
+    /** Verify the payment server-side and return the owning order, or bail. */
+    private function confirmPaidOrder(array $info): object
+    {
+        $order = $info['order_id'] ? $this->orderService->getById($info['order_id']) : null;
         if (!$info['paid'] || $order === null || $order->user_id !== (int) $_SESSION['UserId']) {
             Flash::error('We could not confirm your payment. If you were charged, contact support.');
-            header('Location: /cart');
-            exit();
+            Redirect::to('/cart');
         }
-
         if ($info['payment_intent']) {
             $this->orderService->setPaymentIntent($order->id, $info['payment_intent']);
         }
-
-        // Idempotent: fulfill only flips a pending order to paid + issues tickets.
-        $this->orderService->fulfill($order);
-
-        // Reload to show the paid order with its invoice number.
-        $order = $this->orderService->getById($order->id);
-        View::render('Checkout/success', ['order' => $order], 'Order confirmed');
+        return $order;
     }
 
     // GET: /checkout/cancel - user backed out of Stripe.
     public function cancel(): void
     {
-        AuthMiddleware::requireAuth();
-
+        $userId = AuthMiddleware::userId();
         $orderId = (int) ($_GET['order'] ?? 0);
-        $order = $orderId > 0
-            ? $this->orderService->getByIdForUser($orderId, (int) $_SESSION['UserId'])
-            : null;
-
-        if ($order !== null && $order->canPayLater()) {
-            $deadline = date('j M Y, H:i', strtotime($order->pay_later_until));
-            Flash::error('Payment cancelled. You can still pay this order until ' . $deadline . '.');
-            header('Location: /orders');
-            exit();
-        }
-
-        Flash::error('Payment cancelled.');
-        header('Location: /orders');
-        exit();
+        $order = $orderId > 0 ? $this->orderService->getByIdForUser($orderId, $userId) : null;
+        Flash::error($this->orderService->cancelMessage($order));
+        Redirect::to('/orders');
     }
 }

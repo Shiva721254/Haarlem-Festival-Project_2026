@@ -2,9 +2,8 @@
 
 namespace App\Controllers;
 
-use App\Config;
-use App\Services\OrderService;
 use App\Services\Interfaces\IOrderService;
+use App\Services\Interfaces\IPaymentService;
 
 /**
  * Stripe webhook receiver. Makes order fulfilment robust: even if the buyer
@@ -14,56 +13,31 @@ use App\Services\Interfaces\IOrderService;
 class WebhookController
 {
     private IOrderService $orderService;
+    private IPaymentService $paymentService;
 
-    public function __construct()
+    public function __construct(IOrderService $orderService, IPaymentService $paymentService)
     {
-        $this->orderService = new OrderService();
+        $this->orderService = $orderService;
+        $this->paymentService = $paymentService;
     }
 
     // POST: /webhook/stripe
     public function stripe(): void
     {
         $payload = file_get_contents('php://input') ?: '';
-        $sigHeader = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
-        $secret = Config::stripeWebhookSecret();
-
-        try {
-            if ($secret !== '') {
-                // Verify the signature so only genuine Stripe events are trusted.
-                $event = \Stripe\Webhook::constructEvent($payload, $sigHeader, $secret);
-            } else {
-                // No secret configured (local dev): accept the unverified payload.
-                $event = json_decode($payload);
-                if (!is_object($event)) {
-                    http_response_code(400);
-                    echo 'Invalid payload';
-                    return;
-                }
-            }
-        } catch (\Throwable $e) {
-            http_response_code(400);
-            echo 'Invalid signature';
-            return;
+        $parsed = $this->paymentService->parseWebhookEvent($payload, $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '');
+        if (!$parsed['ok']) {
+            $this->badRequest($parsed['error'] ?? 'Invalid payload');
         }
-
-        if (($event->type ?? '') === 'checkout.session.completed') {
-            $session = $event->data->object ?? null;
-            $orderId = isset($session->metadata->order_id) ? (int) $session->metadata->order_id : 0;
-            $paid = ($session->payment_status ?? '') === 'paid';
-
-            if ($orderId > 0 && $paid) {
-                $order = $this->orderService->getById($orderId);
-                if ($order !== null) {
-                    $pi = is_string($session->payment_intent ?? null) ? $session->payment_intent : null;
-                    if ($pi !== null) {
-                        $this->orderService->setPaymentIntent($order->id, $pi);
-                    }
-                    $this->orderService->fulfill($order); // idempotent: pending -> paid + tickets
-                }
-            }
-        }
-
+        $this->orderService->fulfillPaidCheckout($this->paymentService->completedCheckoutInfo($parsed['event']));
         http_response_code(200);
         echo 'ok';
+    }
+
+    private function badRequest(string $message): never
+    {
+        http_response_code(400);
+        echo $message;
+        exit();
     }
 }

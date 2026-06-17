@@ -3,17 +3,18 @@
 namespace App\Controllers;
 
 use App\Framework\Flash;
+use App\Framework\Redirect;
 use App\Framework\View;
 use App\Middleware\AuthMiddleware;
-use App\Services\ContentService;
+use App\Services\Interfaces\IContentService;
 
 class AdminContentController
 {
-    private ContentService $contentService;
+    private IContentService $contentService;
 
-    public function __construct()
+    public function __construct(IContentService $contentService)
     {
-        $this->contentService = new ContentService();
+        $this->contentService = $contentService;
     }
 
     public function edit(): void
@@ -28,48 +29,23 @@ class AdminContentController
     public function save(): void
     {
         AuthMiddleware::requireAdmin();
-
         $html = $_POST['blocks'] ?? [];
         if (!is_array($html)) {
             Flash::error('Invalid content submission.');
-            header('Location: /admin/edit');
-            exit();
+            Redirect::to('/admin/edit');
         }
+        $this->saveHomepage($html);
+        Redirect::to('/admin/edit');
+    }
 
-        $files = $this->groupUploadedFiles('images');
-
+    /** Persist the homepage blocks, flashing the outcome. */
+    private function saveHomepage(array $html): void
+    {
         try {
-            $this->contentService->savePage('home', $html, $files, (int)($_SESSION['UserId'] ?? 0));
+            $this->contentService->savePageFromUploadField('home', $html, $_FILES['images'] ?? [], (int)($_SESSION['UserId'] ?? 0));
             Flash::success('Homepage content saved.');
         } catch (\Throwable $e) {
             Flash::error($e->getMessage());
         }
-
-        header('Location: /admin/edit');
-        exit();
-    }
-
-    /**
-     * Normalise $_FILES for inputs named images[block_key].
-     *
-     * @return array<string,array<string,mixed>>
-     */
-    private function groupUploadedFiles(string $field): array
-    {
-        if (empty($_FILES[$field]) || !is_array($_FILES[$field]['name'])) {
-            return [];
-        }
-
-        $files = [];
-        foreach ($_FILES[$field]['name'] as $key => $name) {
-            $files[$key] = [
-                'name' => $name,
-                'type' => $_FILES[$field]['type'][$key] ?? '',
-                'tmp_name' => $_FILES[$field]['tmp_name'][$key] ?? '',
-                'error' => $_FILES[$field]['error'][$key] ?? UPLOAD_ERR_NO_FILE,
-                'size' => $_FILES[$field]['size'][$key] ?? 0,
-            ];
-        }
-        return $files;
     }
 }

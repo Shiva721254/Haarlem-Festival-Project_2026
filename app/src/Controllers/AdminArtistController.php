@@ -2,20 +2,19 @@
 namespace App\Controllers;
 
 use App\Framework\Flash;
+use App\Framework\Http;
+use App\Framework\Redirect;
 use App\Framework\View;
-use App\Framework\ImageUpload;
 use App\Middleware\AuthMiddleware;
-use App\Models\ArtistModel;
-use App\Services\ArtistService;
 use App\Services\Interfaces\IArtistService;
 
 class AdminArtistController
 {
     private IArtistService $artistService;
 
-    public function __construct()
+    public function __construct(IArtistService $artistService)
     {
-        $this->artistService = new ArtistService();
+        $this->artistService = $artistService;
     }
 
     public function index(): void
@@ -35,18 +34,12 @@ class AdminArtistController
     public function store(): void
     {
         AuthMiddleware::requireAdmin();
-        $artist = $this->buildFromPost();
-
-        if ($error = $this->validate($artist)) {
-            Flash::error($error);
-            View::renderAdmin('Admin/artists/form', ['artist' => $artist], 'New artist');
-            return;
+        $form = $this->artistService->buildAdminFormModel($_POST);
+        if ($error = $form['error']) {
+            $this->renderForm($form['artist'], $error, 'New artist');
         }
-
-        $this->artistService->create($artist);
-        Flash::success('Artist created.');
-        header('Location: /admin/artists');
-        exit();
+        $this->artistService->create($form['artist']);
+        $this->saved('Artist created.');
     }
 
     public function edit(array $vars = []): void
@@ -54,11 +47,8 @@ class AdminArtistController
         AuthMiddleware::requireAdmin();
         $artist = $this->artistService->getById((int)($vars['id'] ?? 0));
         if ($artist === null) {
-            http_response_code(404);
-            echo 'Artist not found';
-            return;
+            Http::notFound('Artist not found');
         }
-
         View::renderAdmin('Admin/artists/form', [
             'artist'  => $artist,
             'gallery' => $this->artistService->getGallery($artist->id),
@@ -70,24 +60,12 @@ class AdminArtistController
     {
         AuthMiddleware::requireAdmin();
         $artistId = (int)($vars['id'] ?? 0);
-        $back = '/admin/artists/edit/' . $artistId;
         if ($artistId <= 0) {
             Flash::error('Unknown artist.');
-            header('Location: /admin/artists');
-            exit();
+            Redirect::to('/admin/artists');
         }
-
-        $result = ImageUpload::handle('gallery_image', 'artists');
-        if (!$result['ok']) {
-            Flash::error($result['message']);
-        } elseif (!isset($result['path'])) {
-            Flash::error('Please choose an image to upload.');
-        } else {
-            $this->artistService->addImage($artistId, $result['path']);
-            Flash::success('Gallery image added.');
-        }
-        header('Location: ' . $back);
-        exit();
+        Flash::results([$this->artistService->uploadGalleryImage($artistId)]);
+        Redirect::to('/admin/artists/edit/' . $artistId);
     }
 
     // POST: /admin/artists/images/delete — remove a gallery image.
@@ -100,26 +78,19 @@ class AdminArtistController
             $this->artistService->deleteImage($imageId);
             Flash::success('Gallery image removed.');
         }
-        header('Location: /admin/artists/edit/' . $artistId);
-        exit();
+        Redirect::to('/admin/artists/edit/' . $artistId);
     }
 
     public function update(): void
     {
         AuthMiddleware::requireAdmin();
-        $artist = $this->buildFromPost();
-        $artist->id = (int)($_POST['id'] ?? 0);
-
-        if (($error = $this->validate($artist)) || $artist->id <= 0) {
-            Flash::error($error ?? 'Invalid artist.');
-            View::renderAdmin('Admin/artists/form', ['artist' => $artist], 'Edit artist');
-            return;
+        $form = $this->artistService->buildAdminFormModel($_POST);
+        $artist = $form['artist'];
+        if (($error = $form['error']) || $artist->id <= 0) {
+            $this->renderForm($artist, $error ?? 'Invalid artist.', 'Edit artist');
         }
-
         $this->artistService->update($artist);
-        Flash::success('Artist updated.');
-        header('Location: /admin/artists');
-        exit();
+        $this->saved('Artist updated.');
     }
 
     public function delete(): void
@@ -130,25 +101,20 @@ class AdminArtistController
             $this->artistService->delete($id);
             Flash::success('Artist deleted.');
         }
-        header('Location: /admin/artists');
+        Redirect::to('/admin/artists');
+    }
+
+    /** Re-render the form with an error and stop. */
+    private function renderForm(?object $artist, string $error, string $title): never
+    {
+        Flash::error($error);
+        View::renderAdmin('Admin/artists/form', ['artist' => $artist], $title);
         exit();
     }
 
-    private function buildFromPost(): ArtistModel
+    private function saved(string $message): never
     {
-        $artist = new ArtistModel();
-        $artist->name = trim($_POST['name'] ?? '');
-        $artist->genre = trim($_POST['genre'] ?? '') ?: null;
-        $artist->bio = trim($_POST['bio'] ?? '') ?: null;
-        $artist->image = trim($_POST['image'] ?? '') ?: null;
-        $artist->career_highlights = trim($_POST['career_highlights'] ?? '') ?: null;
-        $artist->tracks = trim($_POST['tracks'] ?? '') ?: null;
-        $artist->audio_url = trim($_POST['audio_url'] ?? '') ?: null;
-        return $artist;
-    }
-
-    private function validate(ArtistModel $artist): ?string
-    {
-        return $artist->name === '' ? 'Artist name is required.' : null;
+        Flash::success($message);
+        Redirect::to('/admin/artists');
     }
 }

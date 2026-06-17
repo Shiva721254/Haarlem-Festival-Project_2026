@@ -4,15 +4,14 @@ namespace App\Controllers;
 use App\Framework\View;
 use App\Middleware\AuthMiddleware;
 use App\Services\Interfaces\ITicketScanService;
-use App\Services\TicketScanService;
 
 class ScannerController
 {
     private ITicketScanService $scanService;
 
-    public function __construct()
+    public function __construct(ITicketScanService $scanService)
     {
-        $this->scanService = new TicketScanService();
+        $this->scanService = $scanService;
     }
 
     public function index(): void

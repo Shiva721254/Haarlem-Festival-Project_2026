@@ -1,26 +1,19 @@
-<?php 
+<?php
 
 namespace App\Controllers;
 use App\Services\Interfaces\IUserService;
-use App\Services\UserService;
-use App\Repositories\Interfaces\IUserRepository;
-use App\Repositories\UserRepository;
 use App\ViewModels\AuthViewModel;
-use App\Models\UserModel;
-use App\Enums\UserRole;
 use App\Framework\View;
 use App\Framework\Flash;
-use App\CustomException\DuplicateEntryException;
+use App\Framework\Redirect;
 
 class AuthController
 {
     private IUserService $userService;
-    private IUserRepository $userRepository;
 
-    public function __construct()
+    public function __construct(IUserService $userService)
     {
-        $this->userService = new UserService();
-        $this->userRepository = new UserRepository();
+        $this->userService = $userService;
     }
 
     // GET: /register
@@ -28,154 +21,92 @@ class AuthController
     {
         // Already logged in? No need to register again.
         if (isset($_SESSION['UserId'])) {
-            header('Location: /');
-            exit();
+            Redirect::to('/');
         }
-        View::render('Auth/register', [
-            'vm' => new AuthViewModel(),
-            'old' => [],
-            'captcha' => $this->captchaChallenge(),
-        ], 'Create Account');
+        $this->renderRegisterForm();
     }
 
     // POST: /register
     public function register(): void
     {
-        $old = [
+        $old = $this->registrationInput();
+        $error = $this->registrationGuardError() ?? $this->attemptRegister($old);
+        $this->renderRegisterForm($error, $old);
+    }
+
+    /** @return array<string,string> */
+    private function registrationInput(): array
+    {
+        return [
             'FirstName' => trim($_POST['FirstName'] ?? ''),
             'LastName'  => trim($_POST['LastName'] ?? ''),
             'Username'  => trim($_POST['Username'] ?? ''),
             'Email'     => trim($_POST['Email'] ?? ''),
         ];
-        $password = $_POST['Password'] ?? '';
-        $confirm  = $_POST['PasswordConfirm'] ?? '';
-
-        // Server-side validation, independent of any front end checks.
-        $error = $this->validateRegistration($old, $password, $confirm);
-
-        // GDPR: an account requires explicit agreement to the privacy policy.
-        if ($error === null && empty($_POST['consent'])) {
-            $error = 'Please agree to the privacy policy to create an account.';
-        }
-        if ($error === null && !$this->captchaIsValid($_POST['captcha_answer'] ?? '')) {
-            $error = 'Please answer the anti-bot question correctly.';
-        }
-
-        if ($error === null) {
-            $user = new UserModel();
-            $user->Username = $old['Username'];
-            $user->FirstName = $old['FirstName'];
-            $user->LastName  = $old['LastName'];
-            $user->Email     = $old['Email'];
-            $user->Password  = $password;
-            $user->Role      = UserRole::Customer; // public sign-ups are always customers
-            $user->isVerified = false;
-            $user->isActive   = true;
-
-            try {
-                // Service hashes the password and enforces unique username/email.
-                $_POST['PasswordConfirm'] = $confirm; // service re-checks the confirmation
-                $this->userService->create($user);
-
-                // Send the account verification email on sign-up.
-                $this->userService->sendVerificationEmail($user->Email);
-
-                Flash::success('Account created! Check your email to verify your account, then log in.');
-                header('Location: /showLogin');
-                exit();
-            } catch (DuplicateEntryException $e) {
-                $error = 'An account with this username or email already exists.';
-            } catch (\Throwable $e) {
-                $error = 'Something went wrong creating your account. Please try again.';
-            }
-        }
-
-        View::render('Auth/register', [
-            'vm' => new AuthViewModel($error),
-            'old' => $old,
-            'captcha' => $this->captchaChallenge(),
-        ], 'Create Account');
     }
 
-    /**
-     * Validate registration input. Returns an error message, or null if valid.
-     *
-     * @param array<string,string> $fields
-     */
-    private function validateRegistration(array $fields, string $password, string $confirm): ?string
+    /** Request-level guards the controller owns: privacy consent and captcha. */
+    private function registrationGuardError(): ?string
     {
-        if ($fields['FirstName'] === '' || $fields['LastName'] === '') {
-            return 'Please provide your first and last name.';
+        if (empty($_POST['consent'])) {
+            return 'Please agree to the privacy policy to create an account.';
         }
-        if (!preg_match('/^[a-zA-Z0-9._-]{3,30}$/', $fields['Username'] ?? '')) {
-            return 'Username must be 3-30 characters and only contain letters, numbers, dots, underscores, or hyphens.';
-        }
-        if (!filter_var($fields['Email'], FILTER_VALIDATE_EMAIL)) {
-            return 'Please provide a valid email address.';
-        }
-        if ($password !== $confirm) {
-            return 'Passwords do not match.';
-        }
-        if (strlen($password) < 8
-            || !preg_match('/[A-Z]/', $password)
-            || !preg_match('/[0-9]/', $password)
-            || !preg_match('/[^A-Za-z0-9]/', $password)) {
-            return 'Password must be at least 8 characters and include a capital letter, a number, and a symbol.';
+        $expected = $_SESSION['registration_captcha'] ?? null;
+        unset($_SESSION['registration_captcha']);
+        if (!$this->userService->verifyRegistrationCaptcha($_POST['captcha_answer'] ?? '', $expected)) {
+            return 'Please answer the anti-bot question correctly.';
         }
         return null;
     }
 
-    private function captchaChallenge(): array
+    /** Create the account; redirects on success, otherwise returns the error. */
+    private function attemptRegister(array $old): ?string
     {
-        $a = random_int(2, 9);
-        $b = random_int(2, 9);
-        $_SESSION['registration_captcha'] = $a + $b;
-        return ['question' => "$a + $b"];
+        $result = $this->userService->registerCustomer($old, $_POST['Password'] ?? '', $_POST['PasswordConfirm'] ?? '');
+        if ($result['ok']) {
+            Flash::success('Account created! Check your email to verify your account, then log in.');
+            Redirect::to('/showLogin');
+        }
+        return $result['error'];
     }
 
-    private function captchaIsValid(string $answer): bool
+    private function renderRegisterForm(?string $error = null, array $old = []): void
     {
-        $expected = $_SESSION['registration_captcha'] ?? null;
-        unset($_SESSION['registration_captcha']);
-        return $expected !== null && (int)$answer === (int)$expected;
+        $captcha = $this->userService->registrationCaptchaChallenge();
+        $_SESSION['registration_captcha'] = $captcha['answer'];
+        View::render('Auth/register', [
+            'vm' => new AuthViewModel($error),
+            'old' => $old,
+            'captcha' => ['question' => $captcha['question']],
+        ], 'Create Account');
     }
 
     // GET: /forgotPassword
     public function showForgotPassword()
     {
         $vm = new AuthViewModel();
-        require __DIR__ . "/../Views/Auth/forgotPassword.php";
+        View::render('Auth/forgotPassword', ['vm' => $vm], 'Forgot password');
     }
 
     // POST: /send-reset-link
     public function sendResetLink()
     {
-        $email = $_POST['Email'] ?? '';
-        
-        // We always show success to prevent "email fishing"
-        $this->userService->sendPasswordReset($email);
-
-        // Always show the same message to avoid leaking which emails exist.
+        // Always send (and always show the same message) to avoid leaking which emails exist.
+        $this->userService->sendPasswordReset($_POST['Email'] ?? '');
         Flash::success('If that email is registered, a password reset link has been sent.');
-        header("Location: /showLogin");
-        exit();
+        Redirect::to('/showLogin');
     }
 
     // GET: /resetPassword (from email link)
     public function showResetForm()
     {
         $token = $_GET['token'] ?? '';
-        
-        // Validate token before even showing the form
         $user = $this->userService->validateResetToken($token);
-
         if (!$user) {
-            // Token is garbage or expired; send them back to start
-            header("Location: /forgotPassword?error=invalid_token");
-            exit();
+            // Token is garbage or expired; send them back to start.
+            Redirect::to('/forgotPassword?error=invalid_token');
         }
-
-        require __DIR__ . "/../Views/Auth/resetPassword.php";
+        View::render('Auth/resetPassword', ['user' => $user, 'token' => $token], 'Reset password');
     }
 
     // POST: /update-password
@@ -183,23 +114,20 @@ class AuthController
     {
         $token = $_POST['token'] ?? '';
         $password = $_POST['Password'] ?? '';
-        $confirm = $_POST['PasswordConfirm'] ?? '';
-
-        if ($password !== $confirm) {
-            header("Location: /resetPassword?token=$token&error=match");
-            exit();
+        if ($password !== ($_POST['PasswordConfirm'] ?? '')) {
+            Redirect::to("/resetPassword?token=$token&error=match");
         }
+        $this->finishPasswordReset($token, $password);
+    }
 
-        $success = $this->userService->completePasswordReset($token, $password);
-
-        if ($success) {
+    private function finishPasswordReset(string $token, string $password): never
+    {
+        if ($this->userService->completePasswordReset($token, $password)) {
             Flash::success('Your password has been reset. Please log in.');
-            header("Location: /showLogin");
-        } else {
-            Flash::error('That reset link is invalid or has expired. Please request a new one.');
-            header("Location: /forgotPassword");
+            Redirect::to('/showLogin');
         }
-        exit();
+        Flash::error('That reset link is invalid or has expired. Please request a new one.');
+        Redirect::to('/forgotPassword');
     }
 
     // --- VERIFY ACCOUNT ---
@@ -209,35 +137,28 @@ class AuthController
     {
         $userId = $_SESSION['UserId'] ?? null;
         if (!$userId) {
-            header("Location: /showLogin");
-            exit();
+            Redirect::to('/showLogin');
         }
-        $user = $this->userService->getById($userId);        
-
-        // We always show success to prevent "email fishing"
-        $this->userService->sendVerificationEmail($user->Email);        
-        header("Location: /user/" . $userId . "?mail_sent=1");
-        
-        exit();
+        $user = $this->userService->getById($userId);
+        $this->userService->sendVerificationEmail($user->Email);
+        Redirect::to("/user/$userId?mail_sent=1");
     }
 
     //GET route from the link
     public function verifyAccount()
     {
         $token = $_GET['token'] ?? '';
-        if (empty($token)){
-            header("Location: /showLogin?error=invalid_token");
-            exit();
+        if (empty($token)) {
+            Redirect::to('/showLogin?error=invalid_token');
         }
-        $success = $this->userService->completeAccountVerification($token);
-        if($success){
-            Flash::success('Your account has been verified. You can now log in.');
-            header("Location: /showLogin");
-        } else {
-            Flash::error('That verification link is invalid or has expired.');
-            header("Location: /showLogin");
-        }
-        exit();
+        $this->flashVerificationOutcome($this->userService->completeAccountVerification($token));
+        Redirect::to('/showLogin');
     }
 
+    private function flashVerificationOutcome(bool $ok): void
+    {
+        $ok
+            ? Flash::success('Your account has been verified. You can now log in.')
+            : Flash::error('That verification link is invalid or has expired.');
+    }
 }

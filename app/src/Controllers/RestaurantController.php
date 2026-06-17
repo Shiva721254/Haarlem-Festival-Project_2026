@@ -2,17 +2,17 @@
 
 namespace App\Controllers;
 
+use App\Framework\Http;
 use App\Framework\View;
-use App\Services\RestaurantService;
 use App\Services\Interfaces\IRestaurantService;
 
 class RestaurantController
 {
     private IRestaurantService $restaurantService;
 
-    public function __construct()
+    public function __construct(IRestaurantService $restaurantService)
     {
-        $this->restaurantService = new RestaurantService();
+        $this->restaurantService = $restaurantService;
     }
 
     // GET: /restaurant/{id}
@@ -20,11 +20,8 @@ class RestaurantController
     {
         $restaurant = $this->restaurantService->getById((int)($vars['id'] ?? 0));
         if ($restaurant === null) {
-            http_response_code(404);
-            echo 'Restaurant not found';
-            return;
+            Http::notFound('Restaurant not found');
         }
-
         View::render('Restaurants/detail', [
             'restaurant' => $restaurant,
             'sessions'   => $this->restaurantService->getSessions($restaurant->id),

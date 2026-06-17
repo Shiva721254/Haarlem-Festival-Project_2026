@@ -2,19 +2,19 @@
 namespace App\Controllers;
 
 use App\Framework\Flash;
+use App\Framework\Http;
+use App\Framework\Redirect;
 use App\Framework\View;
 use App\Middleware\AuthMiddleware;
-use App\Models\VenueModel;
 use App\Services\Interfaces\IVenueService;
-use App\Services\VenueService;
 
 class AdminVenueController
 {
     private IVenueService $venueService;
 
-    public function __construct()
+    public function __construct(IVenueService $venueService)
     {
-        $this->venueService = new VenueService();
+        $this->venueService = $venueService;
     }
 
     public function index(): void
@@ -32,18 +32,12 @@ class AdminVenueController
     public function store(): void
     {
         AuthMiddleware::requireAdmin();
-        $venue = $this->buildFromPost();
-
-        if ($error = $this->validate($venue)) {
-            Flash::error($error);
-            View::renderAdmin('Admin/venues/form', ['venue' => $venue], 'New venue');
-            return;
+        $form = $this->venueService->buildAdminFormModel($_POST);
+        if ($error = ($form['error'] ?? $form['uploadError'])) {
+            $this->renderForm($form['venue'], $error, 'New venue');
         }
-
-        $this->venueService->create($venue);
-        Flash::success('Venue created.');
-        header('Location: /admin/venues');
-        exit();
+        $this->venueService->create($form['venue']);
+        $this->saved('Venue created.');
     }
 
     public function edit(array $vars = []): void
@@ -51,30 +45,21 @@ class AdminVenueController
         AuthMiddleware::requireAdmin();
         $venue = $this->venueService->getById((int)($vars['id'] ?? 0));
         if ($venue === null) {
-            http_response_code(404);
-            echo 'Venue not found';
-            return;
+            Http::notFound('Venue not found');
         }
-
         View::renderAdmin('Admin/venues/form', ['venue' => $venue], 'Edit venue');
     }
 
     public function update(): void
     {
         AuthMiddleware::requireAdmin();
-        $venue = $this->buildFromPost();
-        $venue->id = (int)($_POST['id'] ?? 0);
-
-        if (($error = $this->validate($venue)) || $venue->id <= 0) {
-            Flash::error($error ?? 'Invalid venue.');
-            View::renderAdmin('Admin/venues/form', ['venue' => $venue], 'Edit venue');
-            return;
+        $form = $this->venueService->buildAdminFormModel($_POST);
+        $venue = $form['venue'];
+        if (($error = ($form['error'] ?? $form['uploadError'])) || $venue->id <= 0) {
+            $this->renderForm($venue, $error ?? 'Invalid venue.', 'Edit venue');
         }
-
         $this->venueService->update($venue);
-        Flash::success('Venue updated.');
-        header('Location: /admin/venues');
-        exit();
+        $this->saved('Venue updated.');
     }
 
     public function delete(): void
@@ -85,35 +70,20 @@ class AdminVenueController
             $this->venueService->delete($id);
             Flash::success('Venue deleted.');
         }
-        header('Location: /admin/venues');
+        Redirect::to('/admin/venues');
+    }
+
+    /** Re-render the form with an error and stop. */
+    private function renderForm(?object $venue, string $error, string $title): never
+    {
+        Flash::error($error);
+        View::renderAdmin('Admin/venues/form', ['venue' => $venue], $title);
         exit();
     }
 
-    private function buildFromPost(): VenueModel
+    private function saved(string $message): never
     {
-        $venue = new VenueModel();
-        $venue->name = trim($_POST['name'] ?? '');
-        $venue->address = trim($_POST['address'] ?? '') ?: null;
-        $venue->capacity = ($_POST['capacity'] ?? '') !== '' ? (int)$_POST['capacity'] : null;
-        $venue->description = trim($_POST['description'] ?? '') ?: null;
-        $venue->image = trim($_POST['image'] ?? '') ?: null;
-        $upload = \App\Framework\ImageUpload::handle('image_file', 'venues');
-        if (!empty($upload['path'])) {
-            $venue->image = $upload['path'];
-        } elseif (!$upload['ok']) {
-            \App\Framework\Flash::error($upload['message']);
-        }
-        return $venue;
-    }
-
-    private function validate(VenueModel $venue): ?string
-    {
-        if ($venue->name === '') {
-            return 'Venue name is required.';
-        }
-        if ($venue->capacity !== null && $venue->capacity < 0) {
-            return 'Capacity cannot be negative.';
-        }
-        return null;
+        Flash::success($message);
+        Redirect::to('/admin/venues');
     }
 }
