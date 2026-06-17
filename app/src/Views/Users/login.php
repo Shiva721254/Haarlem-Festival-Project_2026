@@ -1,5 +1,3 @@
-<?php require __DIR__ . "/../Partials/header.php"; ?>
-
 <div class="container mt-5">
     <div class="card shadow-sm mx-auto card-narrow">
         <div class="card-header text-white text-center panel-header-purple">
@@ -58,5 +56,3 @@ document.addEventListener('DOMContentLoaded', function ()
     });
 });
 </script>
-
-<?php require __DIR__ . "/../Partials/footer.php"; ?>

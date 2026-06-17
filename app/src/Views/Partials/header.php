@@ -19,11 +19,6 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <?php
-            $currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
-            // Data-driven nav: list the active event types from the database.
-            $navTypes = (new \App\Services\EventService())->getActiveTypes();
-        ?>
         <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
             <ul class="navbar-nav align-items-center">
                 <li class="nav-item">
@@ -41,7 +36,6 @@
         </div>
 
         <div class="d-flex align-items-center gap-3">
-            <?php $cartCount = (new \App\Services\CartService())->itemCount(); ?>
             <a href="/cart" class="btn login-button rounded-circle position-relative" title="Cart">
                 <i class="bi bi-cart3"></i>
                 <?php if ($cartCount > 0): ?>

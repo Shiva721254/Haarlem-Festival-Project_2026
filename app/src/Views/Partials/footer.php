@@ -1,7 +1,3 @@
-<?php
-// Data-driven footer: event links come from the active event types, like the nav.
-$footerTypes = (new \App\Services\EventService())->getActiveTypes();
-?>
 <footer class="site-footer">
     <div class="container">
         <div class="row g-4 footer-top">
@@ -22,7 +18,7 @@ $footerTypes = (new \App\Services\EventService())->getActiveTypes();
             <div class="col-6 col-lg-3">
                 <h6 class="footer-heading">Events</h6>
                 <ul class="footer-links-list">
-                    <?php foreach ($footerTypes as $type): ?>
+                    <?php foreach ($navTypes as $type): ?>
                         <li><a href="/events/<?= htmlspecialchars($type['slug']) ?>"><?= htmlspecialchars($type['name']) ?></a></li>
                     <?php endforeach; ?>
                 </ul>

@@ -1,7 +1,3 @@
-<?php
-require __DIR__ . "/../Partials/header.php"; 
-$title = "reset password";
-?>
 <div class="container mt-5">
     <div class="card shadow-sm mx-auto card-wide-form">
         <div class="card-header bg-primary text-white py-3">
@@ -62,4 +58,3 @@ $title = "reset password";
 </div>
 
 <script src="/assets/js/password.js" defer></script>
-<?php require __DIR__ . "/../Partials/footer.php"; ?>

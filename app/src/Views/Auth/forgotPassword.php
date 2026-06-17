@@ -1,8 +1,3 @@
-<?php 
-require __DIR__ . "/../Partials/header.php"; 
-$title = "forgot password";
-?>
-
 <div class="container mt-5">
     <div class="card shadow-sm mx-auto card-auth">
         <div class="card-header text-white text-center panel-header-purple">
@@ -28,5 +23,3 @@ $title = "forgot password";
         </div>
     </div>
 </div>
-
-<?php require __DIR__ . "/../Partials/footer.php"; ?>
