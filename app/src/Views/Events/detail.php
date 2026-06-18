@@ -41,9 +41,10 @@ $heroImage = $event->image ?? '/assets/images/grote-markt.png';
                 <h4 class="mt-4 mb-3">Line-up</h4>
                 <div class="lineup-grid">
                     <?php foreach ($event->artists as $artist): ?>
+                        <?php $artistImg = (!empty($artist->image) && str_starts_with($artist->image, '/')) ? $artist->image : ($event->image ?? ''); ?>
                         <a class="lineup-card text-decoration-none text-reset" href="/artist/<?= $artist->id ?>" title="View <?= htmlspecialchars($artist->name) ?>">
-                            <?php if (!empty($artist->image)): ?>
-                                <img src="<?= htmlspecialchars($artist->image) ?>" alt="<?= htmlspecialchars($artist->name) ?>">
+                            <?php if (!empty($artistImg)): ?>
+                                <img src="<?= htmlspecialchars($artistImg) ?>" alt="<?= htmlspecialchars($artist->name) ?>">
                             <?php endif; ?>
                             <div class="lineup-name"><?= htmlspecialchars($artist->name) ?></div>
                             <?php if (!empty($artist->genre)): ?>
