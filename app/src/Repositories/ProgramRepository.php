@@ -4,6 +4,7 @@ namespace App\Repositories;
 use App\Framework\Repository;
 use App\Models\ProgramItemModel;
 use App\Repositories\Interfaces\IProgramRepository;
+use App\Enums\OrderStatus;
 
 class ProgramRepository extends Repository implements IProgramRepository
 {
@@ -11,7 +12,7 @@ class ProgramRepository extends Repository implements IProgramRepository
     {
         return array_map(
             static fn(array $row) => ProgramItemModel::fromDb($row),
-            $this->fetchAll($this->programSql(), ['uid' => $userId])
+            $this->fetchAll($this->programSql(), ['uid' => $userId, 'status' => OrderStatus::Paid->value])
         );
     }
 
@@ -23,7 +24,7 @@ class ProgramRepository extends Repository implements IProgramRepository
                        SUM(oi.quantity) AS total_tickets FROM orders o
                 JOIN order_items oi ON oi.order_id = o.id JOIN ticket_types tt ON tt.id = oi.ticket_type_id
                 JOIN events e ON e.id = tt.event_id JOIN event_types et ON et.id = e.event_type_id
-                LEFT JOIN venues v ON v.id = e.venue_id WHERE o.user_id = :uid AND o.status = "paid"
+                LEFT JOIN venues v ON v.id = e.venue_id WHERE o.user_id = :uid AND o.status = :status
                 GROUP BY e.id, e.title, e.starts_at, e.ends_at, e.image, v.name, et.slug, et.name ORDER BY e.starts_at';
     }
 }

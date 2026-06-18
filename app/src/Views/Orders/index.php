@@ -38,11 +38,10 @@ use App\Middleware\AuthMiddleware;
                     <?php foreach ($orders as $order): ?>
                         <?php
                             $statusClass = match ($order->status) {
-                                'paid' => 'success',
-                                'pending' => $order->canPayLater() ? 'warning' : 'secondary',
-                                'failed' => 'danger',
-                                'cancelled' => 'secondary',
-                                default => 'secondary',
+                                \App\Enums\OrderStatus::Paid      => 'success',
+                                \App\Enums\OrderStatus::Pending   => $order->canPayLater() ? 'warning' : 'secondary',
+                                \App\Enums\OrderStatus::Failed    => 'danger',
+                                \App\Enums\OrderStatus::Cancelled => 'secondary',
                             };
                         ?>
                         <tr>
@@ -54,9 +53,9 @@ use App\Middleware\AuthMiddleware;
                             </td>
                             <td>
                                 <span class="badge text-bg-<?= $statusClass ?>">
-                                    <?= htmlspecialchars(ucfirst($order->status)) ?>
+                                    <?= htmlspecialchars(ucfirst($order->status->value)) ?>
                                 </span>
-                                <?php if ($order->status === 'pending' && !$order->canPayLater()): ?>
+                                <?php if ($order->status === \App\Enums\OrderStatus::Pending && !$order->canPayLater()): ?>
                                     <div class="small text-muted">Payment window expired</div>
                                 <?php endif; ?>
                             </td>

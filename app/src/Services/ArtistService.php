@@ -3,7 +3,6 @@ namespace App\Services;
 
 use App\Models\ArtistModel;
 use App\Framework\ImageUpload;
-use App\Repositories\ArtistRepository;
 use App\Repositories\Interfaces\IArtistRepository;
 use App\Services\Interfaces\IArtistService;
 

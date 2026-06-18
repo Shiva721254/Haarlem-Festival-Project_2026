@@ -2,7 +2,6 @@
 namespace App\Services;
 
 use App\Models\UserModel;
-use App\Repositories\AccountRepository;
 use App\Repositories\Interfaces\IAccountRepository;
 use App\Services\Interfaces\IAccountService;
 use App\Services\Interfaces\IUserService;
@@ -98,7 +97,7 @@ class AccountService implements IAccountService
         if ($new !== $confirm) {
             return 'New passwords do not match; password was not changed.';
         }
-        if (!$this->isStrongPassword($new)) {
+        if (!$this->userService->isStrongPassword($new)) {
             return 'New password does not meet the requirements; password was not changed.';
         }
         return null;
@@ -166,11 +165,4 @@ class AccountService implements IAccountService
         $this->userService->deleteOwnAccount($userId);
     }
 
-    private function isStrongPassword(string $password): bool
-    {
-        return strlen($password) >= 8
-            && preg_match('/[A-Z]/', $password)
-            && preg_match('/[0-9]/', $password)
-            && preg_match('/[^A-Za-z0-9]/', $password);
-    }
 }

@@ -3,7 +3,6 @@ namespace App\Services;
 
 use App\Models\EventModel;
 use App\Framework\ImageUpload;
-use App\Repositories\EventRepository;
 use App\Repositories\Interfaces\IEventRepository;
 use App\Repositories\Interfaces\ITicketTypeRepository;
 use App\Services\Interfaces\IEventService;

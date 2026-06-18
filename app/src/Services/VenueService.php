@@ -4,7 +4,6 @@ namespace App\Services;
 use App\Models\VenueModel;
 use App\Framework\ImageUpload;
 use App\Repositories\Interfaces\IVenueRepository;
-use App\Repositories\VenueRepository;
 use App\Services\Interfaces\IVenueService;
 
 class VenueService implements IVenueService

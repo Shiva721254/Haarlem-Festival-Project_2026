@@ -32,7 +32,7 @@ class CustomerOrderController
         $userId = AuthMiddleware::userId();
         $orderId = (int) ($_POST['order_id'] ?? 0);
         $order = $this->requirePayableOrder($orderId, $userId);
-        $this->redirectToStripe($order);
+        $this->paymentService->startCheckoutOrBail($order, '/orders');
     }
 
     /** Load the order for this user and verify it can still be paid, or bail. */
@@ -47,16 +47,6 @@ class CustomerOrderController
             $this->bailToOrders($check['message']);
         }
         return $order;
-    }
-
-    private function redirectToStripe(object $order): never
-    {
-        try {
-            $url = $this->paymentService->startCheckout($order);
-        } catch (\Throwable $e) {
-            $this->bailToOrders('Could not start payment. Please try again.');
-        }
-        Redirect::to($url);
     }
 
     private function bailToOrders(string $message): never

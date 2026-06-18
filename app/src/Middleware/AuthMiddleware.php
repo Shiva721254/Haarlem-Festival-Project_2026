@@ -1,6 +1,8 @@
 <?php
 namespace App\Middleware;
 
+use App\Enums\UserRole;
+
 class AuthMiddleware {
     public static function requireAuth() {
         // Ensure session is started if not already
@@ -28,7 +30,7 @@ class AuthMiddleware {
 
     public static function requireAdmin() {
         self::requireAuth();
-        if (self::currentRole() !== 'admin') {
+        if (self::currentRole() !== UserRole::Admin->value) {
             http_response_code(403);
             echo 'Access Denied';
             exit();
@@ -37,7 +39,7 @@ class AuthMiddleware {
 
     public static function requireStaff() {
         self::requireAuth();
-        if (!in_array(self::currentRole(), ['admin', 'employee'], true)) {
+        if (!in_array(self::currentRole(), [UserRole::Admin->value, UserRole::Employee->value], true)) {
             http_response_code(403);
             echo 'Access Denied';
             exit();
@@ -47,7 +49,7 @@ class AuthMiddleware {
     public static function requireOwner($requiredUserId) {
         self::requireAuth();
 
-        if ($_SESSION['UserId'] !== $requiredUserId && self::currentRole() !== 'admin') {
+        if ($_SESSION['UserId'] !== $requiredUserId && self::currentRole() !== UserRole::Admin->value) {
             http_response_code(403);
             echo 'Unauthorized: You do not own this resource.';
             exit();
@@ -60,7 +62,7 @@ class AuthMiddleware {
         $currentUserId = $_SESSION['UserId'];
         $currentUserRole = self::currentRole();
 
-        $isAdmin = ($currentUserRole === 'admin');
+        $isAdmin = ($currentUserRole === UserRole::Admin->value);
         $isOwner = ($currentUserId == $requiredUserId);
 
         if (!$isAdmin && !$isOwner) {

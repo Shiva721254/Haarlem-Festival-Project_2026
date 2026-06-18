@@ -2,8 +2,9 @@
 namespace App\Services;
 
 use App\Repositories\Interfaces\ITicketRepository;
-use App\Repositories\TicketRepository;
 use App\Services\Interfaces\ITicketScanService;
+use App\Enums\OrderStatus;
+use App\Enums\TicketStatus;
 
 class TicketScanService implements ITicketScanService
 {
@@ -36,13 +37,13 @@ class TicketScanService implements ITicketScanService
     /** A rejection result if the ticket cannot be admitted, otherwise null. */
     private function rejection(array $ticket): ?array
     {
-        if (($ticket['order_status'] ?? '') !== 'paid') {
+        if (($ticket['order_status'] ?? '') !== OrderStatus::Paid->value) {
             return $this->result(false, 'danger', 'Order is not paid. Do not admit this visitor.', $ticket);
         }
-        if (($ticket['status'] ?? '') === 'scanned') {
+        if (($ticket['status'] ?? '') === TicketStatus::Scanned->value) {
             return $this->result(false, 'warning', 'Ticket was already scanned.', $ticket);
         }
-        if (($ticket['status'] ?? '') !== 'valid') {
+        if (($ticket['status'] ?? '') !== TicketStatus::Valid->value) {
             return $this->result(false, 'danger', 'Ticket is not valid.', $ticket);
         }
         return null;

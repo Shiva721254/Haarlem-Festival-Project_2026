@@ -16,8 +16,8 @@
             <h2 class="mb-1">Order #<?= (int)$order->id ?></h2>
             <div class="text-muted"><?= htmlspecialchars($order->invoice_number ?? 'No invoice yet') ?></div>
         </div>
-        <span class="badge fs-6 text-bg-<?= $order->status === 'paid' ? 'success' : 'secondary' ?>">
-            <?= htmlspecialchars(ucfirst($order->status)) ?>
+        <span class="badge fs-6 text-bg-<?= $order->status === \App\Enums\OrderStatus::Paid ? 'success' : 'secondary' ?>">
+            <?= htmlspecialchars(ucfirst($order->status->value)) ?>
         </span>
     </div>
 

@@ -91,8 +91,8 @@
                             <span class="text-muted small"><?= htmlspecialchars($order->customer_email ?? '') ?></span>
                         </td>
                         <td>
-                            <span class="badge text-bg-<?= $order->status === 'paid' ? 'success' : 'secondary' ?>">
-                                <?= htmlspecialchars(ucfirst($order->status)) ?>
+                            <span class="badge text-bg-<?= $order->status === \App\Enums\OrderStatus::Paid ? 'success' : 'secondary' ?>">
+                                <?= htmlspecialchars(ucfirst($order->status->value)) ?>
                             </span>
                         </td>
                         <td class="text-end"><?= (int)$order->item_count ?></td>

@@ -4,9 +4,6 @@ namespace App\Services;
 use App\Models\OrderModel;
 use App\Models\OrderItemModel;
 use App\Models\UserModel;
-use App\Repositories\OrderRepository;
-use App\Repositories\TicketTypeRepository;
-use App\Repositories\UserRepository;
 use App\Repositories\Interfaces\IOrderRepository;
 use App\Repositories\Interfaces\ITicketTypeRepository;
 use App\Repositories\Interfaces\IUserRepository;
@@ -14,10 +11,19 @@ use App\Services\Interfaces\IOrderService;
 use App\Services\Interfaces\ICartService;
 use App\Services\Interfaces\ITicketPdfService;
 use App\Services\Interfaces\IMailService;
+use App\Enums\OrderStatus;
 
 class OrderService implements IOrderService
 {
-    private const ADMIN_STATUSES = ['pending', 'paid', 'failed', 'cancelled'];
+    private const PAY_LATER_SECONDS  = 24 * 60 * 60;
+    private const INVOICE_PREFIX     = 'HF-';
+    private const INVOICE_PAD_LENGTH = 6;
+    private const ADMIN_STATUSES = [
+        OrderStatus::Pending->value,
+        OrderStatus::Paid->value,
+        OrderStatus::Failed->value,
+        OrderStatus::Cancelled->value,
+    ];
     private const EXPORT_COLUMNS = [
         'id' => 'Order ID',
         'invoice_number' => 'Invoice number',
@@ -101,11 +107,11 @@ class OrderService implements IOrderService
     {
         $order = new OrderModel();
         $order->user_id = $userId;
-        $order->status = 'pending';
+        $order->status = OrderStatus::Pending;
         $order->subtotal = $totals['subtotal'];
         $order->vat_total = $totals['vat'];
         $order->total = $totals['total'];
-        $order->pay_later_until = date('Y-m-d H:i:s', time() + 24 * 60 * 60);
+        $order->pay_later_until = date('Y-m-d H:i:s', time() + self::PAY_LATER_SECONDS);
         $order->items = array_map(fn($item) => $this->toOrderItem($item), $items);
         return $order;
     }
@@ -306,7 +312,7 @@ class OrderService implements IOrderService
 
     private function invoiceNumber(int $orderId): string
     {
-        return 'HF-' . date('Y') . '-' . str_pad((string)$orderId, 6, '0', STR_PAD_LEFT);
+        return self::INVOICE_PREFIX . date('Y') . '-' . str_pad((string)$orderId, self::INVOICE_PAD_LENGTH, '0', STR_PAD_LEFT);
     }
 
     /**

@@ -3,6 +3,7 @@ namespace App\Repositories;
 
 use App\Framework\Repository;
 use App\Repositories\Interfaces\ITicketRepository;
+use App\Enums\TicketStatus;
 
 class TicketRepository extends Repository implements ITicketRepository
 {
@@ -26,9 +27,9 @@ class TicketRepository extends Repository implements ITicketRepository
     public function markScanned(int $ticketId): void
     {
         $this->execute(
-            'UPDATE tickets SET status = "scanned", scanned_at = NOW()
-             WHERE id = :id AND status = "valid"',
-            ['id' => $ticketId]
+            'UPDATE tickets SET status = :scanned, scanned_at = NOW()
+             WHERE id = :id AND status = :valid',
+            ['scanned' => TicketStatus::Scanned->value, 'id' => $ticketId, 'valid' => TicketStatus::Valid->value]
         );
     }
 }

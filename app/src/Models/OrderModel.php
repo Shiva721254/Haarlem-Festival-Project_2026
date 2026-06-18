@@ -1,11 +1,13 @@
 <?php
 namespace App\Models;
 
+use App\Enums\OrderStatus;
+
 class OrderModel
 {
     public int $id;
     public int $user_id;
-    public string $status;            // pending|paid|failed|cancelled
+    public OrderStatus $status;
     public ?string $invoice_number = null;
     public float $subtotal = 0.0;
     public float $vat_total = 0.0;
@@ -36,7 +38,7 @@ class OrderModel
     {
         $this->id = (int)$data['id'];
         $this->user_id = (int)$data['user_id'];
-        $this->status = $data['status'];
+        $this->status = OrderStatus::from($data['status']);
         $this->invoice_number = $data['invoice_number'] ?? null;
         $this->subtotal = (float)$data['subtotal'];
         $this->vat_total = (float)$data['vat_total'];
@@ -60,12 +62,12 @@ class OrderModel
 
     public function isPaid(): bool
     {
-        return $this->status === 'paid';
+        return $this->status === OrderStatus::Paid;
     }
 
     public function isPending(): bool
     {
-        return $this->status === 'pending';
+        return $this->status === OrderStatus::Pending;
     }
 
     public function canPayLater(): bool

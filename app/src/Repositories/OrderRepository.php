@@ -5,6 +5,8 @@ use App\Framework\Repository;
 use App\Repositories\Interfaces\IOrderRepository;
 use App\Models\OrderModel;
 use App\Models\OrderItemModel;
+use App\Enums\OrderStatus;
+use App\Enums\TicketStatus;
 use PDO;
 
 class OrderRepository extends Repository implements IOrderRepository
@@ -70,7 +72,7 @@ class OrderRepository extends Repository implements IOrderRepository
     {
         return [
             'user_id'         => $order->user_id,
-            'status'          => $order->status,
+            'status'          => $order->status->value,
             'subtotal'        => $order->subtotal,
             'vat_total'       => $order->vat_total,
             'total'           => $order->total,
@@ -161,8 +163,8 @@ class OrderRepository extends Repository implements IOrderRepository
     public function markPaid(int $orderId, string $invoiceNumber): void
     {
         $this->execute(
-            'UPDATE orders SET status = "paid", invoice_number = :inv, paid_at = NOW() WHERE id = :id',
-            ['inv' => $invoiceNumber, 'id' => $orderId]
+            'UPDATE orders SET status = :st, invoice_number = :inv, paid_at = NOW() WHERE id = :id',
+            ['st' => OrderStatus::Paid->value, 'inv' => $invoiceNumber, 'id' => $orderId]
         );
     }
 
@@ -179,17 +181,17 @@ class OrderRepository extends Repository implements IOrderRepository
     public function issueTickets(array $codesByItemId): void
     {
         $stmt = $this->getConnection()->prepare(
-            'INSERT INTO tickets (order_item_id, qr_code, status) VALUES (:oi, :qr, "valid")'
+            'INSERT INTO tickets (order_item_id, qr_code, status) VALUES (:oi, :qr, :st)'
         );
         foreach ($codesByItemId as $orderItemId => $codes) {
-            $this->issueTicketsForItem($stmt, (int)$orderItemId, $codes);
+            $this->issueTicketsForItem($stmt, (int)$orderItemId, $codes, TicketStatus::Valid->value);
         }
     }
 
-    private function issueTicketsForItem(\PDOStatement $stmt, int $orderItemId, array $codes): void
+    private function issueTicketsForItem(\PDOStatement $stmt, int $orderItemId, array $codes, string $status): void
     {
         foreach ($codes as $code) {
-            $stmt->execute(['oi' => $orderItemId, 'qr' => $code]);
+            $stmt->execute(['oi' => $orderItemId, 'qr' => $code, 'st' => $status]);
         }
     }
 
@@ -213,7 +215,7 @@ class OrderRepository extends Repository implements IOrderRepository
     /** @return array{0:string,1:array<string,string>} */
     private function statusFilter(?string $status): array
     {
-        $allowed = ['pending', 'paid', 'failed', 'cancelled'];
+        $allowed = array_column(OrderStatus::cases(), 'value');
         if ($status === null || $status === '' || !in_array($status, $allowed, true)) {
             return ['', []];
         }

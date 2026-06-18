@@ -1,7 +1,6 @@
 <?php
 namespace App\Services;
 
-use App\Repositories\AdminRepository;
 use App\Repositories\Interfaces\IAdminRepository;
 use App\Services\Interfaces\IAdminService;
 

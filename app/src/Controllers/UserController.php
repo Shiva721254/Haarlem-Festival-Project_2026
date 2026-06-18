@@ -139,7 +139,7 @@ class UserController
     {
         session_regenerate_id(true); // Security best practice
         $_SESSION['UserId'] = $user->UserId;
-        $_SESSION['Role'] = $user->Role;
+        $_SESSION['Role'] = $user->Role->value;
         $_SESSION['FirstName'] = $user->FirstName;
     }
 

@@ -4,6 +4,8 @@ namespace App\Services;
 use App\Config;
 use App\Models\OrderModel;
 use App\Services\Interfaces\IPaymentService;
+use App\Framework\Flash;
+use App\Framework\Redirect;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
 
@@ -25,6 +27,17 @@ class PaymentService implements IPaymentService
             Config::appUrl() . '/checkout/success?session_id={CHECKOUT_SESSION_ID}',
             Config::appUrl() . '/checkout/cancel?order=' . $order->id
         );
+    }
+
+    public function startCheckoutOrBail(OrderModel $order, string $fallbackUrl): never
+    {
+        try {
+            $url = $this->startCheckout($order);
+        } catch (\Throwable $e) {
+            Flash::error('Could not start payment. Please try again.');
+            Redirect::to($fallbackUrl);
+        }
+        Redirect::to($url);
     }
 
     public function createCheckoutSession(OrderModel $order, string $successUrl, string $cancelUrl): string

@@ -169,7 +169,7 @@ class UserService implements IUserService
         return null;
     }
 
-    private function isStrongPassword(string $password): bool
+    public function isStrongPassword(string $password): bool
     {
         return strlen($password) >= 8
             && preg_match('/[A-Z]/', $password)

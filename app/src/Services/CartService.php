@@ -11,6 +11,7 @@ class CartService implements ICartService
 {
     private const MIN_DONATION = 1.00;        // pay-what-you-like floor
     private const HAARLEMPAS_RATE = 0.25;     // 25% off Stories entry fees
+    private const MAX_NOTES_LENGTH = 500;
 
     private ICartRepository $cartRepo;
     private ITicketTypeRepository $ticketRepo;
@@ -106,7 +107,7 @@ class CartService implements ICartService
     private function cappedNotes(string $raw): string
     {
         $notes = trim($raw);
-        return mb_strlen($notes) > 500 ? mb_substr($notes, 0, 500) : $notes;
+        return mb_strlen($notes) > self::MAX_NOTES_LENGTH ? mb_substr($notes, 0, self::MAX_NOTES_LENGTH) : $notes;
     }
 
     /**

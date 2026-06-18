@@ -12,6 +12,12 @@ interface IPaymentService
     public function startCheckout(OrderModel $order): string;
 
     /**
+     * Start Stripe checkout and redirect immediately.
+     * On failure, flashes an error and redirects to $fallbackUrl.
+     */
+    public function startCheckoutOrBail(OrderModel $order, string $fallbackUrl): never;
+
+    /**
      * Create a hosted Stripe Checkout session for an order and return the URL
      * the customer should be redirected to.
      */

@@ -2,7 +2,6 @@
 namespace App\Services;
 
 use App\Models\TicketTypeModel;
-use App\Repositories\TicketTypeRepository;
 use App\Repositories\Interfaces\ITicketTypeRepository;
 use App\Services\Interfaces\ITicketTypeService;
 

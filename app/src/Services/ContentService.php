@@ -3,7 +3,6 @@ namespace App\Services;
 
 use App\Framework\ImageUpload;
 use App\Models\ContentBlockModel;
-use App\Repositories\ContentRepository;
 use App\Repositories\Interfaces\IContentRepository;
 use App\Services\Interfaces\IContentService;
 

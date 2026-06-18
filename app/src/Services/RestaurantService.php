@@ -4,7 +4,6 @@ namespace App\Services;
 use App\Models\RestaurantModel;
 use App\Framework\ImageUpload;
 use App\Repositories\Interfaces\IRestaurantRepository;
-use App\Repositories\RestaurantRepository;
 use App\Services\Interfaces\IRestaurantService;
 
 class RestaurantService implements IRestaurantService

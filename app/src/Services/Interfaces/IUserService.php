@@ -28,6 +28,8 @@ interface IUserService
     public function delete(int $id): void;
     public function deleteOwnAccount(int $userId): void;
 
+    public function isStrongPassword(string $password): bool;
+
     //login stuff
     public function authenticate(string $identifier, string $password): ?UserModel;
 

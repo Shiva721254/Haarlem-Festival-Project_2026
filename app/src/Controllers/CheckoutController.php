@@ -33,7 +33,7 @@ class CheckoutController
             $this->bailToCart($result['message']);
         }
         $order = $this->loadPayableOrder($result['order']->id);
-        $this->redirectToStripe($order);
+        $this->paymentService->startCheckoutOrBail($order, '/cart');
     }
 
     /** Reload the order (with enriched item names) and verify it can be paid. */
@@ -48,16 +48,6 @@ class CheckoutController
             $this->bailToCart($check['message']);
         }
         return $order;
-    }
-
-    private function redirectToStripe(object $order): never
-    {
-        try {
-            $url = $this->paymentService->startCheckout($order);
-        } catch (\Throwable $e) {
-            $this->bailToCart('Could not start payment. Please try again.');
-        }
-        Redirect::to($url);
     }
 
     /** Flash an error and send the visitor back to the cart. */
